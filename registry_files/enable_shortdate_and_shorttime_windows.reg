@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+; This .reg file changes the normal date/time format in Windows (i.e. removes the year)
+
+[HKEY_CURRENT_USER\Control Panel\International]
+"sShortDate"="M/d"
+"sShortTime"="h:mm"

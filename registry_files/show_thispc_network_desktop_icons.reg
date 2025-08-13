@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+; Enables "This PC" and "Network" Desktop icons (especially useful for unactivated Windows installs)
+
+[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel]
+"{20D04FE0-3AEA-1069-A2D8-08002B30309D}"=dword:00000000
+"{F02C1A0D-BE21-4350-88B0-7367FC96EF3C}"=dword:00000000

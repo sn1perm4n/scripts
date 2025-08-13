@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; This .reg file enables the User Account Profile Picture in Windows
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"UseDefaultTile"=dword:00000000

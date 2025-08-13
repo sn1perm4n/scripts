@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; This .reg file disables the User Account Profile Picture in Windows (especially useful for unactivated Windows installs)
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"UseDefaultTile"=dword:00000001

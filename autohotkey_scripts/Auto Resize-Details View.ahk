@@ -1,0 +1,1 @@
+!=::Send,{LCtrl down}{NumpadAdd}{LCtrl up}

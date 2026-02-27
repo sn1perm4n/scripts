@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; This .reg file allows local administrator accounts to perform remote admin tasks without UAC restrictions
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System]
+"LocalAccountTokenFilterPolicy"=dword:00000001

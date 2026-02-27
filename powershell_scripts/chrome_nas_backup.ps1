@@ -71,11 +71,11 @@ $robocopyArgs = @(
 
 # OPTIONAL: Exclude cache/temp/log files
 # If $ExcludeCache = $true is specified (default behavior), the following folders and files will NOT be copied to the backup:
-# Folders excluded: Cache, GPUCache, "Code Cache", "Media Cache", "JumpListIcons", "Crash Reports", "Service Worker"
+# Folders excluded: Cache, Code Cache, Crash Reports, GPUCache, JumpListIcons, Media Cache, Service Worker
 # Files excluded: *.log
 # This keeps the backup clean by skipping transient or rebuildable data while preserving all important profile data (Bookmarks, Extensions, Preferences, Cookies, History, Sessions, etc.)
 if ($ExcludeCache) {
-	$robocopyArgs += "/XD", "Cache", "Crash Reports", "GPUCache", "JumpListIcons", "Media Cache", "Code Cache", "Service Worker"
+	$robocopyArgs += "/XD", "Cache", "Code Cache", "Crash Reports", "GPUCache", "JumpListIcons", "Media Cache", "Service Worker"
 	$robocopyArgs += "/XF", "*.log"
 }
 

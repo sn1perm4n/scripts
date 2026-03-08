@@ -1,6 +1,6 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the default Thunderbird profile to a Linux-based NAS. By default, it excludes unnecessary cache/temp/log files, but users can override this to include all files/folders by running the script as follows:
-# .\thunderbird_nas_backup.ps1 -ExcludeCache:$false
+# .\thunderbird_nas_backup.ps1 -IncludeCache
 
 # Robocopy exit code list:
 # Exit Code Meaning
@@ -13,8 +13,11 @@
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
 param (
-	[switch]$ExcludeCache = $true # Default to excluding cache/temp/log files
+	[switch]$IncludeCache
 )
+
+# ExcludeCache is just the inverse of IncludeCache
+$ExcludeCache = -not $IncludeCache
 
 # Specify remote directory to copy to and the NAS hostname
 $Destination = "\\NAS\PATH\TO\THUNDERBIRD_BACKUP_DIRECTORY" # Change this to your NAS Thunderbird backup directory

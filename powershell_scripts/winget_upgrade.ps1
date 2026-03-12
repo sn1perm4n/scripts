@@ -3,6 +3,8 @@
 # If you want to upgrade everything, you can run "winget upgrade --all"
 # Available commands: https://learn.microsoft.com/en-us/windows/package-manager/winget/upgrade
 # winget pin add --id <APP_ID> - Disables version checking for said app (useful if you need to avoid upgrading specific applications)
+# winget pin remove --id <APP_ID> - Removes a pinned app from winget
+# winget pin list - Shows the current pinned app list
 
 # Update source database
 winget source update

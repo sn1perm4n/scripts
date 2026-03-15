@@ -18,7 +18,7 @@
 #     -SaveBackup: Automatically create backups before converting files (skips interactive prompt)
 #     -ShowFailures: Only show files skipped or not converted
 #     -ShowSuccesses: Only show successfully converted filenames
-#     -Help / -?  : Display this help message
+#     -Help / -?: Display this help message
 
 [CmdletBinding(DefaultParameterSetName='Normal')]
 param(

@@ -8,7 +8,7 @@
 ; Ctrl + =           Auto-resize Details View columns
 ; Ctrl + Shift + C   Copy current folder path
 ; Ctrl + Shift + X   Copy selected file path(s)
-; Ctrl + Alt + T     Open PowerShell (Admin) in current folder
+; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
@@ -98,7 +98,7 @@ TooltipGui.Add("Text",,
 	"Ctrl + =           Auto-resize Details View columns`n"
 	"Ctrl + Shift + C   Copy current folder path`n"
 	"Ctrl + Shift + X   Copy selected file path(s)`n"
-	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder`n"
+	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
 	"Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)`n"
 	"Ctrl + Shift + H   Show all hotkeys in a popup`n`n"
 	"pwsh-user          Open non-admin PowerShell from an Admin shell"
@@ -125,7 +125,7 @@ TrayIconMsg(wParam, lParam, msg, hwnd) {
 		; Center GUI over tray icon, but clamp so it never goes off screen
 		iconCenterX := (RECT.Left + RECT.Right) // 2
 		xPos := iconCenterX - (gw // 2)
-		xPos := Max(0, Min(xPos, A_ScreenWidth - gw))
+		xPos := Max(5, Min(xPos, A_ScreenWidth - gw - 5))
 		; Adjust the - 5 below to change the gap between the tooltip and Taskbar (0, - 2, or - 3 for a tighter fit)
 		TooltipGui.Show("x" xPos " y" (RECT.Top - gh - 5) " NoActivate")
 		TooltipVisible := true
@@ -195,13 +195,13 @@ GetTrayIconRECT(hwnd) {
 	Send("^c")
 	if (!ClipWait(2)) {
 		A_Clipboard := ClipSaved
-		MsgBox("No file selected in Explorer/Desktop.")
+		MsgBox("No file selected in File Explorer/Desktop.")
 		Return
 	}
 	local paths := A_Clipboard
 	if (paths = "") {
 		A_Clipboard := ClipSaved
-		MsgBox("No file selected in Explorer/Desktop.")
+		MsgBox("No file selected in File Explorer/Desktop.")
 		Return
 	}
 	; Clean up paths (trim each line)
@@ -216,30 +216,39 @@ GetTrayIconRECT(hwnd) {
 	A_Clipboard := joined
 }
 
-; Ctrl + Alt + T → Open PowerShell (Admin) in current folder
+; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
 ; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
 ^!t:: {
-	; Check for an open Explorer window first
-	hwndExplorer := WinExist("ahk_class CabinetWClass")
-	if !hwndExplorer {
-		MsgBox("No Explorer window detected.")
-		Return
-	}
-	WinActivate("ahk_id " hwndExplorer)
-	WinWaitActive("ahk_id " hwndExplorer,, 1)
-	local ClipSaved := ClipboardAll()
-	A_Clipboard := ""
-	Send("^l")
-	Sleep(100)
-	Send("^a")
-	Sleep(50)
-	Send("^c")
-	ClipWait(2)
-	local currentFolder := A_Clipboard
-	Send("{Escape}")
-	if (!FileExist(currentFolder))
+	local currentFolder := ""
+
+	; Check if the Desktop is the active/focused window first
+	if WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman") {
 		currentFolder := A_Desktop
-	A_Clipboard := ClipSaved
+	} else {
+		; Check for an open File Explorer window
+		hwndExplorer := WinExist("ahk_class CabinetWClass")
+		if hwndExplorer {
+			WinActivate("ahk_id " hwndExplorer)
+			WinWaitActive("ahk_id " hwndExplorer,, 1)
+			local ClipSaved := ClipboardAll()
+			A_Clipboard := ""
+			Send("^l")
+			Sleep(100)
+			Send("^a")
+			Sleep(50)
+			Send("^c")
+			ClipWait(2)
+			currentFolder := A_Clipboard
+			Send("{Escape}")
+			if (!FileExist(currentFolder))
+				currentFolder := A_Desktop
+			A_Clipboard := ClipSaved
+		} else {
+			MsgBox("No File Explorer/Desktop window detected.")
+			Return
+		}
+	}
+
 	; Open PowerShell as Administrator (falls back to PowerShell 5 if 7 is not installed)
 	local psExe := "C:\Program Files\PowerShell\7\pwsh.exe"
 	if (!FileExist(psExe))
@@ -255,13 +264,13 @@ GetTrayIconRECT(hwnd) {
 	Send("^c")
 	if (!ClipWait(2)) {
 		A_Clipboard := ClipSaved
-		MsgBox("No file selected in Explorer/Desktop.")
+		MsgBox("No file selected in File Explorer/Desktop.")
 		Return
 	}
 	local paths := A_Clipboard
 	if (paths = "") {
 		A_Clipboard := ClipSaved
-		MsgBox("No file selected in Explorer/Desktop.")
+		MsgBox("No file selected in File Explorer/Desktop.")
 		Return
 	}
 	local files := StrSplit(paths, "`n")
@@ -288,7 +297,7 @@ ShowHotkeys() {
 		"Ctrl + =`t`tAuto-resize Details View columns`n"
 		"Ctrl + Shift + C`tCopy current folder path`n"
 		"Ctrl + Shift + X`tCopy selected file path(s)`n"
-		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder`n"
+		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n"
 		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)`n`n"
 		"Tip: Use pwsh-user in PowerShell to open a non-admin shell"
 	)

@@ -53,11 +53,13 @@ try {
 		Write-Host "PSScriptAnalyzer module not found. Installing..." -ForegroundColor Yellow
 		Install-Module -Name PSScriptAnalyzer -Repository PSGallery -Force -Scope CurrentUser -ErrorAction Stop
 		Write-Host "PSScriptAnalyzer module installed successfully." -ForegroundColor Green
-	} else {
+	}
+	else {
 		Write-Host "PSScriptAnalyzer module already installed." -ForegroundColor Green
 	}
 	Import-Module PSScriptAnalyzer -ErrorAction Stop
-} catch {
+}
+catch {
 	Write-Host "Failed to install or import PSScriptAnalyzer: $_" -ForegroundColor Red
 	Write-Host ""  # blank line before prompt
 	exit
@@ -81,7 +83,8 @@ if ((Get-Item $Path).PSIsContainer) {
 } else {
 	if ($Path -like "*.ps1") {
 		$scripts = @(Get-Item $Path)
-	} else {
+	}
+	else {
 		Write-Error "The specified file is not a PowerShell script (.ps1)."
 		exit
 	}
@@ -95,7 +98,8 @@ if ($scripts.Count -eq 0) {
 # Detect installed PowerShell versions
 $PS5Version = if ($PSVersionTable.PSVersion.Major -eq 5) {
 	"$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
-} else {
+}
+else {
 	& "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
 }
 
@@ -115,6 +119,7 @@ $VersionsToCheck = @($PS5Version) + $Detected7Versions
 # Initialize collections
 $AllResults = @()
 $FileOutputLines = @()
+$summaryLine = ""
 
 # Analyze each script
 for ($i = 0; $i -lt $scripts.Count; $i++) {
@@ -125,15 +130,22 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 	foreach ($version in $VersionsToCheck) {
 		try {
 			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Severity Warning -ExcludeRule PSAvoidUsingWriteHost
-		} catch {
+		}
+		catch {
 			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $_"
 			Write-Warning $warningLine
-			if ($SaveResults) { $FileOutputLines += $warningLine }
+			if ($SaveResults) {
+				$FileOutputLines += $warningLine
+			}
 			continue
 		}
 
-		if (-not $CompactOutput) { $scriptOutput += "--- PowerShell $version Compatibility ---" }
-		else { $scriptOutput += "PowerShell $version Compatibility:" }
+		if (-not $CompactOutput) {
+			$scriptOutput += "--- PowerShell $version Compatibility ---"
+		}
+		else {
+			$scriptOutput += "PowerShell $version Compatibility:"
+		}
 
 		if ($results.Count -gt 0) {
 			$hasIssues = $true
@@ -141,7 +153,8 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 				$line = "[{0}] {1} (Line {2})" -f $issue.RuleName, $issue.Message, $issue.Line
 				$scriptOutput += $line
 			}
-		} elseif ($Successes -or (-not $Failures -and -not $Successes)) {
+		}
+		elseif ($Successes -or (-not $Failures -and -not $Successes)) {
 			# Add "No compatibility issues detected." for -Successes or default behavior
 			$scriptOutput += "No compatibility issues detected."
 		}
@@ -149,22 +162,30 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 		$AllResults += $results
 	}
 
-	# Save file output if requested (single script header, then versions, with a blank line after)
-	if ($SaveResults) {
-		$FileOutputLines += "Script: $($script.FullName)"
-		$FileOutputLines += $scriptOutput
-		$FileOutputLines += ""  # blank line between scripts
+	# ShowSuccesses prints only scripts with no issues
+	if ($Successes -and $hasIssues) {
+		$scriptOutput = @()
 	}
 
-	# ShowSuccesses prints only scripts with no issues
-	if ($Successes -and $hasIssues) { $scriptOutput = @() }
-
 	# ShowFailures prints only scripts with issues
-	if ($Failures -and -not $hasIssues) { $scriptOutput = @() }
+	if ($Failures -and -not $hasIssues) {
+		$scriptOutput = @()
+	}
+
+	# Save file output if requested, respecting -Failures and -Successes filters
+	if ($SaveResults -and $scriptOutput.Count -gt 0) {
+		$FileOutputLines += "Script: $($script.FullName)"
+		$FileOutputLines += $scriptOutput
+		if (-not $CompactOutput) {
+			$FileOutputLines += ""  # blank line between scripts
+		}
+	}
 
 	# Only print to console if output exists
 	if ($scriptOutput.Count -gt 0) {
-		if (-not $CompactOutput) { Write-Host "=========================================" -ForegroundColor DarkCyan }
+		if (-not $CompactOutput) {
+			Write-Host "=========================================" -ForegroundColor DarkCyan
+		}
 		Write-Host "Analyzing script: $($script.FullName)" -ForegroundColor Cyan
 
 		foreach ($line in $scriptOutput) {
@@ -177,20 +198,10 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			Write-Host ""
 		}
 
-		if (-not $CompactOutput -and $i -lt ($scripts.Count - 1) -and -not $Failures) { Write-Host "" }
+		if (-not $CompactOutput -and $i -lt ($scripts.Count - 1) -and -not $Failures) {
+			Write-Host ""
+		}
 	}
-}
-
-# Save results to text file if requested, no trailing newline at the end
-if ($SaveResults) {
-	# Remove trailing blank lines
-	while ($FileOutputLines[-1] -eq '') { $FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)] }
-
-	# Join lines with a single newline
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "Results saved to text file: $SaveResults" -ForegroundColor Green
 }
 
 # Display summary if requested
@@ -203,13 +214,38 @@ if ($ShowSummary) {
 	# Handle newlines before summary
 	if ($Failures -and $CompactOutput) {
 		Write-Host ""
-	} elseif (-not $Failures) {
+	}
+	elseif (-not $Failures) {
 		Write-Host ""  # normal spacing for other flags
 	}
 
 	$summaryLine = "Analysis complete! Analyzed $TotalScripts scripts: $PassedScripts passed, $FailedScripts failed, $TotalIssues issues detected."
 	Write-Host $summaryLine -ForegroundColor Yellow
-	if ($SaveResults) { Add-Content -Path $SaveResults -Value $summaryLine }
+}
+
+# Save results to text file if requested, no trailing newline at the end
+if ($SaveResults) {
+	# Remove trailing blank lines
+	while ($FileOutputLines[-1] -eq '') {
+		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	}
+
+	# Append summary line if requested
+	if ($ShowSummary -and $summaryLine -ne '') {
+		$FileOutputLines += ""
+		$FileOutputLines += $summaryLine
+	}
+
+	# Join lines with a single newline
+	$outputString = ($FileOutputLines -join "`n")
+	[System.IO.File]::WriteAllText($SaveResults, $outputString)
+
+	if ($Failures -and -not $CompactOutput -and -not $ShowSummary) {
+		Write-Host "Results saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	else {
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
 }
 
 # Keep window open

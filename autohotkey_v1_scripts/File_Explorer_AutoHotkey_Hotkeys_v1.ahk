@@ -8,7 +8,7 @@
 ; Ctrl + =           Auto-resize Details View columns
 ; Ctrl + Shift + C   Copy current folder path (50 ms pause for reliability)
 ; Ctrl + Shift + X   Copy selected file path(s)
-; Ctrl + Alt + T     Open PowerShell (Admin) in current folder
+; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
@@ -127,41 +127,49 @@ Return
 	If Clipboard =
 	{
 		Clipboard := ClipSaved
-		MsgBox, No file selected in Explorer/Desktop.
+		MsgBox, No file selected in File Explorer/Desktop.
 		Return
 	}
 	Clipboard := Clipboard  ; forces AHK to normalize Explorer clipboard file paths
 Return
 
-; Ctrl + Alt + T → Open PowerShell (Admin) in current folder
+; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
 ; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
 ^!t::
-	; Activate the last active Explorer window
-	WinGet, id, ID, ahk_class CabinetWClass
-	if !id
+	; Check if the Desktop is the active/focused window first
+	if WinActive("ahk_class WorkerW") or WinActive("ahk_class Progman")
 	{
-		MsgBox, No Explorer window detected.
-		Return
+		currentFolder := A_Desktop
 	}
-	WinActivate, ahk_id %id%
+	else
+	{
+		; Check for an open File Explorer window
+		WinGet, id, ID, ahk_class CabinetWClass
+		if !id
+		{
+			MsgBox, No File Explorer/Desktop window detected.
+			Return
+		}
+		WinActivate, ahk_id %id%
 
-	; Wait until the window is active instead of using a fixed Sleep
-	WinWaitActive, ahk_id %id%, , 0.5  ; wait up to 0.5 seconds
+		; Wait until the window is active instead of using a fixed Sleep
+		WinWaitActive, ahk_id %id%, , 0.5  ; wait up to 0.5 seconds
 
-	; Copy current folder from address bar
-	ClipSaved := ClipboardAll
-	Clipboard := ""
-	Send ^l
-	Sleep, 100  ; let Explorer register selection
-	Send ^c
-	ClipWait, 0.5
-	currentFolder := Clipboard
-	if !FileExist(currentFolder)
-		currentFolder := A_Desktop  ; fallback
-	Clipboard := ClipSaved
+		; Copy current folder from address bar
+		ClipSaved := ClipboardAll
+		Clipboard := ""
+		Send ^l
+		Sleep, 100  ; let Explorer register selection
+		Send ^c
+		ClipWait, 0.5
+		currentFolder := Clipboard
+		if !FileExist(currentFolder)
+			currentFolder := A_Desktop  ; fallback
+		Clipboard := ClipSaved
+	}
 
 	; Open PowerShell 7 as Administrator (falls back to PowerShell 5 if 7 is not installed)
-	psExe := "C:\Program Files\PowerShell\7\pwsh.exe"
+	psExe := "C:\Program Files\PowerShell\7\pwsh_fake.exe"
 	if !FileExist(psExe)
 		psExe := "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
 	Run, %psExe%, %currentFolder%, RunAs
@@ -177,7 +185,7 @@ Return
 	If Clipboard =
 	{
 		Clipboard := ClipSaved
-		MsgBox, No file selected in Explorer/Desktop.
+		MsgBox, No file selected in File Explorer/Desktop.
 		Return
 	}
 	Loop, Parse, Clipboard, `n, `r
@@ -203,7 +211,7 @@ File Explorer Hotkeys v1
 Ctrl + =`t`tAuto-resize Details View columns
 Ctrl + Shift + C`tCopy current folder path
 Ctrl + Shift + X`tCopy selected file path(s)
-Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder
+Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop
 Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)
 Ctrl + Shift + H`tShow all hotkeys in a popup
 

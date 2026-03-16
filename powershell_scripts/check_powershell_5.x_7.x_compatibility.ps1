@@ -14,18 +14,18 @@
 # Optional flags:
 #     -CompactOutput: Simplifies console output to match saved file style (removes separators and extra spacing)
 #     -Failures: Shows only scripts with issues in output
-#     -ShowSummary: Shows a summary of analyzed scripts at the end
 #     -Successes: Shows only scripts with no issues in output
+#     -Summary: Shows a summary of analyzed scripts at the end
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt") - must be specified last
 #     -Help / -?: Display this help message
 
 [CmdletBinding()]
 param (
-	[string]$SaveResults,
 	[switch]$CompactOutput,
 	[switch]$Failures,
-	[switch]$ShowSummary,
+	[string]$SaveResults,
 	[switch]$Successes,
+	[switch]$Summary,
 	[switch]$Help
 )
 
@@ -34,12 +34,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-ShowSummary] [-Successes] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-Successes] [-Summary] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CompactOutput       Simplifies console output to match saved file style (removes separators and extra spacing)" -ForegroundColor Cyan
 	Write-Host "  -Failures            Show only scripts with compatibility issues" -ForegroundColor Cyan
-	Write-Host "  -ShowSummary         Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
 	Write-Host "  -Successes           Show only scripts with no compatibility issues" -ForegroundColor Cyan
+	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host "" # extra newline for readability
@@ -60,7 +60,7 @@ try {
 	Import-Module PSScriptAnalyzer -ErrorAction Stop
 }
 catch {
-	Write-Host "Failed to install or import PSScriptAnalyzer: $_" -ForegroundColor Red
+	Write-Host "Failed to install or import PSScriptAnalyzer: $($_.Exception.Message)" -ForegroundColor Red
 	Write-Host ""  # blank line before prompt
 	exit
 }
@@ -80,7 +80,8 @@ if (-not (Test-Path $Path)) {
 # Collect scripts
 if ((Get-Item $Path).PSIsContainer) {
 	$scripts = Get-ChildItem -Path $Path -Recurse -Filter *.ps1
-} else {
+}
+else {
 	if ($Path -like "*.ps1") {
 		$scripts = @(Get-Item $Path)
 	}
@@ -132,7 +133,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Severity Warning -ExcludeRule PSAvoidUsingWriteHost
 		}
 		catch {
-			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $_"
+			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $($_.Exception.Message)"
 			Write-Warning $warningLine
 			if ($SaveResults) {
 				$FileOutputLines += $warningLine
@@ -162,12 +163,12 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 		$AllResults += $results
 	}
 
-	# ShowSuccesses prints only scripts with no issues
+	# Successes prints only scripts with no issues
 	if ($Successes -and $hasIssues) {
 		$scriptOutput = @()
 	}
 
-	# ShowFailures prints only scripts with issues
+	# Failures prints only scripts with issues
 	if ($Failures -and -not $hasIssues) {
 		$scriptOutput = @()
 	}
@@ -205,7 +206,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 }
 
 # Display summary if requested
-if ($ShowSummary) {
+if ($Summary) {
 	$TotalScripts = $scripts.Count
 	$TotalIssues  = $AllResults.Count
 	$FailedScripts = ($AllResults | Select-Object -ExpandProperty ScriptName | Sort-Object -Unique).Count
@@ -231,7 +232,7 @@ if ($SaveResults) {
 	}
 
 	# Append summary line if requested
-	if ($ShowSummary -and $summaryLine -ne '') {
+	if ($Summary -and $summaryLine -ne '') {
 		$FileOutputLines += ""
 		$FileOutputLines += $summaryLine
 	}
@@ -240,7 +241,7 @@ if ($SaveResults) {
 	$outputString = ($FileOutputLines -join "`n")
 	[System.IO.File]::WriteAllText($SaveResults, $outputString)
 
-	if ($Failures -and -not $CompactOutput -and -not $ShowSummary) {
+	if ($Failures -and -not $CompactOutput -and -not $Summary) {
 		Write-Host "Results saved to text file: $SaveResults" -ForegroundColor Green
 	}
 	else {
@@ -249,7 +250,7 @@ if ($SaveResults) {
 }
 
 # Keep window open
-if ($Failures -and -not $CompactOutput -and -not $ShowSummary -and -not $SaveResults) {
+if ($Failures -and -not $CompactOutput -and -not $Summary -and -not $SaveResults) {
 	Write-Host "Press any key to exit..."
 }
 else {

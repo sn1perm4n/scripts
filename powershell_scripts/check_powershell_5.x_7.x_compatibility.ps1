@@ -220,7 +220,7 @@ if ($ShowSummary) {
 	}
 
 	$summaryLine = "Analysis complete! Analyzed $TotalScripts scripts: $PassedScripts passed, $FailedScripts failed, $TotalIssues issues detected."
-	Write-Host $summaryLine -ForegroundColor Yellow
+	Write-Host $summaryLine -ForegroundColor Cyan
 }
 
 # Save results to text file if requested, no trailing newline at the end

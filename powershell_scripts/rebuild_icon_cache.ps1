@@ -42,7 +42,7 @@ foreach ($pattern in $cachePaths) {
 	}
 }
 
-Write-Host "`nIconCache rebuild complete. A reboot may be required." -ForegroundColor Green
+Write-Host "`nIconCache rebuild complete. Please reboot for changes to take effect." -ForegroundColor Green
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

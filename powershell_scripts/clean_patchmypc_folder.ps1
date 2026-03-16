@@ -1,72 +1,70 @@
-﻿# This script deletes all but the most recent file and folder in a specific directory
+﻿# This script deletes all but the most recent file and folder in a specific folder:
+# C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Specify the directory to process
 $programdataPatchmypcFolder = 'C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates'
 
-# --- Guard clauses ---
+# Guard clauses
 if (-not (Test-Path $programdataPatchmypcFolder)) {
-	Write-Warning "The directory '$programdataPatchmypcFolder' does not exist."
+	Write-Host "`nThe directory '$programdataPatchmypcFolder' does not exist." -ForegroundColor Yellow
 	exit
 }
 
 if (-not (Get-ChildItem -Path $programdataPatchmypcFolder -Force)) {
-	Write-Warning "The directory '$programdataPatchmypcFolder' is empty."
+	Write-Host "`nThe directory '$programdataPatchmypcFolder' is empty." -ForegroundColor Yellow
 	exit
 }
 
 try {
-	$deleted = $false
+	# Initialize counters to track deletions
+	$deletedFilesCount = 0
+	$deletedFoldersCount = 0
+
 	# Keep only the most recent file
 	$files = Get-ChildItem -Path $programdataPatchmypcFolder -File
 	if ($files.Count -gt 0) {
 		$latestFile = $files | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-		Write-Host "Keeping file: $($latestFile.FullName)"
+		Write-Host "`nKeeping file: $($latestFile.FullName)" -ForegroundColor Cyan
+
 		if ($files.Count -gt 1) {
 			$files | Sort-Object LastWriteTime -Descending | Select-Object -Skip 1 |
 				ForEach-Object {
-					Write-Host "Deleting file: $($_.FullName)"
+					Write-Host "Deleting file: $($_.FullName)" -ForegroundColor Yellow
 					Remove-Item $_.FullName -Force
-					$deleted = $true
-				}
-		}
-	}
-	# Keep only the most recent folder
-	$folders = Get-ChildItem -Path $programdataPatchmypcFolder -Directory
-	if ($folders.Count -gt 0) {
-		$latestFolder = $folders | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-		Write-Host "Keeping folder: $($latestFolder.FullName)"
-		if ($folders.Count -gt 1) {
-			$folders | Sort-Object LastWriteTime -Descending | Select-Object -Skip 1 |
-				ForEach-Object {
-					Write-Host "Deleting folder: $($_.FullName)"
-					Remove-Item $_.FullName -Recurse -Force
-					$deleted = $true
+					$deletedFilesCount++
 				}
 		}
 	}
 
-	if ($deleted) {
-		Write-Host "Successfully deleted all but the most recent file and folder in '$programdataPatchmypcFolder'."
+	# Keep only the most recent folder
+	$folders = Get-ChildItem -Path $programdataPatchmypcFolder -Directory
+	if ($folders.Count -gt 0) {
+		$latestFolder = $folders | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+		Write-Host "`nKeeping folder: $($latestFolder.FullName)" -ForegroundColor Cyan
+
+		if ($folders.Count -gt 1) {
+			$folders | Sort-Object LastWriteTime -Descending | Select-Object -Skip 1 |
+				ForEach-Object {
+					Write-Host "Deleting folder: $($_.FullName)" -ForegroundColor Yellow
+					Remove-Item $_.FullName -Recurse -Force
+					$deletedFoldersCount++
+				}
+		}
+	}
+
+	# Report final status
+	if ($deletedFilesCount -gt 0 -or $deletedFoldersCount -gt 0) {
+		Write-Host "`nSuccessfully deleted all but the most recent file and folder in '$programdataPatchmypcFolder'." -ForegroundColor Green
 	}
 	else {
-		Write-Host "No deletions were necessary."
+		Write-Host "`nNo deletions were necessary." -ForegroundColor Green
 	}
 }
 catch {
-	Write-Error "An error occurred while trying to delete items in '$programdataPatchmypcFolder': $($_.Exception.Message)."
+	Write-Host ""
+	Write-Error "An error occurred while trying to delete items in '$programdataPatchmypcFolder': $($_.Exception.Message)"
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

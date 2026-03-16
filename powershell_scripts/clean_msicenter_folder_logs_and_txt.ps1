@@ -1,4 +1,4 @@
-# This script deletes all *.log and *.txt files in a specific directory
+﻿# This script deletes all *.log and *.txt files in a specific directory
 #Requires -RunAsAdministrator
 
 # Ensure script runs as Administrator

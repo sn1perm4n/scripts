@@ -1,4 +1,4 @@
-# This script deletes specific directories and their contents
+﻿# This script deletes specific directories and their contents
 #Requires -RunAsAdministrator
 
 # Ensure script runs as Administrator

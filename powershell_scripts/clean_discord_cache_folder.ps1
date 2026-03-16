@@ -1,4 +1,4 @@
-# This script searches a specific directory for folders that start with the characters "app-" and keeps the one with the highest number
+﻿# This script searches a specific directory for folders that start with the characters "app-" and keeps the one with the highest number
 
 # Specify the target directory
 $appdataLocalDiscordFolder = 'C:\Users\<PROFILE>\AppData\Local\Discord'

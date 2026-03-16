@@ -1,4 +1,4 @@
-# This script deletes the contents of a specific folder
+﻿# This script deletes the contents of a specific folder
 
 # Specify the directory to process
 $appdataRoamingSignalFolder = 'C:\Users\<PROFILE>\AppData\Roaming\Signal\update-cache'

@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script disables Hibernation
 # Check Hibernation status via the registry (preferred for scripting):
 # Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled

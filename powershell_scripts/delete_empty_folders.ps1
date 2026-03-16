@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script deletes all empty folders from a user-specified folder. It prompts for the folder path and requires confirmation before deleting.
 # Example usage with -WhatIf (preview deletions without actually removing anything):
 # Remove-EmptyFolder -Path C:\PATH\TO\FOLDER -WhatIf

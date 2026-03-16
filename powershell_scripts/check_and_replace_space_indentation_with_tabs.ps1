@@ -1,4 +1,4 @@
-# This script checks a folder of PowerShell scripts or an individual PowerShell script for space indentation and replaces with tab indentation
+﻿# This script checks a folder of PowerShell scripts or an individual PowerShell script for space indentation and replaces with tab indentation
 
 # Number of spaces per tab
 # Converts leading spaces to tabs (preserves leftover spaces beyond full tabs)

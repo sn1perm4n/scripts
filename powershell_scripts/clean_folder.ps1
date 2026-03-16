@@ -1,4 +1,4 @@
-# This script is a parameterized version that deletes the contents of a specified folder. It can be re-used for any folder by doing the following:
+﻿# This script is a parameterized version that deletes the contents of a specified folder. It can be re-used for any folder by doing the following:
 # Usage: .\clean_folder.ps1 -TargetFolder "C:\ProgramData\Apple Computer\Installer Cache"
 
 #Requires -RunAsAdministrator

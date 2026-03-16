@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script disables unnecessary devices (and deletes an invisible monitor) in Device Manager. Some devices get re-enabled (or reappear) every time the Nvidia driver is updated. To see invisible devices in Device Manager, go to the "View" menu and enable "Show hidden devices".
 
 # IMPORTANT: It is unfortunately NOT possible to query the device status first so only enabled devices are processed. As a result, error-handling also can't be added. The only solution is to forcefully disable the devices every time the script runs (which is in no way harmful).

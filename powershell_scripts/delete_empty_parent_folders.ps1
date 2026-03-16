@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script scans a user-specified directory for empty parent folders and prompts the user for each deletion. There is also a list of ProtectedFolders that should be avoided at all costs, add to this list as you see fit.
 
 function Remove-ParentEmptyFolderStrict {

@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script searches a specific directory for folders that start with the characters "app-" and keeps the one with the highest number:
 # C:\Users\<PROFILE>\AppData\Local\slack
 

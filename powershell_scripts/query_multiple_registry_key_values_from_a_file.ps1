@@ -1,4 +1,4 @@
-# This script queries Registry values from file "keys.txt". Create keys.txt and include the values you'd like to query. Here's an example:
+﻿# This script queries Registry values from file "keys.txt". Create keys.txt and include the values you'd like to query. Here's an example:
 # HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ShowSyncProviderNotifications
 # HKLM:\SOFTWARE\Policies\Microsoft\Dsh\AllowWidgets
 # HKCU\Software\Policies\Microsoft\Windows\Explorer\DisableSearchBoxSuggestions

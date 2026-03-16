@@ -1,4 +1,4 @@
-# This script keeps only the latest folder that starts with the characters "Apple Software Update*" in a specific folder (all other folders are deleted)
+﻿# This script keeps only the latest folder that starts with the characters "Apple Software Update*" in a specific folder (all other folders are deleted)
 #Requires -RunAsAdministrator
 
 # Ensure script runs as Administrator

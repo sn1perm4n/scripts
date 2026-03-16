@@ -1,4 +1,4 @@
-# This script deletes all but the most recent folder that starts with the character "A" in a specific directory
+﻿# This script deletes all but the most recent folder that starts with the character "A" in a specific directory
 #Requires -RunAsAdministrator
 
 # Ensure script runs as Administrator

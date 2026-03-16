@@ -1,4 +1,4 @@
-# This script removes Microsoft Start Experiences App and must be run as Administrator, which requires the following:
+﻿# This script removes Microsoft Start Experiences App and must be run as Administrator, which requires the following:
 # 1. Create a shortcut to the .ps1 file, set the "Target" field to C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -command "& C:\Users\<USERNAME>\Scripts\uninstall_start_experiences.ps1"
 # 2. Enable "Run as administrator" in the Shortcut tab -> Advanced)
 

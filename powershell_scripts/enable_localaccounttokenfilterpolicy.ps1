@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script file allows local administrator accounts to perform remote admin tasks without UAC restrictions by enabling LocalAccountTokenFilterPolicy in the Registry
 #Requires -RunAsAdministrator
 

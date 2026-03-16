@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script deletes all but the most recent folder that starts with the character 'B' in a specific directory:
 # C:\Program Files (x86)\Battle.net
 #Requires -RunAsAdministrator

@@ -1,4 +1,4 @@
-# This script checks the Microsoft Store for apps that have upgrades available, with the intention being to upgrade. Unfortunately, Microsoft Store app upgrades can't be installed in this manner because none of them appear in winget upgrade. I'm releasing this script purely for informational purposes. Please note this script also must be run as Administrator, which requires the following:
+﻿# This script checks the Microsoft Store for apps that have upgrades available, with the intention being to upgrade. Unfortunately, Microsoft Store app upgrades can't be installed in this manner because none of them appear in winget upgrade. I'm releasing this script purely for informational purposes. Please note this script also must be run as Administrator, which requires the following:
 # 1. Create a shortcut to the .ps1 file, set the "Target" field to C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -command "& C:\Users\reedwaller\Scripts\remove_game_assist.ps1"
 # 2. Enable "Run as administrator" in the Shortcut tab -> Advanced)
 #Requires -RunAsAdministrator

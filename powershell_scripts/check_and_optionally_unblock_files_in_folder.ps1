@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script checks a user-supplied folder (and subfolders) for files that are blocked from running and then optionally unblocks them. Two practical examples would be C:\Tools\PsTools (or in my instance C:\Program Files (x86)\PsTools 2.51) and C:\Tools\unxutils. Admin is required to make changes to any file in one of the protected system folders. Delete everything from here down to "# Prompt the user for the folder to process" if you don't need the admin requirement.
 #Requires -RunAsAdministrator
 

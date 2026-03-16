@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script sanitizes a file containing UNC (local) network file paths, each on a new line, down to just the filenames
 # It is meant to be used in conjunction with File Explorer's "Copy Path" option:
 # 1. Select file(s) in File Explorer -> Press CTRL-SHIFT-C -> Press CTRL-V into the appropriate application

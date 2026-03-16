@@ -1,4 +1,4 @@
-# This script disables Bluetooth
+﻿# This script disables Bluetooth
 
 Get-PnpDevice -Class Bluetooth | Disable-PnpDevice -Confirm:$false
 

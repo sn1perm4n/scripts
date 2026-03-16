@@ -1,4 +1,4 @@
-# This script prompts the user to enter a full registry path that includes both the registry key and the value name. Both common input formats are handled, i.e.:
+﻿# This script prompts the user to enter a full registry path that includes both the registry key and the value name. Both common input formats are handled, i.e.:
 # HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProductName
 # HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProductName
 # Must be run as Administrator if querying protected registry locations

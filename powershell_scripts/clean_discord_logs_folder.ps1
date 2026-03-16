@@ -1,4 +1,4 @@
-# This script deletes all *.log files in a specific directory
+﻿# This script deletes all *.log files in a specific directory
 
 # Specify the directory to process
 $appdataLocalDiscordLogsFolder = 'C:\Users\<PROFILE>\AppData\Local\Discord'

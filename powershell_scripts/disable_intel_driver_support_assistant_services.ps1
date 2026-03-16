@@ -1,4 +1,4 @@
-# This script stops and disables the Intel Driver and Support Assistant services and must be run as Administrator, which requires the following:
+﻿# This script stops and disables the Intel Driver and Support Assistant services and must be run as Administrator, which requires the following:
 # 1. Create a shortcut to the .ps1 file and set the "Target" field to C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -command "& C:\Users\<PROFILE>\Scripts"
 # 2. Enable "Run as administrator" in the Shortcut tab -> Advanced)
 #Requires -RunAsAdministrator

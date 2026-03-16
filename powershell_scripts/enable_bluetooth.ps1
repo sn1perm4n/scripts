@@ -1,4 +1,4 @@
-# This script enables Bluetooth
+﻿# This script enables Bluetooth
 
 Get-PnpDevice -Class Bluetooth | Enable-PnpDevice -Confirm:$false
 

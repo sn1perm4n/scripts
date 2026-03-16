@@ -1,4 +1,4 @@
-# This script deletes all but the most recent file and folder in a specific directory
+﻿# This script deletes all but the most recent file and folder in a specific directory
 #Requires -RunAsAdministrator
 
 # Ensure script runs as Administrator

@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script uses the PSWindowsUpdate module to check for non-hidden Windows Updates, Microsoft Updates, and Microsoft Defender definition updates. It also attempts to update the "Last checked" timestamp in the Windows Update GUI (and ignore and optionally install updates based on user-input).
 
 # IMPORTANT: These scripts respect the user's "Receive updates for other Microsoft products" setting in Advanced Options. For best security, it is recommended to enable this setting in Windows Update -> Advanced Options.

@@ -1,4 +1,4 @@
-# This script stops and disables various unnecessary services I don't use in Windows 11 and must be run as Administrator, which requires the following:
+﻿# This script stops and disables various unnecessary services I don't use in Windows 11 and must be run as Administrator, which requires the following:
 # 1. Create a shortcut to the .ps1 file, set the "Target" field to C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -command "& C:\Users\<PROFILE>\Scripts\disable_windows11_services.ps1"
 # 2. Enable "Run as administrator" in the Shortcut tab -> Advanced)
 # I strongly recommend creating a backup of your existing service settings before running this script. This way if something breaks you'll be able to figure out what changed and revert accordingly.

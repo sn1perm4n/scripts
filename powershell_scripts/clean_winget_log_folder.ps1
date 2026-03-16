@@ -1,4 +1,4 @@
-# This script deletes the contents of a specific folder
+﻿# This script deletes the contents of a specific folder
 
 # Specify the directory to process (the name of this directory may be different on your computer)
 $appdataLocalPackagesWingetlogFolder = 'C:\Users\<PROFILE>\AppData\Local\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir'

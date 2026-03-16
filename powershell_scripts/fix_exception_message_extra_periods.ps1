@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script checks a single script or a folder of scripts for an extra . at the end of $($_.Exception.Message) and removes the period when there shouldn't be one (Write-Error and Write-Warning) [i.e. "$($_.Exception.Message)." becomes "$($_.Exception.Message)"]. A backup (.bak) is created for each modified script.
 # Optional switch: -DryRun mode to preview changes without saving
 

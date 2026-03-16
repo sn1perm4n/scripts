@@ -1,4 +1,4 @@
-# This script deletes all *.backup files aside from the most recent one in a specific folder
+﻿# This script deletes all *.backup files aside from the most recent one in a specific folder
 
 # Specify the directory to process
 $appdataRoamingMremoteng = 'C:\Users\<PROFILE>\AppData\Roaming\mRemoteNG'

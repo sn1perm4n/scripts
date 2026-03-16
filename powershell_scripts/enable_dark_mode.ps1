@@ -1,4 +1,4 @@
-# This script enables dark mode in Windows 10 and 11 (activation not required)
+﻿# This script enables dark mode in Windows 10 and 11 (activation not required)
 
 # Enable Dark Mode for Windows 10 and 11 (Apps + System)
 $regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'

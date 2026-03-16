@@ -1,4 +1,4 @@
-# This script disables Wi-Fi
+﻿# This script disables Wi-Fi
 
 Disable-NetAdapter -Name "Wi-Fi" -Confirm:$false
 

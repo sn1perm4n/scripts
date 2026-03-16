@@ -1,4 +1,4 @@
-# This script enables Wi-Fi
+﻿# This script enables Wi-Fi
 
 Enable-NetAdapter -Name "Wi-Fi" -Confirm:$false
 

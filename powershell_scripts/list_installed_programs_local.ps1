@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script queries Installed Programs and deduplicates the final output
 # Query installed programs using WMI/CIM. Output is sorted alphabetically by Name and displayed on screen.
 # Optionally export to CSV by setting $csvPath (ENABLED BY DEFAULT, MAKE SURE THE PATH IS CORRECT).

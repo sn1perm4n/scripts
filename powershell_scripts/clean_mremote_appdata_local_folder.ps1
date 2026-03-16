@@ -1,4 +1,4 @@
-# This script deletes all but the most recent folder in a specific folder
+﻿# This script deletes all but the most recent folder in a specific folder
 
 # Specify the directory to process (the name of this directory may be different on your computer)
 $appdataLocalMremotengFolder = 'C:\Users\<PROFILE>\AppData\Local\mRemoteNG\mRemoteNG.exe_Url_pjpxdehxpaaorqg2thmuhl11a34i3ave'

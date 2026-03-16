@@ -1,4 +1,4 @@
-# This script deletes all folders with the exception of the most recent in a specific folder
+﻿# This script deletes all folders with the exception of the most recent in a specific folder
 
 # Specify the directory to process (the name of this directory may be different on your computer)
 $appdataLocalAdvinstAnalyticsFolder = 'C:\Users\<PROFILE>\AppData\Local\AdvinstAnalytics\67167f270d96e6db370a449a'

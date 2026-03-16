@@ -1,5 +1,5 @@
 ﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script rebuilds the Windows icon cache to fix missing or corrupted icons. It safely stops File Explorer, removes all IconCache database files, clears the thumbnail cache, and restarts File Explorer.
+# This script rebuilds the Windows icon cache to fix missing or corrupted icons. It safely stops File Explorer, removes all IconCache database files, clears the thumbnail cache, and notifies the user to reboot.
 
 #Requires -RunAsAdministrator
 
@@ -40,17 +40,6 @@ foreach ($pattern in $cachePaths) {
 			Write-Warning "Could not delete $($file.Name): $($_.Exception.Message)"
 		}
 	}
-}
-
-# Restart File Explorer
-try {
-	Write-Host "`nRestarting File Explorer..." -ForegroundColor Cyan
-	Start-Process explorer.exe
-	Start-Sleep -Seconds 2
-}
-catch {
-	Write-Error "Failed to restart File Explorer: $($_.Exception.Message)"
-	exit 1
 }
 
 Write-Host "`nIconCache rebuild complete. A reboot may be required." -ForegroundColor Green

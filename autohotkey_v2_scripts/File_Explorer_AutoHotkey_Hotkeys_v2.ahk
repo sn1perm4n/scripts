@@ -10,6 +10,7 @@
 ; Ctrl + Shift + X   Copy selected file path(s)
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
+; Ctrl + Alt + V     Open selected file(s) in VSCode
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
 ;
@@ -45,6 +46,8 @@
 ; - pwsh-user ensures you can still test scripts in a non-admin environment without closing elevated windows
 ; - Ctrl + Alt + E opens selected files in Notepad++ (x86 by default)
 ;   If you use the 64-bit version, update the path in the script accordingly
+; - Ctrl + Alt + V opens selected files in VSCode (per-user install path by default)
+;   If you have a system-wide install, update the path in the script accordingly
 ;
 ; ==========================
 ; PowerShell non-admin helper
@@ -100,6 +103,7 @@ TooltipGui.Add("Text",,
 	"Ctrl + Shift + X   Copy selected file path(s)`n"
 	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
 	"Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)`n"
+	"Ctrl + Alt + V     Open selected file(s) in VSCode`n"
 	"Ctrl + Shift + H   Show all hotkeys in a popup`n`n"
 	"pwsh-user          Open non-admin PowerShell from an Admin shell"
 )
@@ -273,12 +277,54 @@ GetTrayIconRECT(hwnd) {
 		MsgBox("No file selected in File Explorer/Desktop.")
 		Return
 	}
+	; Build a single command with all file paths in correct tab order
 	local files := StrSplit(paths, "`n")
-	for file in files {
+	local reversed := []
+	loop files.Length
+		reversed.Push(files[files.Length - A_Index + 1])
+	local args := ""
+	for file in reversed {
+		file := Trim(file, " `t`r`n")  ; explicitly strip carriage returns and newlines
+		if (file != "")
+			args .= '"' file '" '
+	}
+	Run('"' npp '" ' Trim(args))
+	A_Clipboard := ClipSaved
+}
+
+; Ctrl + Alt + V → Open selected file(s) in VSCode
+^!v:: {
+	; Uses 'code' via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
+	; A_UserName dynamically resolves to the current Windows username at runtime (per-user install path)
+	local ClipSaved := ClipboardAll()
+	A_Clipboard := ""
+	Send("^c")
+	if (!ClipWait(2)) {
+		A_Clipboard := ClipSaved
+		MsgBox("No file selected in File Explorer/Desktop.")
+		Return
+	}
+	local paths := A_Clipboard
+	if (paths = "") {
+		A_Clipboard := ClipSaved
+		MsgBox("No file selected in File Explorer/Desktop.")
+		Return
+	}
+	; Build a single command with all file paths in correct tab order
+	; NOTE: Tab/open order depends on Windows clipboard reporting order and may not always match
+	; click order — Desktop selections tend to be most reliable for ordered multi-file selection
+	local files := StrSplit(paths, "`n")
+	local reversed := []
+	loop files.Length
+		reversed.Push(files[files.Length - A_Index + 1])
+	local args := ""
+	for file in reversed {
 		file := Trim(file)
 		if (file != "")
-			Run('"' npp '" "' file '"')
+			args .= '"' file '" '
 	}
+	; Run via cmd.exe using 'code' from PATH — correctly reuses existing VSCode window
+	RunWait(A_ComSpec ' /c code ' Trim(args),, "Hide")
 	A_Clipboard := ClipSaved
 }
 
@@ -298,7 +344,8 @@ ShowHotkeys() {
 		"Ctrl + Shift + C`tCopy current folder path`n"
 		"Ctrl + Shift + X`tCopy selected file path(s)`n"
 		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n"
-		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)`n`n"
+		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)`n"
+		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n`n"
 		"Tip: Use pwsh-user in PowerShell to open a non-admin shell"
 	)
 }

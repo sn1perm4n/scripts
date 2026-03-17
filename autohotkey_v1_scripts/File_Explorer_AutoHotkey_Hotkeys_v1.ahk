@@ -10,6 +10,7 @@
 ; Ctrl + Shift + X   Copy selected file path(s)
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
+; Ctrl + Alt + V     Open selected file(s) in VSCode
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
 
@@ -53,6 +54,21 @@
 ;
 ; NOTE: If an "Open File - Security Warning" dialog appears on reboot,
 ;       uncheck "Always ask before opening this file" to prevent it recurring
+;
+; ALTERNATIVE: UIA Executable
+; If you have AHK v2 installed AND installed v1 via "Install as additional version"
+; in the v1 installer, UIA executables will be present in your v1 directory.
+; In that case you can use the simpler UIA approach instead of Task Scheduler:
+; 1. Create a shortcut in shell:startup
+; 2. Set the shortcut Target to:
+;      "C:\Program Files\AutoHotkey\v1.1.xx\AutoHotkeyU64_UIA.exe" "\PATH\TO\File_Explorer_AutoHotkey_Hotkeys_v1.ahk"
+;      (replace xx with your installed v1 version number)
+;      Use AutoHotkeyU64_UIA.exe for 64-bit systems (recommended) or AutoHotkeyU32_UIA.exe for 32-bit systems
+;      (adjust the script path to match your actual location)
+; 3. In shortcut Properties -> Advanced, enable "Run as administrator"
+;
+; NOTE: This approach is NOT available with a standalone v1 install — Task Scheduler
+;       is required in that case
 
 ; ==========================
 ; Notes:
@@ -65,6 +81,8 @@
 ; - pwsh-user ensures you can still test scripts in a non-admin environment without closing elevated windows
 ; - Ctrl + Alt + E opens selected files in Notepad++ (x86 by default)
 ;   If you use the 64-bit version, update the path in the script accordingly
+; - Ctrl + Alt + V opens selected files in VSCode (per-user install path by default)
+;   If you have a system-wide install, update the path in the script accordingly
 
 ; ==========================
 ; PowerShell non-admin helper
@@ -169,13 +187,13 @@ Return
 	}
 
 	; Open PowerShell 7 as Administrator (falls back to PowerShell 5 if 7 is not installed)
-	psExe := "C:\Program Files\PowerShell\7\pwsh_fake.exe"
+	psExe := "C:\Program Files\PowerShell\7\pwsh.exe"
 	if !FileExist(psExe)
 		psExe := "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
 	Run, %psExe%, %currentFolder%, RunAs
 Return
 
-; Ctrl + Alt + E → Open selected file(s) in Notepad++ (32-bit)
+; Ctrl + Alt + E → Open selected file(s) in Notepad++ (x86)
 ^!e::
 	npp := "C:\Program Files (x86)\Notepad++\notepad++.exe"
 	ClipSaved := ClipboardAll
@@ -188,10 +206,54 @@ Return
 		MsgBox, No file selected in File Explorer/Desktop.
 		Return
 	}
-	Loop, Parse, Clipboard, `n, `r
+	; Build a single command with all file paths in correct tab order
+	; NOTE: Tab/open order depends on Windows clipboard reporting order and may not always match
+	; click order — Desktop selections tend to be most reliable for ordered multi-file selection
+	files := StrSplit(Clipboard, "`n")
+	reversed := []
+	Loop, % files.Length()
+		reversed.Push(files[files.Length() - A_Index + 1])
+	args := ""
+	For i, file in reversed
 	{
-		Run, %npp% "%A_LoopField%"
+		file := Trim(file, " `t`r`n")
+		if (file != "")
+			args .= """" file """ "
 	}
+	Run, %npp% %args%
+	Clipboard := ClipSaved
+Return
+
+; Ctrl + Alt + V → Open selected file(s) in VSCode
+^!v::
+	; Uses 'code' via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
+	; A_UserName dynamically resolves to the current Windows username at runtime (per-user install path)
+	ClipSaved := ClipboardAll
+	Clipboard := ""
+	Send ^c
+	ClipWait, 0.5
+	If Clipboard =
+	{
+		Clipboard := ClipSaved
+		MsgBox, No file selected in File Explorer/Desktop.
+		Return
+	}
+	; Build a single command with all file paths in correct tab order
+	; NOTE: Tab/open order depends on Windows clipboard reporting order and may not always match
+	; click order — Desktop selections tend to be most reliable for ordered multi-file selection
+	files := StrSplit(Clipboard, "`n")
+	reversed := []
+	Loop, % files.Length()
+		reversed.Push(files[files.Length() - A_Index + 1])
+	args := ""
+	For i, file in reversed
+	{
+		file := Trim(file, " `t`r`n")
+		if (file != "")
+			args .= """" file """ "
+	}
+	; Run via cmd.exe using 'code' from PATH — correctly reuses existing VSCode window
+	RunWait, %ComSpec% /c code %args%,, Hide
 	Clipboard := ClipSaved
 Return
 
@@ -213,6 +275,7 @@ Ctrl + Shift + C`tCopy current folder path
 Ctrl + Shift + X`tCopy selected file path(s)
 Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop
 Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)
+Ctrl + Alt + V`tOpen selected file(s) in VSCode
 Ctrl + Shift + H`tShow all hotkeys in a popup
 
 Tip:

@@ -12,20 +12,35 @@
 # 8+		Failure — serious errors (network issue, permissions, etc.)
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
+# Optional flags:
+#     -IncludeCache: Include cache/temp/log files in backup (excluded by default)
+#     -Help / -?: Display this help message
+
+[CmdletBinding()]
 param (
-	[switch]$IncludeCache
+	[switch]$IncludeCache, # Include cache/temp/log files in backup (excluded by default)
+	[switch]$Help
 )
 
-# ExcludeCache is just the inverse of IncludeCache
-$ExcludeCache = -not $IncludeCache
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-IncludeCache] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -IncludeCache  Include cache/temp/log files in backup (excluded by default)" -ForegroundColor Cyan
+	Write-Host "  -Help          Display this help message" -ForegroundColor Cyan
+	Write-Host "" # extra newline for readability
+	exit 0
+}
 
 # Specify remote directory to copy to and the NAS hostname
 $Destination = "\\NAS\PATH\TO\THUNDERBIRD_BACKUP_DIRECTORY" # Change this to your NAS Thunderbird backup directory
 $nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
 
 # Quick NAS Availability Check
-Write-Host "Checking NAS availability ($nasHost)..." -ForegroundColor Cyan
-
+Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
 	return
@@ -36,10 +51,8 @@ else {
 
 # Detect if Thunderbird is running and close it if y/Y is pressed (otherwise abort)
 $thunderbirdProcess = Get-Process -Name thunderbird -ErrorAction SilentlyContinue
-
 if ($thunderbirdProcess) {
 	$response = Read-Host "`nThunderbird is currently running. Close Thunderbird now? (Y/N)"
-
 	if ($response -match '^[Yy]$') {
 		Write-Host "Stopping Thunderbird..." -ForegroundColor Cyan
 		Stop-Process -Name thunderbird -Force
@@ -99,7 +112,9 @@ Write-Host "`nSource Profile: $Source" -ForegroundColor Green
 Write-Host "Destination: $Destination`n" -ForegroundColor Green
 
 # Build Robocopy Arguments
-# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup. The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source. This safely maintains a single up-to-date backup at all times.
+# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup.
+# The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source.
+# This safely maintains a single up-to-date backup at all times.
 $robocopyArgs = @(
 	$Source,
 	$Destination,
@@ -110,11 +125,11 @@ $robocopyArgs = @(
 )
 
 # OPTIONAL: Exclude cache/temp/log files
-# If $ExcludeCache = $true is specified (default behavior), the following folders and files will NOT be copied to the backup:
+# If -IncludeCache is not specified (default behavior), the following folders and files will NOT be copied to the backup:
 # Folders excluded: cache2, crashes, minidumps, thumbnails, storage\temporary
 # Files excluded: *.log, .lock, lock, parent.lock
 # This keeps the backup clean by skipping transient or rebuildable data while preserving all important profile data (emails, settings, extensions, address books, etc.)
-if ($ExcludeCache) {
+if (-not $IncludeCache) {
 	$robocopyArgs += "/XD", "cache2", "crashes", "minidumps", "thumbnails", "storage\temporary"
 	$robocopyArgs += "/XF", "*.log", ".lock", "lock", "parent.lock"
 }
@@ -124,7 +139,6 @@ Write-Host "Starting Thunderbird profile backup..." -ForegroundColor Cyan
 robocopy @robocopyArgs
 
 $exitCode = $LASTEXITCODE
-
 if ($exitCode -le 3) {
 	Write-Host "`nThunderbird profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
 }

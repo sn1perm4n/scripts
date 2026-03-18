@@ -118,6 +118,7 @@ OnMessage(0x404, TrayIconMsg)
 TrayIconMsg(wParam, lParam, msg, hwnd) {
 	global TooltipVisible, LastMouseX, LastMouseY
 	if (lParam = 0x200) {  ; WM_MOUSEMOVE — mouse is over tray icon
+		RemoveTrayTip()  ; re-suppress native tooltip on every hover
 		if TooltipVisible  ; already visible, nothing to do
 			return
 		RECT := GetTrayIconRECT(A_ScriptHwnd)

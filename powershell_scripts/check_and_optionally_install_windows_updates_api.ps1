@@ -1,11 +1,37 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script uses the Windows Update API to check for non-hidden Windows Updates, Microsoft Updates, and Microsoft Defender definition updates. It also attempts to update the "Last checked" timestamp in the Windows Update GUI (and ignore and optionally install updates based on user-input).
 
-# IMPORTANT: These scripts respect the user's "Receive updates for other Microsoft products" setting in Advanced Options. For best security, it is recommended to enable this setting in Windows Update -> Advanced Options.
+# IMPORTANT: This script enables "Receive updates for other Microsoft products" by default. To disable this behavior, comment out the six lines below the "Enable Microsoft Update" comment in the script. For best security, it is recommended to leave this enabled.
 
 # NOTE: The GUI "Last checked" timestamp may not update due to Windows Update orchestration behavior
 
+# Optional flags:
+#     -CheckOnly: Check for updates without prompting to install
+#     -InstallAll: Automatically install all available updates without prompting
+#     -Help / -?: Display this help message
+
 #Requires -RunAsAdministrator
+
+[CmdletBinding()]
+param (
+	[switch]$CheckOnly,
+	[switch]$InstallAll,
+	[switch]$Help
+)
+
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-CheckOnly] [-InstallAll] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -CheckOnly   Check for updates without prompting to install" -ForegroundColor Cyan
+	Write-Host "  -InstallAll  Automatically install all available updates without prompting" -ForegroundColor Cyan
+	Write-Host "  -Help        Display this help message" -ForegroundColor Cyan
+	Write-Host "" # extra newline for readability
+	exit 0
+}
 
 try {
 	Write-Host "`nChecking for available Windows/Microsoft/Defender updates..." -ForegroundColor Cyan
@@ -13,7 +39,7 @@ try {
 	# Trigger a Windows Update scan so the GUI "Last checked" timestamp updates
 	Start-Process -FilePath "UsoClient.exe" -ArgumentList "StartScan" -NoNewWindow -Wait
 
-	# Enable Microsoft Update (equivalent to "Receive updates for other Microsoft products"). I STRONGLY recommend "Receive updates for other Microsoft products" be enabled in Windows Update -> Advanced options from a security standpoint. If you enable it, uncomment the below six lines:
+	# Enable Microsoft Update (equivalent to "Receive updates for other Microsoft products"). I STRONGLY recommend "Receive updates for other Microsoft products" be enabled in Windows Update -> Advanced options from a security standpoint. If you want it disabled, comment out the below six lines:
 	$serviceManager = New-Object -ComObject Microsoft.Update.ServiceManager
 	$serviceManager.AddService2(
 		"7971f918-a847-4430-9279-4a52d1efe18d",
@@ -39,7 +65,7 @@ try {
 
 	if ($visibleUpdates.Count -eq 0) {
 		Write-Host "`nNo updates available." -ForegroundColor Green
-		Write-Host "Press any key to exit..."
+		Write-Host "`nPress any key to exit..."
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		return
 	}
@@ -50,10 +76,22 @@ try {
 		Write-Host "- $($_.Title)"
 	}
 
-	# Prompt user only because updates exist
-	do {
-		$response = Read-Host "`nInstall these updates now? (Y/N)"
-	} until ($response -match '^[YyNn]$')
+	# Exit here if -CheckOnly is specified
+	if ($CheckOnly) {
+		Write-Host "`nPress any key to exit..."
+		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+		return
+	}
+
+	# Prompt user unless -InstallAll is specified
+	if ($InstallAll) {
+		$response = 'Y'
+	}
+	else {
+		do {
+			$response = Read-Host "`nInstall these updates now? (Y/N)"
+		} until ($response -match '^[YyNn]$')
+	}
 
 	if ($response -match '^[Yy]$') {
 		Write-Host "`nInstalling Windows/Microsoft/Defender updates..." -ForegroundColor Cyan
@@ -65,26 +103,47 @@ try {
 
 		$installer = $updateSession.CreateUpdateInstaller()
 		$installer.Updates = $updatesToInstall
-		$installer.AutoReboot = $false
+
+		# AutoReboot is not supported on all systems, so wrap in try/catch
+		try {
+			$installer.AutoReboot = $false
+		}
+		catch {
+			# AutoReboot property not supported on this system, continuing without it
+		}
 
 		$installResult = $installer.Install()
 
 		if ($installResult.ResultCode -eq 2) {
-			Write-Host "Updates successfully installed." -ForegroundColor Green
-		} else {
-			Write-Warning "Update installation completed with result code: $($installResult.ResultCode)."
+			Write-Host "`nUpdates successfully installed." -ForegroundColor Green
+		}
+		else {
+			# If result code 4, attempt to update Defender definitions via MpCmdRun.exe as a fallback
+			if ($installResult.ResultCode -eq 4) {
+				Write-Host "`nInstallation failed (result code 4). Attempting Defender definition update via MpCmdRun.exe..." -ForegroundColor Yellow
+				try {
+					& "$env:ProgramFiles\Windows Defender\MpCmdRun.exe" -SignatureUpdate
+					Write-Host "`nDefender definition update completed via MpCmdRun.exe." -ForegroundColor Green
+				}
+				catch {
+					Write-Warning "Defender definition update via MpCmdRun.exe also failed: $($_.Exception.Message)"
+				}
+			}
+			else {
+				Write-Warning "Update installation completed with result code: $($installResult.ResultCode)"
+			}
 		}
 
 		if ($installResult.RebootRequired) {
-			Write-Warning "A system reboot is required to complete installation."
+			Write-Host "`nA system reboot is required to complete installation." -ForegroundColor Yellow
 		}
-
-	} else {
-		Write-Warning "Updates were not installed because the user declined installation."
 	}
-
-} catch {
-	Write-Warning "An error occurred while checking or installing updates: $($_.Exception.Message)."
+	else {
+		Write-Host "`nUpdates were not installed." -ForegroundColor Yellow
+	}
+}
+catch {
+	Write-Warning "An error occurred while checking or installing updates: $($_.Exception.Message)"
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

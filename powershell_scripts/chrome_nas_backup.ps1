@@ -1,6 +1,6 @@
 ﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the default Google Chrome profile to a Linux-based NAS. By default, it excludes unnecessary cache/temp/log files, but users can override this to include all files/folders by running the script as follows:
-# .\chrome_nas_backup.ps1 -ExcludeCache:$false
+# .\chrome_nas_backup.ps1 -IncludeCache
 
 # Robocopy exit code list:
 # Exit Code Meaning
@@ -12,16 +12,35 @@
 # 8+		Failure — serious errors (network issue, permissions, etc.)
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
+# Optional flags:
+#     -IncludeCache: Include cache/temp/log files in backup (excluded by default)
+#     -Help / -?: Display this help message
+
+[CmdletBinding()]
 param (
-	[switch]$ExcludeCache = $true # Default to excluding cache/temp/log files
+	[switch]$IncludeCache, # Include cache/temp/log files in backup (excluded by default)
+	[switch]$Help
 )
+
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-IncludeCache] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -IncludeCache  Include cache/temp/log files in backup (excluded by default)" -ForegroundColor Cyan
+	Write-Host "  -Help          Display this help message" -ForegroundColor Cyan
+	Write-Host "" # extra newline for readability
+	exit 0
+}
 
 # Specify remote directory to copy to and the NAS hostname
 $Destination = "\\NAS\PATH\TO\CHROME_BACKUP_DIRECTORY" # Change this to your NAS Chrome backup directory
 $nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
 
 # Quick NAS Availability Check
-Write-Host "Checking NAS availability ($nasHost)..." -ForegroundColor Cyan
+Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
 	return
@@ -70,11 +89,11 @@ $robocopyArgs = @(
 )
 
 # OPTIONAL: Exclude cache/temp/log files
-# If $ExcludeCache = $true is specified (default behavior), the following folders and files will NOT be copied to the backup:
+# If -IncludeCache is not specified (default behavior), the following folders and files will NOT be copied to the backup:
 # Folders excluded: Cache, Code Cache, Crash Reports, GPUCache, JumpListIcons, Media Cache, Service Worker
 # Files excluded: *.log
 # This keeps the backup clean by skipping transient or rebuildable data while preserving all important profile data (Bookmarks, Extensions, Preferences, Cookies, History, Sessions, etc.)
-if ($ExcludeCache) {
+if (-not $IncludeCache) {
 	$robocopyArgs += "/XD", "Cache", "Code Cache", "Crash Reports", "GPUCache", "JumpListIcons", "Media Cache", "Service Worker"
 	$robocopyArgs += "/XF", "*.log"
 }

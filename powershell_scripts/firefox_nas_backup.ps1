@@ -1,6 +1,5 @@
 ﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script backs up the default Firefox profile to a Linux-based NAS. By default, it excludes unnecessary cache/temp/log files, but users can override this to include all files/folders by running the script as follows:
-# .\firefox_nas_backup.ps1 -IncludeCache
+# This script backs up the default Firefox profile to a Linux-based NAS. It excludes unnecessary cache/temp/log files to keep the backup clean.
 
 # Robocopy exit code list:
 # Exit Code Meaning
@@ -12,20 +11,13 @@
 # 8+		Failure — serious errors (network issue, permissions, etc.)
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
-param (
-	[switch]$IncludeCache
-)
-
-# ExcludeCache is just the inverse of IncludeCache
-$ExcludeCache = -not $IncludeCache
-
-# Specify remote directory to copy to and the NAS hostname
-$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY" # Change this to your NAS Firefox backup directory
-$nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
+# Specify remote directory to copy to
+$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY"
+# Specify the NAS hostname
+$nasHost = "NAS_HOSTNAME"
 
 # Quick NAS Availability Check
-Write-Host "Checking NAS availability ($nasHost)..." -ForegroundColor Cyan
-
+Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
 	return
@@ -36,13 +28,11 @@ else {
 
 # Detect if Firefox is running and close it if y/Y is pressed (otherwise abort)
 $firefoxProcess = Get-Process -Name firefox -ErrorAction SilentlyContinue
-
 if ($firefoxProcess) {
 	$response = Read-Host "`nFirefox is currently running. Close Firefox now? (Y/N)"
-
 	if ($response -match '^[Yy]$') {
 		Write-Host "Stopping Firefox..." -ForegroundColor Cyan
-		Stop-Process -Name firefox -Force
+		Stop-Process -Name firefox -Force -ErrorAction SilentlyContinue
 		Start-Sleep -Seconds 2
 	}
 	else {
@@ -99,7 +89,9 @@ Write-Host "`nSource Profile: $Source" -ForegroundColor Green
 Write-Host "Destination: $Destination`n" -ForegroundColor Green
 
 # Build Robocopy Arguments
-# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup. The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source. This safely maintains a single up-to-date backup at all times.
+# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup.
+# The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source.
+# This safely maintains a single up-to-date backup at all times.
 $robocopyArgs = @(
 	$Source,
 	$Destination,
@@ -109,27 +101,25 @@ $robocopyArgs = @(
 	"/W:1"
 )
 
-# OPTIONAL: Exclude cache/temp/log files
-# If $ExcludeCache = $true is specified (default behavior), the following folders and files will NOT be copied to the backup:
-# Folders excluded: cache2, crashes, minidumps, shader-cache, startupCache, storage\temporary, thumbnails, weave\logs
+# Exclude cache/temp/log files
+# NOTE: Firefox stores its disk cache (cache2, shader-cache, etc.) in %LOCALAPPDATA%\Mozilla\Firefox\Profiles\<profile>
+# rather than %APPDATA% where the profile personal data lives. The exclusions below target residual temp/log files
+# that may exist in the %APPDATA% profile path.
+# Folders excluded: crashes, minidumps, startupCache, storage\temporary, thumbnails, weave\logs
 # Files excluded: *.log, .lock, lock, parent.lock
-# This keeps the backup clean by skipping transient or rebuildable data while preserving all important profile data (bookmarks, passwords, extensions, cookies, sessionstore, etc.)
-if ($ExcludeCache) {
-	$robocopyArgs += "/XD", "cache2", "crashes", "minidumps", "shader-cache", "startupCache", "storage\temporary", "thumbnails", "weave\logs"
-	$robocopyArgs += "/XF", "*.log", ".lock", "lock", "parent.lock"
-}
+$robocopyArgs += "/XD", "crashes", "minidumps", "startupCache", "storage\temporary", "thumbnails", "weave\logs"
+$robocopyArgs += "/XF", "*.log", ".lock", "lock", "parent.lock"
 
 # Execute Robocopy
 Write-Host "Starting Firefox profile backup..." -ForegroundColor Cyan
 robocopy @robocopyArgs
 
 $exitCode = $LASTEXITCODE
-
 if ($exitCode -le 3) {
-	Write-Host "`nFirefox profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
+	Write-Host "Firefox profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
 }
 else {
-	Write-Host "`nFirefox profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
+	Write-Host "Firefox profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

@@ -11,12 +11,11 @@
 # 8+		Failure — serious errors (network issue, permissions, etc.)
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
-# Specify remote directory to copy to
-$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY"
-# Specify the NAS hostname
-$nasHost = "NAS_HOSTNAME"
+# Specify remote directory to copy to and the NAS hostname
+$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY" # Change this to your NAS Thunderbird backup directory
+$nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
 
-# Quick NAS Availability Check
+# Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
@@ -49,7 +48,7 @@ if (-not (Test-Path $profilesIni)) {
 	return
 }
 
-# Parse Default Profile
+# Parse Default profile
 $profilePath = $null
 $isRelative = $true
 $lines = Get-Content $profilesIni

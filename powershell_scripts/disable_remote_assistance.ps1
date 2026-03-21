@@ -13,7 +13,8 @@ try {
 
 	if ($currentValue -eq 0) {
 		Write-Host "`nRemote Assistance is already disabled in the registry." -ForegroundColor Yellow
-	} else {
+	}
+	else {
 		Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 0 -Type DWord -ErrorAction Stop
 		Write-Host "`nRegistry setting updated." -ForegroundColor Green
 	}
@@ -32,10 +33,12 @@ try {
 		if ($enabledRules) {
 			$enabledRules | Disable-NetFirewallRule -ErrorAction Stop
 			Write-Host "`nWindows Firewall rules disabled (Remote Assistance group)." -ForegroundColor Green
-		} else {
+		}
+		else {
 			Write-Host "`nRemote Assistance firewall rules are already disabled." -ForegroundColor Yellow
 		}
-	} else {
+	}
+	else {
 		Write-Host "`nNo Remote Assistance firewall rules found." -ForegroundColor Yellow
 	}
 }

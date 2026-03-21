@@ -1,0 +1,54 @@
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
+# $env:LOCALAPPDATA\AnthropicClaude (resolves to C:\Users\<username>\AppData\Local\AnthropicClaude)
+
+# Specify the target directory
+$appdataLocalAnthropicClaudeFolder = "$env:LOCALAPPDATA\AnthropicClaude"
+
+# Check if the directory exists
+if (Test-Path -Path $appdataLocalAnthropicClaudeFolder) {
+	try {
+		# Get all directories starting with "app-"
+		$appDirs = Get-ChildItem -Path $appdataLocalAnthropicClaudeFolder -Directory | Where-Object { $_.Name -like 'app-*' }
+		# Guard clause that activates and exits if there's only 0 or 1 "app-" folder
+		if ($appDirs.Count -le 1) {
+			Write-Warning "Only $($appDirs.Count) 'app-' folder found, nothing to delete."
+			return
+		}
+		# Extract numeric part and sort
+		$appNumbers = $appDirs | ForEach-Object {
+			$name = $_.Name
+			$path = $_.FullName
+			if ($name -match '^app-(\d+(?:\.\d+)*)$') {
+				[PSCustomObject]@{
+				Name = $name
+				Path = $path
+				Version = [version]$matches[1]
+				}
+			}
+		} | Sort-Object Version -Descending
+		if (-not $appNumbers) {
+			Write-Warning "No folders starting with 'app-' found in '$appdataLocalAnthropicClaudeFolder'."
+			return
+		}
+		# Keep the highest "app-" version
+		$keep = $appNumbers | Select-Object -First 1
+		Write-Host "`nKeeping folder: $($keep.Name)`n" -ForegroundColor Green
+		# Delete all other "app-" versions
+		$appNumbers | Where-Object { $_.Path -ne $keep.Path } | ForEach-Object {
+			Write-Host "Deleting folder: $($_.Path)" -ForegroundColor Yellow
+			Remove-Item -Path $_.Path -Recurse -Force
+		}
+		Write-Host "`nSuccessfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalAnthropicClaudeFolder'." -ForegroundColor Green
+	}
+	catch {
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalAnthropicClaudeFolder': $($_.Exception.Message)"
+	}
+}
+else {
+	Write-Warning "The directory '$appdataLocalAnthropicClaudeFolder' does not exist."
+}
+
+# Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
+
+# End.

@@ -1,4 +1,4 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the default Firefox profile to a Linux-based NAS. It excludes unnecessary cache/temp/log files to keep the backup clean.
 
 # Robocopy exit code list:
@@ -31,7 +31,7 @@ $firefoxProcess = Get-Process -Name firefox -ErrorAction SilentlyContinue
 if ($firefoxProcess) {
 	$response = Read-Host "`nFirefox is currently running. Close Firefox now? (Y/N)"
 	if ($response -match '^[Yy]$') {
-		Write-Host "Stopping Firefox..." -ForegroundColor Cyan
+		Write-Host "`nStopping Firefox..." -ForegroundColor Cyan
 		Stop-Process -Name firefox -Force -ErrorAction SilentlyContinue
 		Start-Sleep -Seconds 2
 	}
@@ -116,10 +116,10 @@ robocopy @robocopyArgs
 
 $exitCode = $LASTEXITCODE
 if ($exitCode -le 3) {
-	Write-Host "Firefox profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
+	Write-Host "`nFirefox profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
 }
 else {
-	Write-Host "Firefox profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
+	Write-Host "`nFirefox profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

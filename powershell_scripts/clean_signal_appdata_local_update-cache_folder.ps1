@@ -1,9 +1,9 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script deletes the contents of a specific folder:
 # $env:APPDATA\Signal\update-cache (resolves to C:\Users\<username>\AppData\Roaming\Signal\update-cache)
 
 # Specify the directory to process
-$appdataRoamingSignalFolder = "C:\Users\$env:APPDATA\Signal\update-cache"
+$appdataRoamingSignalFolder = "$env:APPDATA\Signal\update-cache"
 
 Write-Host "`nChecking '$appdataRoamingSignalFolder'..." -ForegroundColor Cyan
 
@@ -18,7 +18,7 @@ if (Test-Path -Path $appdataRoamingSignalFolder) {
 			return
 		}
 		# Output what will be deleted
-		Write-Host "`nDeleting the following items:"
+		Write-Host "`nDeleting the following items:" -ForegroundColor Cyan
 		$items | ForEach-Object { Write-Host " - $($_.FullName)" }
 		# Delete all files and folders within the directory
 		$items | Remove-Item -Recurse -Force

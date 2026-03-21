@@ -1,4 +1,4 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the default Thunderbird profile to a Linux-based NAS. By default, it excludes unnecessary cache/temp/log files, but users can override this to include all files/folders by running the script as follows:
 # .\thunderbird_nas_backup.ps1 -IncludeCache
 
@@ -112,9 +112,9 @@ Write-Host "`nSource Profile: $Source" -ForegroundColor Green
 Write-Host "Destination: $Destination`n" -ForegroundColor Green
 
 # Build Robocopy Arguments
-# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup.
-# The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source.
-# This safely maintains a single up-to-date backup at all times.
+# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup
+# The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source
+# This safely maintains a single up-to-date backup at all times
 $robocopyArgs = @(
 	$Source,
 	$Destination,

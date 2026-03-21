@@ -1,9 +1,11 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script searches a specific directory for folders that start with the characters "app-" and keeps the one with the highest number:
-# C:\Users\<PROFILE>\AppData\Local\slack
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
+# $env:LOCALAPPDATA\slack (resolves to C:\Users\<username>\AppData\Local\slack)
 
-# Specify the target directory - Change <PROFILE> to to match your system
-$appdataLocalSlackFolder = 'C:\Users\<PROFILE>\AppData\Local\slack'
+# Specify the target directory
+$appdataLocalSlackFolder = "$env:LOCALAPPDATA\slack"
+
+Write-Host "`nChecking '$appdataLocalSlackFolder'..." -ForegroundColor Cyan
 
 # Check if the directory exists
 if (Test-Path -Path $appdataLocalSlackFolder) {
@@ -33,7 +35,7 @@ if (Test-Path -Path $appdataLocalSlackFolder) {
 		}
 		# Keep the highest "app-" version
 		$keep = $appNumbers | Select-Object -First 1
-		Write-Host "Keeping folder: $($keep.Name)" -ForegroundColor Green
+		Write-Host "`nKeeping folder: $($keep.Name)" -ForegroundColor Green
 		# Delete all other "app-" versions
 		$appNumbers | Where-Object { $_.Path -ne $keep.Path } | ForEach-Object {
 			Write-Output "Deleting folder: $($_.Path)"

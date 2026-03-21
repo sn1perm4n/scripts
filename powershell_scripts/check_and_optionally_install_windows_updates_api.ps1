@@ -1,4 +1,4 @@
-# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script uses the Windows Update API to check for non-hidden Windows Updates, Microsoft Updates, and Microsoft Defender definition updates. It also attempts to update the "Last checked" timestamp in the Windows Update GUI (and ignore and optionally install updates based on user-input).
 
 # IMPORTANT: This script enables "Receive updates for other Microsoft products" by default. To disable this behavior, comment out the six lines below the "Enable Microsoft Update" comment in the script. For best security, it is recommended to leave this enabled.

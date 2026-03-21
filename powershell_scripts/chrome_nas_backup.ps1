@@ -39,7 +39,7 @@ if ($Help) {
 $Destination = "\\NAS\PATH\TO\CHROME_BACKUP_DIRECTORY" # Change this to your NAS Chrome backup directory
 $nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
 
-# Quick NAS Availability Check
+# Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red

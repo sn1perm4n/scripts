@@ -39,7 +39,7 @@ if ($Help) {
 $Destination = "\\NAS\PATH\TO\THUNDERBIRD_BACKUP_DIRECTORY" # Change this to your NAS Thunderbird backup directory
 $nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
 
-# Quick NAS Availability Check
+# Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
@@ -54,7 +54,7 @@ $thunderbirdProcess = Get-Process -Name thunderbird -ErrorAction SilentlyContinu
 if ($thunderbirdProcess) {
 	$response = Read-Host "`nThunderbird is currently running. Close Thunderbird now? (Y/N)"
 	if ($response -match '^[Yy]$') {
-		Write-Host "Stopping Thunderbird..." -ForegroundColor Cyan
+		Write-Host "`nStopping Thunderbird..." -ForegroundColor Cyan
 		Stop-Process -Name thunderbird -Force
 		Start-Sleep -Seconds 2
 	}
@@ -72,7 +72,7 @@ if (-not (Test-Path $profilesIni)) {
 	return
 }
 
-# Parse Default Profile
+# Parse Default profile
 $profilePath = $null
 $isRelative = $true
 $lines = Get-Content $profilesIni

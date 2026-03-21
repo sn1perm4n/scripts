@@ -1,17 +1,9 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script disables Remote Assistance
+
 #Requires -RunAsAdministrator
 
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-	Write-Error "This script must be run as Administrator."
-	exit 1
-}
-
-Write-Host "Disabling Remote Assistance..." -ForegroundColor Cyan
+Write-Host "`nDisabling Remote Assistance..." -ForegroundColor Cyan
 
 try {
 	$raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
@@ -20,14 +12,14 @@ try {
 	$currentValue = Get-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -ErrorAction Stop | Select-Object -ExpandProperty fAllowToGetHelp
 
 	if ($currentValue -eq 0) {
-		Write-Host "Remote Assistance is already disabled in the registry." -ForegroundColor Yellow
+		Write-Host "`nRemote Assistance is already disabled in the registry." -ForegroundColor Yellow
 	} else {
 		Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 0 -Type DWord -ErrorAction Stop
-		Write-Host "Registry setting updated." -ForegroundColor Green
+		Write-Host "`nRegistry setting updated." -ForegroundColor Green
 	}
 }
 catch {
-	Write-Error "Failed to check or modify Remote Assistance registry setting: $_"
+	Write-Error "Failed to check or modify Remote Assistance registry setting: $($_.Exception.Message)"
 	exit 1
 }
 
@@ -39,16 +31,16 @@ try {
 		$enabledRules = $fwRules | Where-Object { $_.Enabled -eq "True" }
 		if ($enabledRules) {
 			$enabledRules | Disable-NetFirewallRule -ErrorAction Stop
-			Write-Host "Windows Firewall rules disabled (Remote Assistance group)." -ForegroundColor Green
+			Write-Host "`nWindows Firewall rules disabled (Remote Assistance group)." -ForegroundColor Green
 		} else {
-			Write-Host "Remote Assistance firewall rules are already disabled." -ForegroundColor Yellow
+			Write-Host "`nRemote Assistance firewall rules are already disabled." -ForegroundColor Yellow
 		}
 	} else {
-		Write-Host "No Remote Assistance firewall rules found." -ForegroundColor Yellow
+		Write-Host "`nNo Remote Assistance firewall rules found." -ForegroundColor Yellow
 	}
 }
 catch {
-	Write-Warning "Firewall rule modification failed: $_"
+	Write-Warning "Firewall rule modification failed: $($_.Exception.Message)"
 }
 
 Write-Host "`nRemote Assistance has been successfully disabled." -ForegroundColor Green

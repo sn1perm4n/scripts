@@ -1,4 +1,4 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the default Google Chrome profile to a Linux-based NAS. By default, it excludes unnecessary cache/temp/log files, but users can override this to include all files/folders by running the script as follows:
 # .\chrome_nas_backup.ps1 -IncludeCache
 
@@ -54,7 +54,7 @@ $chromeProcess = Get-Process -Name chrome -ErrorAction SilentlyContinue
 if ($chromeProcess) {
 	$response = Read-Host "`nGoogle Chrome is currently running. Close Chrome now? (Y/N)"
 	if ($response -match '^[Yy]$') {
-		Write-Host "Stopping Chrome..." -ForegroundColor Cyan
+		Write-Host "`nStopping Chrome..." -ForegroundColor Cyan
 		Stop-Process -Name chrome -Force
 		Start-Sleep -Seconds 2
 	}
@@ -76,9 +76,9 @@ Write-Host "`nSource Profile: $Source" -ForegroundColor Green
 Write-Host "Destination: $Destination`n" -ForegroundColor Green
 
 # Build Robocopy Arguments
-# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup.
-# The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source.
-# This safely maintains a single up-to-date backup at all times.
+# NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup
+# The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source
+# This safely maintains a single up-to-date backup at all times
 $robocopyArgs = @(
 	$Source,
 	$Destination,

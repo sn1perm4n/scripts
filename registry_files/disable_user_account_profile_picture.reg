@@ -1,4 +1,4 @@
-Windows Registry Editor Version 5.00
+﻿Windows Registry Editor Version 5.00
 
 ; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/registry_files
 ; Disables the User Account Profile Picture in Windows (especially useful for unactivated Windows installs)

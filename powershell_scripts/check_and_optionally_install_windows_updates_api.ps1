@@ -33,7 +33,7 @@ if ($Help) {
 	Write-Host "  -CheckOnly   Check for updates without prompting to install" -ForegroundColor Cyan
 	Write-Host "  -InstallAll  Automatically install all available updates without prompting" -ForegroundColor Cyan
 	Write-Host "  -Help        Display this help message" -ForegroundColor Cyan
-	Write-Host "" # extra newline for readability
+	Write-Host ""  # extra newline for readability
 	exit 0
 }
 

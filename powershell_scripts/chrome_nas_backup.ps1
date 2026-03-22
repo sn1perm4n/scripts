@@ -18,7 +18,7 @@
 
 [CmdletBinding()]
 param (
-	[switch]$IncludeCache, # Include cache/temp/log files in backup (excluded by default)
+	[switch]$IncludeCache,  # Include cache/temp/log files in backup (excluded by default)
 	[switch]$Help
 )
 
@@ -31,13 +31,13 @@ if ($Help) {
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -IncludeCache  Include cache/temp/log files in backup (excluded by default)" -ForegroundColor Cyan
 	Write-Host "  -Help          Display this help message" -ForegroundColor Cyan
-	Write-Host "" # extra newline for readability
+	Write-Host ""  # extra newline for readability
 	exit 0
 }
 
 # Specify remote directory to copy to and the NAS hostname
-$Destination = "\\NAS\PATH\TO\CHROME_BACKUP_DIRECTORY" # Change this to your NAS Chrome backup directory
-$nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
+$Destination = "\\NAS\PATH\TO\CHROME_BACKUP_DIRECTORY"  # Change this to your NAS Chrome backup directory
+$nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan

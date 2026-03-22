@@ -27,7 +27,7 @@ if ($Help) {
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host "" # extra newline for readability
+	Write-Host ""  # extra newline for readability
 	exit 0
 }
 

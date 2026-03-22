@@ -42,7 +42,7 @@ if ($Help) {
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host "" # extra newline for readability
+	Write-Host ""  # extra newline for readability
 	exit 0
 }
 
@@ -65,12 +65,12 @@ catch {
 	exit
 }
 
-Write-Host "" # blank line before prompt
+Write-Host ""  # blank line before prompt
 
 # Prompt the user for the file or folder path
 $Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
 
-Write-Host "" # blank line after prompt
+Write-Host ""  # blank line after prompt
 
 if (-not (Test-Path $Path)) {
 	Write-Error "The specified path does not exist."

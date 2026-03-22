@@ -12,8 +12,8 @@
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
 # Specify remote directory to copy to and the NAS hostname
-$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY" # Change this to your NAS Thunderbird backup directory
-$nasHost = "NAS_HOSTNAME" # Change this to your NAS hostname
+$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY"  # Change this to your NAS Thunderbird backup directory
+$nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan

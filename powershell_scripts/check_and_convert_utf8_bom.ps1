@@ -47,13 +47,13 @@ if ($Help) {
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
 	Write-Host "  -Successes           Only show successfully converted filenames" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host "" # extra newline for readability
+	Write-Host ""  # extra newline for readability
 	exit 0
 }
 
 # Prompt user for file or folder path
 $Path = Read-Host "`nEnter the full path to a script (.ps1) or a folder containing scripts"
-Write-Host "" # blank line after initial user-input
+Write-Host ""  # blank line after initial user-input
 
 # Validate path exists
 if (-not (Test-Path $Path)) {
@@ -128,7 +128,7 @@ if ($Successes) {
 	else {
 		Write-Host "No files with UTF-8 BOM found." -ForegroundColor Yellow
 	}
-	Write-Host "" # newline after last file
+	Write-Host ""  # newline after last file
 	exit 0
 }
 
@@ -142,7 +142,7 @@ if ($Failures) {
 	else {
 		Write-Host "No files missing UTF-8 BOM found." -ForegroundColor Cyan
 	}
-	Write-Host "" # newline after last file
+	Write-Host ""  # newline after last file
 	exit 0
 }
 
@@ -154,7 +154,7 @@ if ($SuccessFiles.Count -and (-not $ConvertAll)) {
 		Write-Host "${fileName}: UTF-8 BOM OK" -ForegroundColor Cyan
 		if ($SaveResults) { $FileOutputLines += "${fileName}: UTF-8 BOM OK" }
 	}
-	Write-Host "" # blank line between successes and failures
+	Write-Host ""  # blank line between successes and failures
 }
 
 # Interactive processing for files missing BOM
@@ -222,7 +222,7 @@ foreach ($filePath in $FailureFiles) {
 				Write-Host "Please enter Y or N." -ForegroundColor Yellow
 			}
 		}
-		Write-Host "" # blank line after each failure
+		Write-Host ""  # blank line after each failure
 	}
 }
 

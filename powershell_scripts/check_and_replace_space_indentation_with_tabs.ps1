@@ -27,7 +27,7 @@ if ((Get-Item $scriptFileOrDirectory).PSIsContainer) {
 		Write-Host "`nThe file '$scriptFileOrDirectory' is not a .ps1 script. Exiting..." -ForegroundColor Red
 		exit
 	}
-	$files = @(Get-Item $scriptFileOrDirectory) # wrap in array for consistency
+	$files = @(Get-Item $scriptFileOrDirectory)  # wrap in array for consistency
 }
 
 # Process each file
@@ -71,7 +71,7 @@ foreach ($fileObj in $files) {
 		# Backup original file
 		Copy-Item $file "$file.bak" -Force
 		# Save modified content
-		Set-Content $file $newContent # Comment this line if you want to preview any changes
+		Set-Content $file $newContent  # Comment this line if you want to preview any changes
 		Write-Host "`nUpdated $file (backup saved as $file.bak)." -ForegroundColor Green
 	} else {
 		Write-Host "`nNo changes needed." -ForegroundColor Green

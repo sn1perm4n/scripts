@@ -1,19 +1,6 @@
 ﻿# This script checks the Microsoft Store for apps that have upgrades available, with the intention being to upgrade. Unfortunately, Microsoft Store app upgrades can't be installed in this manner because none of them appear in winget upgrade. I'm releasing this script purely for informational purposes. Please note this script also must be run as Administrator, which requires the following:
-# 1. Create a shortcut to the .ps1 file, set the "Target" field to C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -command "& C:\Users\reedwaller\Scripts\remove_game_assist.ps1"
-# 2. Enable "Run as administrator" in the Shortcut tab -> Advanced)
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Ensure winget is available
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
@@ -59,7 +46,7 @@ else {
 	$lines = $wingetOutput | Where-Object { $_ -and ($_ -notmatch '^Name\s+Id\s+Version\s+Available\s+Source') -and ($_ -notmatch '^-+') }
 	foreach ($line in $lines) {
 		# Split line by whitespace (first few columns)
-		$parts = $line -split '\s{2,}' # two or more spaces
+		$parts = $line -split '\s{2,}'  # two or more spaces
 		if ($parts.Count -ge 2) {
 			$name = $parts[0].Trim()
 			$id   = $parts[1].Trim()

@@ -113,7 +113,7 @@ try {
 			$installer.AutoReboot = $false
 		}
 		catch {
-			# AutoReboot property not supported on this system, continuing without it
+			Write-Verbose "AutoReboot property not supported on this system, continuing without it."
 		}
 
 		$installResult = $installer.Install()

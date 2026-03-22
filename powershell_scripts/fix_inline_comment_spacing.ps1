@@ -57,8 +57,8 @@ if (-not $files -or $files.Count -eq 0) {
 }
 
 # Initialize counters and output lines
-$issueCount      = 0
-$fixedCount      = 0
+$issueCount = 0
+$fixedCount = 0
 $FileOutputLines = @()
 
 Write-Host "`nScanning for incorrect inline comment spacing...`n" -ForegroundColor Cyan
@@ -67,7 +67,7 @@ Write-Host "`nScanning for incorrect inline comment spacing...`n" -ForegroundCol
 $fileIssuesMap = @{}
 
 foreach ($file in $files) {
-	$lines      = Get-Content -Path $file.FullName
+	$lines = @(Get-Content -Path $file.FullName)
 	$fileIssues = @()
 
 	for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -179,7 +179,7 @@ foreach ($file in $files) {
 		$firstFixFile = $false
 	}
 
-	$lines    = Get-Content -Path $file.FullName
+	$lines = @(Get-Content -Path $file.FullName)
 	$newLines = @()
 
 	for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -202,7 +202,7 @@ foreach ($file in $files) {
 		}
 
 		$utf8Bom = New-Object System.Text.UTF8Encoding $true
-		[System.IO.File]::WriteAllLines($file.FullName, $newLines, $utf8Bom)
+		[System.IO.File]::WriteAllText($file.FullName, ($newLines -join "`r`n"), $utf8Bom)
 		if ($firstFix -and -not $doBackup) {
 			Write-Host ""
 			$firstFix = $false

@@ -1,6 +1,10 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script searches files or directories for inline comments with incorrect spacing (single space before #) and optionally fixes them
 
+# WARNING: This script cannot distinguish between a # inside a string literal or regex pattern and an actual inline comment. Always carefully review the output before applying fixes, as false positives are possible. When in doubt, fix manually rather than using the -Fix flag.
+
+# WARNING: This script cannot distinguish between a # inside a string literal or regex pattern and an actual inline comment. Always carefully review the output before applying fixes, as false positives are possible. When in doubt, decline the fix prompt or avoid using the -Fix flag and fix manually instead.
+
 # Optional flags:
 #     -Backup: Automatically create backups before fixing files (skips interactive prompt)
 #     -Fix: Automatically fix incorrect spacing without prompting

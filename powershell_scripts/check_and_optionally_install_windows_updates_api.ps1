@@ -5,6 +5,10 @@
 
 # NOTE: The GUI "Last checked" timestamp may not update due to Windows Update orchestration behavior
 
+# NOTE2: Cumulative and feature updates delivered via the UUP pipeline (i.e. monthly security rollups) may not be detected by this script due to a Windows Update COM API limitation. Always verify via the Windows Update GUI or Settings > Windows Update to ensure all critical updates are installed.
+
+# NOTE3: Cumulative and feature updates delivered via the UUP pipeline (e.g. monthly security rollups) may not be detected by this script due to a PSWindowsUpdate/Windows Update API limitation. Always verify via the Windows Update GUI or Settings > Windows Update to ensure all critical updates are installed.
+
 # Optional flags:
 #     -CheckOnly: Check for updates without prompting to install
 #     -InstallAll: Automatically install all available updates without prompting

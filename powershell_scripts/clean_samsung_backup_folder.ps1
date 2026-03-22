@@ -34,7 +34,7 @@ if (Test-Path -Path $programdataSamsungBackupFolder) {
 		Write-Host "Successfully deleted the contents of '$programdataSamsungBackupFolder'."
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$programdataSamsungBackupFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$programdataSamsungBackupFolder': $($_.Exception.Message)"
 	}
 }
 else {

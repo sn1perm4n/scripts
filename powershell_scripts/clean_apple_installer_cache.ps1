@@ -43,7 +43,7 @@ if (Test-Path -Path $appleInstallerCacheFolder) {
 		Write-Host "Successfully deleted all folders except '$($latestASU.Name)'." -ForegroundColor Green
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appleInstallerCacheFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appleInstallerCacheFolder': $($_.Exception.Message)"
 	}
 }
 else {

@@ -34,7 +34,7 @@ if (Test-Path -Path $appleComputerInstallerCacheFolder) {
 		Write-Host "Successfully deleted the contents of '$appleComputerInstallerCacheFolder'."
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appleComputerInstallerCacheFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appleComputerInstallerCacheFolder': $($_.Exception.Message)"
 	}
 }
 else {

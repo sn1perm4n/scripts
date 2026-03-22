@@ -48,7 +48,7 @@ if (Test-Path -Path $battlenetAgentFolder) {
 		}
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$battlenetAgentFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$battlenetAgentFolder': $($_.Exception.Message)"
 	}
 }
 else {

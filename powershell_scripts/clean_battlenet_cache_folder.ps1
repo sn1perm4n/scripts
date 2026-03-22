@@ -34,7 +34,7 @@ if (Test-Path -Path $battlenetCacheFolder) {
 		Write-Host "Successfully deleted the contents of '$battlenetCacheFolder'."
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$battlenetCacheFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$battlenetCacheFolder': $($_.Exception.Message)"
 	}
 }
 else {

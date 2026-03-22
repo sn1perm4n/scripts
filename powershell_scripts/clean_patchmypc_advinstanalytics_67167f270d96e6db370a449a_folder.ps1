@@ -37,7 +37,7 @@ if (Test-Path -Path $appdataLocalAdvinstAnalyticsFolder) {
 		}
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalAdvinstAnalyticsFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalAdvinstAnalyticsFolder': $($_.Exception.Message)"
 	}
 }
 else {

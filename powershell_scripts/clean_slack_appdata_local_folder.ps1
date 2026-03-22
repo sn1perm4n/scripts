@@ -44,7 +44,7 @@ if (Test-Path -Path $appdataLocalSlackFolder) {
 		Write-Host "`nSuccessfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalSlackFolder'." -ForegroundColor Green
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalSlackFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalSlackFolder': $($_.Exception.Message)"
 	}
 }
 else {

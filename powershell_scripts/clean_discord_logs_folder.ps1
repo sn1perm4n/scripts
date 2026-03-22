@@ -23,7 +23,7 @@ if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 		Write-Host "Successfully deleted all .log files from '$appdataLocalDiscordLogsFolder'."
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordLogsFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordLogsFolder': $($_.Exception.Message)"
 	}
 }
 else {

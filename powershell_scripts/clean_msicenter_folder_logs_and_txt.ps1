@@ -33,7 +33,7 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 			Remove-Item -Path $file.FullName -Force
 		}
 		catch {
-			Write-Error "An error occurred while trying to delete items in '$programdataMSIMSICenterFolder': $($_.Exception.Message)."
+			Write-Error "An error occurred while trying to delete items in '$programdataMSIMSICenterFolder': $($_.Exception.Message)"
 		}
 	}
 	Write-Host "Successfully deleted all .log and .txt files in '$programdataMSIMSICenterFolder'."

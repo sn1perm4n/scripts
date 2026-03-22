@@ -75,7 +75,7 @@ try {
 	}
 }
 catch {
-	Write-Error "An error occurred during the search: $($_.Exception.Message)."
+	Write-Error "An error occurred during the search: $($_.Exception.Message)"
 	exit 1
 }
 

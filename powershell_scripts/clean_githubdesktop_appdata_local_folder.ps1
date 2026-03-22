@@ -42,7 +42,7 @@ if (Test-Path -Path $appdataLocalGithubdesktopFolder) {
 		Write-Host "Successfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalGithubdesktopFolder'." -ForegroundColor Green
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalGithubdesktopFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalGithubdesktopFolder': $($_.Exception.Message)"
 	}
 }
 else {

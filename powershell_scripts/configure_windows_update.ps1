@@ -31,7 +31,7 @@ try {
 	Write-Host "`nWindows Update has been configured." -ForegroundColor Green
 }
 catch {
-	Write-Error "An error occurred: $($_.Exception.Message)."
+	Write-Error "An error occurred: $($_.Exception.Message)"
 	exit 1
 }
 

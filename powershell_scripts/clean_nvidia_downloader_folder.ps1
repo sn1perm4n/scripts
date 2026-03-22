@@ -38,7 +38,7 @@ if (Test-Path -Path $programdataNvidiacorporationDownloader) {
 		Write-Host "Successfully deleted the contents of '$programdataNvidiacorporationDownloader'."
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$programdataNvidiacorporationDownloader': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$programdataNvidiacorporationDownloader': $($_.Exception.Message)"
 	}
 }
 else {

@@ -80,7 +80,7 @@ else {
 		Write-Host "Microsoft Store apps updated successfully." -ForegroundColor Green
 	}
 	catch {
-		Write-Error "An error occurred while updating Microsoft Store apps: $($_.Exception.Message)."
+		Write-Error "An error occurred while updating Microsoft Store apps: $($_.Exception.Message)"
 	}
 }
 

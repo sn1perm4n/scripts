@@ -37,7 +37,7 @@ try {
 	Write-Host "`nSuccessfully deleted the contents of '$TargetFolder'." -ForegroundColor Green
 }
 catch {
-	Write-Error "An error occurred while trying to delete items in '$TargetFolder': $($_.Exception.Message)."
+	Write-Error "An error occurred while trying to delete items in '$TargetFolder': $($_.Exception.Message)"
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

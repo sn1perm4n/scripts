@@ -21,7 +21,7 @@ if (Test-Path -Path $appdataLocalPackagesWingetlogFolder) {
 		Write-Host "Successfully deleted the contents of '$appdataLocalPackagesWingetlogFolder'."
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalPackagesWingetlogFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalPackagesWingetlogFolder': $($_.Exception.Message)"
 	}
 }
 else {

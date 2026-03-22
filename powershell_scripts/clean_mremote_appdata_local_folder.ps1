@@ -37,7 +37,7 @@ if (Test-Path -Path $appdataLocalMremotengFolder) {
 		}
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalMremotengFolder': $($_.Exception.Message)."
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalMremotengFolder': $($_.Exception.Message)"
 	}
 }
 else {

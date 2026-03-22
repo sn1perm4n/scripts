@@ -1,6 +1,7 @@
 Windows Registry Editor Version 5.00
 
-; This .reg file enables the User Account Profile Picture in Windows
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/registry_files
+; Enables the User Account Profile Picture in Windows
 
 [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
 "UseDefaultTile"=dword:00000000

@@ -10,9 +10,8 @@
 $csvPath = "C:\Users\PROFILE\Desktop\Installed_Programs_List.csv"
 
 try {
-	
 	Write-Host "`nQuerying installed programs..." -ForegroundColor Cyan
-	
+
 	# Get installed programs
 	if ($PSVersionTable.PSVersion.Major -ge 7) {
 		# PowerShell 7+: use Get-CimInstance
@@ -50,7 +49,7 @@ try {
 			}
 		}
 	}
-	
+
 	Write-Host "`nInstalled program query completed successfully." -ForegroundColor Green
 
 } catch {

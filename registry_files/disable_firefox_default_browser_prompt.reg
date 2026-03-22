@@ -1,0 +1,7 @@
+﻿Windows Registry Editor Version 5.00
+
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/registry_files
+; Disable Mozilla Firefox from prompting to be the default browser (creates the key if it does not exist)
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Mozilla\Firefox]
+"DontCheckDefaultBrowser"=dword:00000001

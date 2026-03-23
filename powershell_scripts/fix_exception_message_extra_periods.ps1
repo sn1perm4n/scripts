@@ -1,90 +1,240 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script checks a single script or a folder of scripts for an extra . at the end of $($_.Exception.Message) and removes the period when there shouldn't be one (Write-Error and Write-Warning) [i.e. "$($_.Exception.Message)." becomes "$($_.Exception.Message)"]. A backup (.bak) is created for each modified script.
-# Optional switch: -DryRun mode to preview changes without saving
+# This script checks a single script or a folder of scripts for an extra period at the end of $($_.Exception.Message) in Write-Error and Write-Warning lines and removes it
 
+# Optional flags:
+#     -Backup: Automatically create backups before fixing files (skips interactive prompt)
+#     -Fix: Automatically fix issues without prompting
+#     -Recurse: Include files in subdirectories
+#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -Help / -?: Display this help message
+
+[CmdletBinding(PositionalBinding=$false)]
 param (
-	[switch]$DryRun
+	[switch]$Backup,
+	[switch]$Fix,
+	[switch]$Recurse,
+	[string]$SaveResults,
+	[switch]$Help
 )
 
-# Prompt the user for a script or folder to process
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Fix] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -Backup              Automatically create backups before fixing files (skips interactive prompt)" -ForegroundColor Cyan
+	Write-Host "  -Fix                 Automatically fix issues without prompting" -ForegroundColor Cyan
+	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
+	Write-Host ""  # extra newline for readability
+	exit 0
+}
+
+# Prompt user for file or directory path
 $InputPath = Read-Host "`nEnter the full path to a script (.ps1) or a folder containing scripts"
 
-# Check that the path exists (either file or folder)
 if (-not (Test-Path -LiteralPath $InputPath)) {
-	Write-Host ""
 	Write-Error "Path '$InputPath' does not exist."
-	exit
+	exit 1
 }
 
-# Determine if input is a folder or a file
-$Item = Get-Item -LiteralPath $InputPath
-$IsFolder = $Item.PSIsContainer
+$item = Get-Item -LiteralPath $InputPath
 
-# Initialize counter for modified files
-$ModifiedCount = 0
-
-# Gather files
-if ($IsFolder) {
-	$Files = Get-ChildItem -Path $InputPath -Filter *.ps1 -File -Recurse
-} else {
-	$Files = @($Item)  # wrap single file in array so foreach works
+# Collect files
+$files = if ($item.PSIsContainer) {
+	Get-ChildItem -Path $InputPath -Filter *.ps1 -File -Recurse:$Recurse
+}
+else {
+	if ($item.Extension -eq '.ps1') { @($item) } else { @() }
 }
 
-# Process each file
-foreach ($File in $Files) {
-	$FilePath = $File.FullName
-	$DisplayPath = $FilePath
-	$FileName = $File.Name
-	$Lines = Get-Content -LiteralPath $FilePath
-	$Modified = $false
-	$FirstFixInFile = $true
+if (-not $files -or $files.Count -eq 0) {
+	Write-Host "`nNo PowerShell (.ps1) files found." -ForegroundColor Yellow
+	exit 0
+}
 
-	for ($i = 0; $i -lt $Lines.Count; $i++) {
-		# Match Write-Error or Write-Warning lines with $($_.Exception.Message) immediately followed by a period
-		if ($Lines[$i] -match '(Write-Error|Write-Warning).*?\$\(\$_\.Exception\.Message\)\.') {
+# Initialize counters and output lines
+$issueCount      = 0
+$fixedCount      = 0
+$FileOutputLines = @()
 
-			# Add a blank line and filename before the first fix of each file
-			if ($FirstFixInFile) {
-				Write-Host "`nChecking $FileName..." -ForegroundColor Cyan
-				$FirstFixInFile = $false
-			}
+Write-Host "`nScanning for trailing periods after `$(`$_.Exception.Message)...`n" -ForegroundColor Cyan
 
-			Write-Host ("Fixing line " + ($i + 1) + ":") -ForegroundColor Cyan
-			Write-Host "    Original: $($Lines[$i])" -ForegroundColor Yellow
+# First pass: scan all files and collect issues
+$fileIssuesMap = @{}
 
-			# Remove the period
-			$Lines[$i] = $Lines[$i] -replace '(\$\(\$_\.Exception\.Message\))\.', '$1'
-			Write-Host "    Fixed   : $($Lines[$i])" -ForegroundColor Green
+foreach ($file in $files) {
+	$lines      = @(Get-Content -LiteralPath $file.FullName)
+	$fileIssues = @()
 
-			$Modified = $true
+	for ($i = 0; $i -lt $lines.Count; $i++) {
+		$line = $lines[$i]
+
+		if ($line -match '(Write-Error|Write-Warning).*?\$\(\$_\.Exception\.Message\)\.') {
+			$fileIssues += "  Line $($i + 1): $($line.TrimStart())"
+			$issueCount++
 		}
 	}
 
-	if ($Modified) {
-		if ($DryRun) {
-			Write-Host "`nDryRun: Changes detected in $DisplayPath (no modifications made)" -ForegroundColor Yellow
-			$ModifiedCount++
+	if ($fileIssues.Count -gt 0) {
+		$fileIssuesMap[$file.FullName] = $fileIssues
+		$headerLine = "$($file.FullName):"
+		Write-Host $headerLine -ForegroundColor Yellow
+		if ($SaveResults) {
+			$FileOutputLines += $headerLine
 		}
-		else {
-			# Create a backup
-			Copy-Item -Path $FilePath -Destination "$FilePath.bak" -Force
 
-			# Save modified file
-			$ResolvedPath = (Resolve-Path $FilePath).Path
-			$Lines | Set-Content -Path $ResolvedPath
-
-			Write-Host "`n$FileName updated (backup saved as $DisplayPath.bak)" -ForegroundColor Green
-			$ModifiedCount++
+		foreach ($issue in $fileIssues) {
+			Write-Host $issue -ForegroundColor Yellow
+			if ($SaveResults) {
+				$FileOutputLines += $issue
+			}
 		}
+
+		if (@($files).IndexOf($file) -lt ($files.Count - 1)) {
+			Write-Host ""
+			if ($SaveResults) {
+				$FileOutputLines += ""
+			}
+		}
+	}
+}
+
+if ($issueCount -eq 0) {
+	$summaryLine = "Scan complete. No trailing periods found."
+	Write-Host $summaryLine -ForegroundColor Green
+
+	if ($SaveResults) {
+		$FileOutputLines += $summaryLine
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+
+	exit 0
+}
+
+# Determine whether to fix
+$doFix = $false
+if ($Fix) {
+	$doFix = $true
+}
+else {
+	Write-Host ""
+	$fixResponse = Read-Host "Would you like to fix these issues? (Y/N)"
+	if ($fixResponse -match '^[Yy]$') {
+		$doFix = $true
+	}
+}
+
+if (-not $doFix) {
+	$summaryLine = "Scan complete. $issueCount instance(s) found. No fixes applied."
+	Write-Host "`n$summaryLine" -ForegroundColor Yellow
+
+	if ($SaveResults) {
+		$FileOutputLines += ""
+		$FileOutputLines += $summaryLine
+
+		while ($FileOutputLines[-1] -eq '') {
+			$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+		}
+
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+
+	exit 0
+}
+
+# Determine whether to create backups
+$doBackup = $false
+if ($Backup) {
+	$doBackup = $true
+}
+else {
+	if (-not $Fix) {
+		Write-Host ""
+		$backupResponse = Read-Host "Would you like to create backups before fixing? (Y/N)"
+		if ($backupResponse -match '^[Yy]$') {
+			$doBackup = $true
+		}
+	}
+}
+
+# Second pass: fix files
+$firstFix     = $true
+$firstFixFile = $true
+foreach ($file in $files) {
+	if (-not $fileIssuesMap.ContainsKey($file.FullName)) {
+		continue
+	}
+
+	if ($firstFixFile) {
+		Write-Host ""
+		$firstFixFile = $false
+		if ($SaveResults) {
+			$FileOutputLines += ""
+		}
+	}
+
+	$lines    = @(Get-Content -LiteralPath $file.FullName)
+	$newLines = @()
+
+	for ($i = 0; $i -lt $lines.Count; $i++) {
+		$line = $lines[$i]
+		if ($line -match '(Write-Error|Write-Warning).*?\$\(\$_\.Exception\.Message\)\.') {
+			$line = $line -replace '(\$\(\$_\.Exception\.Message\))\.', '$1'
+			$fixedCount++
+		}
+		$newLines += $line
+	}
+
+	try {
+		if ($doBackup) {
+			$backupPath = $file.FullName + ".bak"
+			Copy-Item -Path $file.FullName -Destination $backupPath -Force -ErrorAction Stop
+			Write-Host "Backup created: $backupPath" -ForegroundColor Cyan
+			if ($SaveResults) {
+				$FileOutputLines += "Backup created: $backupPath"
+			}
+		}
+
+		$utf8Bom = New-Object System.Text.UTF8Encoding $true
+		[System.IO.File]::WriteAllText($file.FullName, ($newLines -join "`r`n"), $utf8Bom)
+		if ($firstFix -and -not $doBackup) {
+			$firstFix = $false
+		}
+		Write-Host "Fixed: $($file.Name)" -ForegroundColor Green
+		if ($SaveResults) {
+			$FileOutputLines += "Fixed: $($file.Name)"
+		}
+	}
+	catch {
+		Write-Warning "Could not write to $($file.Name): $($_.Exception.Message)"
 	}
 }
 
 # Summary
-if ($DryRun) {
-	Write-Host "`nScan complete. $ModifiedCount file(s) would be modified." -ForegroundColor Yellow
-}
-else {
-	Write-Host "`nScan complete. Modified $ModifiedCount file(s)." -ForegroundColor Green
+$summaryLine = "Scan complete. $issueCount instance(s) found, $fixedCount fixed."
+Write-Host "`n$summaryLine" -ForegroundColor Green
+
+# Save results if requested
+if ($SaveResults) {
+	$FileOutputLines += ""
+	$FileOutputLines += $summaryLine
+
+	while ($FileOutputLines[-1] -eq '') {
+		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	}
+
+	$outputString = ($FileOutputLines -join "`n")
+	[System.IO.File]::WriteAllText($SaveResults, $outputString)
+
+	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

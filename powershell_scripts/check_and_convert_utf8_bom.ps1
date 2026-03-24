@@ -6,11 +6,11 @@
 #     -ConvertAll: Automatically convert all files without prompting
 #     -Failures: Only show files skipped or not converted
 #     -Recurse: Include all .ps1 and .reg files in subfolders of the specified path
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt") - must be specified last
+#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Successes: Only show successfully converted filenames
 #     -Help / -?: Display this help message
 
-[CmdletBinding(DefaultParameterSetName='Normal')]
+[CmdletBinding(PositionalBinding=$false)]
 param(
 	[switch]$Backup,
 	[switch]$ConvertAll,
@@ -32,7 +32,7 @@ if ($Help) {
 	Write-Host "  -ConvertAll          Automatically convert all files without prompting" -ForegroundColor Cyan
 	Write-Host "  -Failures            Only show files skipped or not converted" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include all .ps1 and .reg files in subfolders of the specified path" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Successes           Only show successfully converted filenames" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability

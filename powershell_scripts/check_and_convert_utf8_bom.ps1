@@ -1,23 +1,11 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# Description:
-#  - This script checks files for UTF-8 BOM formatting and optionally converts them to UTF-8 BOM
-
-# Features:
-#  - Interactive Y/N prompts for each file that is missing BOM
-#  - Optional backups before conversion (-Backup skips prompts)
-#  - Can scan a single file or all files in a folder. Use -Recurse for subfolders
-#  - Quick one-line summary at the end showing total files scanned, missing BOM, and converted files
-#  - Success/failure separation in output for easier reading
-#  - Correct UTF-8 BOM output in both PowerShell 5.x and 7.x
-#  - Robust handling of skipped files to always display filename
-#  - Warns if no .ps1 files are found in the specified path
-#  - Optional saving of results to a text file
+# This script checks files for UTF-8 BOM formatting and optionally converts them to UTF-8 BOM
 
 # Optional flags:
 #     -Backup: Automatically create backups before converting files (skips interactive prompt)
 #     -ConvertAll: Automatically convert all files without prompting
 #     -Failures: Only show files skipped or not converted
-#     -Recurse: Include all .ps1 files in subfolders of the specified path
+#     -Recurse: Include all .ps1 and .reg files in subfolders of the specified path
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt") - must be specified last
 #     -Successes: Only show successfully converted filenames
 #     -Help / -?: Display this help message
@@ -43,7 +31,7 @@ if ($Help) {
 	Write-Host "  -Backup              Automatically create backups before converting files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -ConvertAll          Automatically convert all files without prompting" -ForegroundColor Cyan
 	Write-Host "  -Failures            Only show files skipped or not converted" -ForegroundColor Cyan
-	Write-Host "  -Recurse             Include all .ps1 files in subfolders of the specified path" -ForegroundColor Cyan
+	Write-Host "  -Recurse             Include all .ps1 and .reg files in subfolders of the specified path" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
 	Write-Host "  -Successes           Only show successfully converted filenames" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -52,7 +40,7 @@ if ($Help) {
 }
 
 # Prompt user for file or folder path
-$Path = Read-Host "`nEnter the full path to a script (.ps1) or a folder containing scripts"
+$Path = Read-Host "`nEnter the full path to a .ps1 or .reg file, or a folder"
 Write-Host ""  # blank line after initial user-input
 
 # Validate path exists
@@ -63,24 +51,24 @@ if (-not (Test-Path $Path)) {
 
 $items = Get-Item $Path
 
-# Include only .ps1 scripts
+# Include only .ps1 and .reg files
 $files = if ($items.PSIsContainer) {
-	Get-ChildItem -Path $Path -File -Recurse:$Recurse -Filter *.ps1
+	Get-ChildItem -Path $Path -File -Recurse:$Recurse | Where-Object { $_.Extension -in '.ps1', '.reg' }
 }
 else {
-	if ($items.Extension -eq '.ps1') { @($items) } else { @() }
+	if ($items.Extension -in '.ps1', '.reg') { @($items) } else { @() }
 }
 
-# Quick check for no .ps1 files
+# Quick check for no .ps1 or .reg files
 if (-not $files -or $files.Count -eq 0) {
-	Write-Host "No PowerShell (.ps1) files found in '$Path'. Exiting..." -ForegroundColor Red
+	Write-Host "No PowerShell (.ps1) or Registry (.reg) files found in '$Path'. Exiting..." -ForegroundColor Red
 	exit 1
 }
 
 # Counters for statistics
 $TotalFiles = 0
 $MissingBOM = 0
-$Converted = 0
+$Converted  = 0
 
 # Arrays to separate successes and failures for clean output
 $SuccessFiles = @()
@@ -159,7 +147,7 @@ if ($SuccessFiles.Count -and (-not $ConvertAll)) {
 
 # Interactive processing for files missing BOM
 foreach ($filePath in $FailureFiles) {
-	$file = Get-Item $filePath
+	$file     = Get-Item $filePath
 	$fileName = $file.Name
 	Write-Host "${fileName}: UTF-8 BOM Incorrect" -ForegroundColor Yellow
 

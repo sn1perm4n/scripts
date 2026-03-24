@@ -1,17 +1,8 @@
-﻿# This script deletes the contents of a specific folder
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script deletes the contents of a specific folder:
+# C:\ProgramData\Apple Computer\Installer Cache
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Specify the directory to process
 $appleComputerInstallerCacheFolder = 'C:\ProgramData\Apple Computer\Installer Cache'
@@ -31,7 +22,7 @@ if (Test-Path -Path $appleComputerInstallerCacheFolder) {
 		$items | ForEach-Object { Write-Host " - $($_.FullName)" }
 		# Delete all files/folders within the directory
 		Remove-Item -Path "$appleComputerInstallerCacheFolder\*" -Recurse -Force
-		Write-Host "Successfully deleted the contents of '$appleComputerInstallerCacheFolder'."
+		Write-Host "Successfully deleted the contents of '$appleComputerInstallerCacheFolder'." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$appleComputerInstallerCacheFolder': $($_.Exception.Message)"

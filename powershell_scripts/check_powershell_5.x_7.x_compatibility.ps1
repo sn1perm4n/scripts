@@ -1,25 +1,15 @@
 ﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# Description:
-#  - This script uses PSScriptAnalyzer to check all PowerShell scripts in a user-specified directory for compatibility with PowerShell 5.x and 7.x
-
-# Features:
-#  - Automatically installs PSScriptAnalyzer if not already present
-#  - Detects all installed PowerShell 5.x and 7.x versions on the system
-#  - Analyzes a single script or all .ps1 files in a folder (including subfolders)
-#  - Optional compact output mode to match saved file formatting
-#  - Optional filtering to show only passing or failing scripts
-#  - Optional summary showing total scripts analyzed, passed, and failed
-#  - Optional saving of results to a text file
+# This script uses PSScriptAnalyzer to check all PowerShell scripts in a user-specified directory for compatibility with PowerShell 5.x and 7.x
 
 # Optional flags:
 #     -CompactOutput: Simplifies console output to match saved file style (removes separators and extra spacing)
 #     -Failures: Shows only scripts with issues in output
+#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Successes: Shows only scripts with no issues in output
 #     -Summary: Shows a summary of analyzed scripts at the end
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt") - must be specified last
 #     -Help / -?: Display this help message
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$CompactOutput,
 	[switch]$Failures,
@@ -40,7 +30,7 @@ if ($Help) {
 	Write-Host "  -Failures            Show only scripts with compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -Successes           Show only scripts with no compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0

@@ -1,19 +1,16 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# Description:
-#  - This script searches a user-defined directory for a user-defined text string
-
-# Features:
-#  - Searches all files in a directory recursively
-#  - Displays matching file path, line number, and line content in table format
-#  - Displays a summary of total matches and files found
-#  - Optional saving of results to a text file
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script searches a user-defined directory for a user-defined text string
 
 # Optional flags:
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt") - must be specified last
+#     -CaseSensitive: Enables case-sensitive search
+#     -Recurse: Search subdirectories recursively
+#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding=$false)]
 param (
+	[switch]$CaseSensitive,
+	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
 )
@@ -23,9 +20,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
+	Write-Host "  -CaseSensitive       Enables case-sensitive search" -ForegroundColor Cyan
+	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0
@@ -45,8 +44,22 @@ $searchText = Read-Host "`nEnter the text string to search for"
 
 try {
 	Write-Host "`nSearching for '$searchText' in '$searchPath'..." -ForegroundColor Cyan
-	$Results = Get-ChildItem -Path $searchPath -Recurse -File -ErrorAction Stop |
-		Select-String -Pattern $searchText -SimpleMatch -ErrorAction Stop
+
+	$getChildItemParams = @{
+		Path    = $searchPath
+		File    = $true
+		Recurse = $Recurse
+		ErrorAction = 'Stop'
+	}
+
+	$selectStringParams = @{
+		Pattern     = $searchText
+		SimpleMatch = $true
+		CaseSensitive = $CaseSensitive
+		ErrorAction = 'Stop'
+	}
+
+	$Results = Get-ChildItem @getChildItemParams | Select-String @selectStringParams
 
 	if ($Results) {
 		$Results | Select-Object Path, LineNumber, Line |
@@ -59,10 +72,12 @@ try {
 				$outputLines += "Path: $($result.Path)"
 				$outputLines += "Line $($result.LineNumber): $($result.Line.Trim())"
 			}
+
 			# Remove trailing blank lines
 			while ($outputLines[-1] -eq '') {
 				$outputLines = $outputLines[0..($outputLines.Count - 2)]
 			}
+
 			$outputLines += ""
 			$outputLines += "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)."
 			$outputString = ($outputLines -join "`n")

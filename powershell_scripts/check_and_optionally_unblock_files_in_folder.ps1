@@ -1,18 +1,7 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script checks a user-supplied folder (and subfolders) for files that are blocked from running and then optionally unblocks them. Two practical examples would be C:\Tools\PsTools (or in my instance C:\Program Files (x86)\PsTools 2.51) and C:\Tools\unxutils. Admin is required to make changes to any file in one of the protected system folders. Delete everything from here down to "# Prompt the user for the folder to process" if you don't need the admin requirement.
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script checks a user-supplied folder (and subfolders) for files that are blocked from running and then optionally unblocks them. Two practical examples would be C:\Tools\PsTools (or in my instance C:\Program Files (x86)\PsTools 2.51) and C:\Tools\unxutils. Admin is required to make changes to any file in one of the protected system folders (remove #Requires -RunAsAdministrator if you don't need this).
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Prompt the user for the folder to process
 $Path = Read-Host "Enter the directory to scan"
@@ -39,7 +28,7 @@ catch {
 }
 
 $blockedFiles = @()
-$checkErrors  = @()
+$checkErrors = @()
 
 foreach ($file in $files) {
 
@@ -74,7 +63,7 @@ if ($checkErrors.Count -gt 0) {
 	Write-Host "`nSome files could not be checked:" -ForegroundColor DarkYellow
 
 	foreach ($err in $checkErrors) {
-		Write-Host "File: $($err.File)"  -ForegroundColor Red
+		Write-Host "File: $($err.File)" -ForegroundColor Red
 		Write-Host "Error: $($err.Error)" -ForegroundColor Red
 	}
 }
@@ -93,7 +82,7 @@ if ($response -match '^[Yy]$') {
 		}
 		catch {
 			$unblockErrors += [PSCustomObject]@{
-				File  = $file.FullName
+				File = $file.FullName
 				Error = $_.Exception.Message
 			}
 		}
@@ -106,7 +95,7 @@ if ($response -match '^[Yy]$') {
 		Write-Host "`nSome files failed to unblock:" -ForegroundColor Yellow
 
 		foreach ($err in $unblockErrors) {
-			Write-Host "File: $($err.File)"  -ForegroundColor Red
+			Write-Host "File: $($err.File)" -ForegroundColor Red
 			Write-Host "Error: $($err.Error)" -ForegroundColor Red
 		}
 	}

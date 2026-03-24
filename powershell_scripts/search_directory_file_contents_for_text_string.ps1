@@ -3,6 +3,7 @@
 
 # Optional flags:
 #     -CaseSensitive: Enables case-sensitive search
+#     -Filenames: Show filenames only instead of full paths
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -10,6 +11,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$CaseSensitive,
+	[switch]$Filenames,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -20,9 +22,10 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Filenames] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive       Enables case-sensitive search" -ForegroundColor Cyan
+	Write-Host "  -Filenames           Show filenames only instead of full paths" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -46,30 +49,37 @@ try {
 	Write-Host "`nSearching for '$searchText' in '$searchPath'..." -ForegroundColor Cyan
 
 	$getChildItemParams = @{
-		Path    = $searchPath
-		File    = $true
-		Recurse = $Recurse
+		Path        = $searchPath
+		File        = $true
+		Recurse     = $Recurse
 		ErrorAction = 'Stop'
 	}
 
 	$selectStringParams = @{
-		Pattern     = $searchText
-		SimpleMatch = $true
+		Pattern       = $searchText
+		SimpleMatch   = $true
 		CaseSensitive = $CaseSensitive
-		ErrorAction = 'Stop'
+		ErrorAction   = 'Stop'
 	}
 
 	$Results = Get-ChildItem @getChildItemParams | Select-String @selectStringParams
 
 	if ($Results) {
-		$Results | Select-Object Path, LineNumber, Line |
-			Format-Table -AutoSize
-		Write-Host "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)." -ForegroundColor Cyan
+		$displayResults = $Results | Select-Object @{
+			Name       = 'Path'
+			Expression = { if ($Filenames) { $_.Filename } else { $_.Path } }
+		}, LineNumber, Line
+
+		$displayResults | Format-Table -AutoSize
+
+		$summaryLine = "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)."
+		Write-Host $summaryLine -ForegroundColor Cyan
 
 		if ($SaveResults) {
 			$outputLines = @()
 			foreach ($result in $Results) {
-				$outputLines += "Path: $($result.Path)"
+				$displayPath = if ($Filenames) { $result.Filename } else { $result.Path }
+				$outputLines += "Path: $displayPath"
 				$outputLines += "Line $($result.LineNumber): $($result.Line.Trim())"
 			}
 
@@ -79,7 +89,7 @@ try {
 			}
 
 			$outputLines += ""
-			$outputLines += "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)."
+			$outputLines += $summaryLine
 			$outputString = ($outputLines -join "`n")
 			[System.IO.File]::WriteAllText($SaveResults, $outputString)
 			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green

@@ -1,4 +1,4 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script disables unnecessary devices (and deletes an invisible monitor) in Device Manager. Some devices get re-enabled (or reappear) every time the Nvidia driver is updated. To see invisible devices in Device Manager, go to the "View" menu and enable "Show hidden devices".
 
 # IMPORTANT: It is unfortunately NOT possible to query the device status first so only enabled devices are processed. As a result, error-handling also can't be added. The only solution is to forcefully disable the devices every time the script runs (which is in no way harmful).
@@ -6,24 +6,13 @@
 # NOTE: Under NO CIRCUMSTANCES should you delete every invisible device in Device Manager (unless you know EXACTLY what you're doing).
 
 # Use the following command to dump output to a file for easy searching:
-# Get-PnpDevice | Out-File -FilePath "C:\Users\<USERNAME>\Desktop\get-pnpdevices_output.txt"
+# Get-PnpDevice | Out-File -FilePath "C:\Users\<username>\Desktop\get-pnpdevices_output.txt"
 # Can use the following command to prevent InstanceId from truncating:
 # Get-PnpDevice | Format-Table -AutoSize -Wrap | Out-File -FilePath "C:\Users\<USERNAME>\Desktop\get-pnpdevices_output.txt"
 # Can use the following command to only print non-truncated InstanceId column:
 # Get-PnpDevice | Select-Object -ExpandProperty InstanceId | Out-File -FilePath "C:\Users\<USERNAME>\Desktop\get-pnpdevices_output.txt"
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Realtek Digital Output (Realtek(R) Audio)
 Get-PnpDevice -FriendlyName "Realtek Digital Output (Realtek(R) Audio)" | Disable-PnpDevice -Confirm:$false

@@ -1,24 +1,12 @@
-﻿# This script stops and disables various unnecessary services I don't use in Windows 11 and must be run as Administrator, which requires the following:
-# 1. Create a shortcut to the .ps1 file, set the "Target" field to C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -command "& C:\Users\<PROFILE>\Scripts\disable_windows11_services.ps1"
-# 2. Enable "Run as administrator" in the Shortcut tab -> Advanced)
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script stops and disables various unnecessary services I don't use in Windows 11
 # I strongly recommend creating a backup of your existing service settings before running this script. This way if something breaks you'll be able to figure out what changed and revert accordingly.
 # Instructions:
 # 1. Open PowerShell and type the following:
-# 2. Get-Service | Select-Object Name, Status, StartType | Out-File -FilePath C:\Users\<PROFILE>\Desktop\Service_Status.txt
-# NOTE: Substitute <PROFILE> with whatever your username is.
+# 2. Get-Service | Select-Object Name, Status, StartType | Out-File -FilePath C:\Users\<username>\Desktop\Service_Status.txt
+# NOTE: Substitute <username> with whatever your username is
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # AssignedAccessManagerSvc (AssignedAccessManager Service)
 Stop-Service -Name AssignedAccessManagerSvc -Force -ErrorAction Stop

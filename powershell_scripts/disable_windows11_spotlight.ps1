@@ -1,18 +1,7 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script disables all Windows Spotlight features in Windows 11 and sets the desktop background to blank
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 $ErrorActionPreference = "Continue"
 $hadErrors = $false

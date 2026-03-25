@@ -1,17 +1,8 @@
-﻿# This script keeps only the latest folder that starts with the characters "Apple Software Update*" in a specific folder (all other folders are deleted)
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script keeps only the latest folder that starts with the characters "Apple Software Update*" in a specific folder (all other folders are deleted):
+# C:\ProgramData\Apple\Installer Cache
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Specify the directory to process
 $appleInstallerCacheFolder = 'C:\ProgramData\Apple\Installer Cache'

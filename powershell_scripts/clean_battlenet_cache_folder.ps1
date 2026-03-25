@@ -1,17 +1,8 @@
-﻿# This script deletes the contents of a specific folder
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script deletes the contents of a specific folder:
+# C:\ProgramData\Blizzard Entertainment\Battle.net\Cache
+
 #Requires -RunAsAdministrator
-
-# Ensure script runs as Administrator
-$principal = New-Object Security.Principal.WindowsPrincipal `
-	([Security.Principal.WindowsIdentity]::GetCurrent())
-
-if (-not $principal.IsInRole(
-	[Security.Principal.WindowsBuiltInRole]::Administrator
-)) {
-	Write-Host "Please run this script as Administrator. Press any key to exit..." -ForegroundColor Red
-	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-	exit 1
-}
 
 # Specify the directory to process
 $battlenetCacheFolder = 'C:\ProgramData\Blizzard Entertainment\Battle.net\Cache'

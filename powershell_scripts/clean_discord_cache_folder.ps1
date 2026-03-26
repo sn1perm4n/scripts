@@ -1,7 +1,9 @@
-﻿# This script searches a specific directory for folders that start with the characters "app-" and keeps the one with the highest number
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
+# $env:LOCALAPPDATA\Discord (resolves to C:\Users\<username>\AppData\Local\Discord)
 
 # Specify the target directory
-$appdataLocalDiscordFolder = 'C:\Users\<PROFILE>\AppData\Local\Discord'
+$appdataLocalDiscordFolder = '$env:LOCALAPPDATA\Discord'
 
 # Check if the directory exists
 if (Test-Path -Path $appdataLocalDiscordFolder) {
@@ -19,8 +21,8 @@ if (Test-Path -Path $appdataLocalDiscordFolder) {
 			$path = $_.FullName
 			if ($name -match '^app-(\d+(?:\.\d+)*)$') {
 				[PSCustomObject]@{
-				Name    = $name
-				Path    = $path
+				Name = $name
+				Path = $path
 				Version = [version]$matches[1]
 				}
 			}
@@ -31,13 +33,13 @@ if (Test-Path -Path $appdataLocalDiscordFolder) {
 		}
 		# Keep the highest "app-" version
 		$keep = $appNumbers | Select-Object -First 1
-		Write-Host "Keeping folder: $($keep.Name)"
+		Write-Host "`nKeeping folder: $($keep.Name)`n" -ForegroundColor Green
 		# Delete all other "app-" versions
 		$appNumbers | Where-Object { $_.Path -ne $keep.Path } | ForEach-Object {
-			Write-Output "Deleting folder: $($_.Path)"
+			Write-Host "Deleting folder: $($_.Path)" -ForegroundColor Yellow
 			Remove-Item -Path $_.Path -Recurse -Force
 		}
-		Write-Host "Successfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalDiscordFolder'."
+		Write-Host "`nSuccessfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalDiscordFolder'." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordFolder': $($_.Exception.Message)"

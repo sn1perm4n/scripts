@@ -1,15 +1,15 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script searches a specific directory for folders that start with the characters "app-" and keeps the one with the highest number:
-# C:\Users\<PROFILE>\AppData\Local\GitHubDesktop
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
+# $env:LOCALAPPDATA\GitHubDesktop (resolves to C:\Users\<username>\AppData\Local\GitHubDesktop)
 
-# Specify the target directory - Change <PROFILE> to to match your system
-$appdataLocalGithubdesktopFolder = 'C:\Users\<PROFILE>\AppData\Local\GitHubDesktop'
+# Specify the target directory
+$appdataLocalGitHubDesktopFolder = "$env:LOCALAPPDATA\GitHubDesktop"
 
 # Check if the directory exists
-if (Test-Path -Path $appdataLocalGithubdesktopFolder) {
+if (Test-Path -Path $appdataLocalGitHubDesktopFolder) {
 	try {
 		# Get all directories starting with "app-"
-		$appDirs = Get-ChildItem -Path $appdataLocalGithubdesktopFolder -Directory | Where-Object { $_.Name -like 'app-*' }
+		$appDirs = Get-ChildItem -Path $appdataLocalGitHubDesktopFolder -Directory | Where-Object { $_.Name -like 'app-*' }
 		# Guard clause that activates and exits if there's only 0 or 1 "app-" folder
 		if ($appDirs.Count -le 1) {
 			Write-Warning "Only $($appDirs.Count) 'app-' folder found, nothing to delete."
@@ -28,25 +28,25 @@ if (Test-Path -Path $appdataLocalGithubdesktopFolder) {
 			}
 		} | Sort-Object Version -Descending
 		if (-not $appNumbers) {
-			Write-Warning "No folders starting with 'app-' found in '$appdataLocalGithubdesktopFolder'."
+			Write-Warning "No folders starting with 'app-' found in '$appdataLocalGitHubDesktopFolder'."
 			return
 		}
 		# Keep the highest "app-" version
 		$keep = $appNumbers | Select-Object -First 1
-		Write-Host "Keeping folder: $($keep.Name)" -ForegroundColor Green
+		Write-Host "`nKeeping folder: $($keep.Name)`n" -ForegroundColor Green
 		# Delete all other "app-" versions
 		$appNumbers | Where-Object { $_.Path -ne $keep.Path } | ForEach-Object {
-			Write-Output "Deleting folder: $($_.Path)"
+			Write-Host "Deleting folder: $($_.Path)" -ForegroundColor Yellow
 			Remove-Item -Path $_.Path -Recurse -Force
 		}
-		Write-Host "Successfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalGithubdesktopFolder'." -ForegroundColor Green
+		Write-Host "`nSuccessfully deleted all 'app-' folders with the exception of the newest in '$appdataLocalGitHubDesktopFolder'." -ForegroundColor Green
 	}
 	catch {
-		Write-Error "An error occurred while trying to delete items in '$appdataLocalGithubdesktopFolder': $($_.Exception.Message)"
+		Write-Error "An error occurred while trying to delete items in '$appdataLocalGitHubDesktopFolder': $($_.Exception.Message)"
 	}
 }
 else {
-	Write-Warning "The directory '$appdataLocalGithubdesktopFolder' does not exist."
+	Write-Warning "The directory '$appdataLocalGitHubDesktopFolder' does not exist."
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

@@ -1,7 +1,9 @@
-﻿# This script deletes all *.log files in a specific directory
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script deletes all *.log files in a specific directory:
+# $env:LOCALAPPDATA\Discord (resolves to C:\Users\<username>\AppData\Local\Discord)
 
 # Specify the directory to process
-$appdataLocalDiscordLogsFolder = 'C:\Users\<PROFILE>\AppData\Local\Discord'
+$appdataLocalDiscordLogsFolder = '$env:LOCALAPPDATA\Discord'
 
 # Check if the directory exists
 if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
@@ -17,10 +19,10 @@ if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 		}
 		# Delete each log file
 		foreach ($log in $logFiles) {
-			Write-Host "Deleting the following item: $($log.FullName)"
+			Write-Host "Deleting the following item: $($log.FullName)" -ForegroundColor Yellow
 			Remove-Item -Path $log.FullName -Force
 		}
-		Write-Host "Successfully deleted all .log files from '$appdataLocalDiscordLogsFolder'."
+		Write-Host "Successfully deleted all .log files from '$appdataLocalDiscordLogsFolder'." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordLogsFolder': $($_.Exception.Message)"

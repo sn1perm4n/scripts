@@ -3,7 +3,7 @@
 
 # Optional flags:
 #     -CaseSensitive: Enables case-sensitive search
-#     -Filenames: Show filenames only instead of full paths
+#     -Filenames: Show unique filenames only instead of full table output
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -25,7 +25,7 @@ if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Filenames] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive       Enables case-sensitive search" -ForegroundColor Cyan
-	Write-Host "  -Filenames           Show filenames only instead of full paths" -ForegroundColor Cyan
+	Write-Host "  -Filenames           Show unique filenames only instead of full table output" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -33,8 +33,17 @@ if ($Help) {
 	exit 0
 }
 
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
 # Prompt user for directory path
-$searchPath = Read-Host "Enter the directory path to search"
+$searchPath = Read-Host "`nEnter the directory path to search"
 
 # Validate directory exists before proceeding
 if (-not (Test-Path -Path $searchPath -PathType Container)) {
@@ -49,50 +58,74 @@ try {
 	Write-Host "`nSearching for '$searchText' in '$searchPath'..." -ForegroundColor Cyan
 
 	$getChildItemParams = @{
-		Path        = $searchPath
-		File        = $true
-		Recurse     = $Recurse
+		Path = $searchPath
+		File = $true
+		Recurse = $Recurse
 		ErrorAction = 'Stop'
 	}
 
 	$selectStringParams = @{
-		Pattern       = $searchText
-		SimpleMatch   = $true
+		Pattern = $searchText
+		SimpleMatch = $true
 		CaseSensitive = $CaseSensitive
-		ErrorAction   = 'Stop'
+		ErrorAction = 'Stop'
 	}
 
 	$Results = Get-ChildItem @getChildItemParams | Select-String @selectStringParams
 
 	if ($Results) {
-		$displayResults = $Results | Select-Object @{
-			Name       = 'Path'
-			Expression = { if ($Filenames) { $_.Filename } else { $_.Path } }
-		}, LineNumber, Line
+		if ($Filenames) {
+			# Show unique filenames only as a clean list
+			$uniqueFiles = $Results | Select-Object -ExpandProperty Filename -Unique
+			Write-Host ""
+			$uniqueFiles | ForEach-Object { Write-Host $_ -ForegroundColor Cyan }
 
-		$displayResults | Format-Table -AutoSize
+			$summaryLine = "$($uniqueFiles.Count) file(s) found containing '$searchText'."
+			Write-Host "`n$summaryLine" -ForegroundColor Green
 
-		$summaryLine = "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)."
-		Write-Host $summaryLine -ForegroundColor Cyan
-
-		if ($SaveResults) {
-			$outputLines = @()
-			foreach ($result in $Results) {
-				$displayPath = if ($Filenames) { $result.Filename } else { $result.Path }
-				$outputLines += "Path: $displayPath"
-				$outputLines += "Line $($result.LineNumber): $($result.Line.Trim())"
+			if ($SaveResults) {
+				$outputLines = $uniqueFiles + @("", $summaryLine)
+				try {
+					$outputString = ($outputLines -join "`n")
+					[System.IO.File]::WriteAllText($SaveResults, $outputString)
+					Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+				}
+				catch {
+					Write-Host ""
+					Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+				}
 			}
+		}
+		else {
+			$Results | Select-Object Path, LineNumber, Line | Format-Table -AutoSize
 
-			# Remove trailing blank lines
-			while ($outputLines[-1] -eq '') {
-				$outputLines = $outputLines[0..($outputLines.Count - 2)]
+			$summaryLine = "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)."
+			Write-Host $summaryLine -ForegroundColor Green
+
+			if ($SaveResults) {
+				$outputLines = @()
+				foreach ($result in $Results) {
+					$outputLines += "Path: $($result.Path)"
+					$outputLines += "Line $($result.LineNumber): $($result.Line.Trim())"
+				}
+
+				while ($outputLines[-1] -eq '') {
+					$outputLines = $outputLines[0..($outputLines.Count - 2)]
+				}
+
+				$outputLines += ""
+				$outputLines += $summaryLine
+
+				try {
+					$outputString = ($outputLines -join "`n")
+					[System.IO.File]::WriteAllText($SaveResults, $outputString)
+					Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+				}
+				catch {
+					Write-Host ""
+					Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+				}
 			}
-
-			$outputLines += ""
-			$outputLines += $summaryLine
-			$outputString = ($outputLines -join "`n")
-			[System.IO.File]::WriteAllText($SaveResults, $outputString)
-			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
 		}
 	}
 	else {

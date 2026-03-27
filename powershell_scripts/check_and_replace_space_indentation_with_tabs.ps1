@@ -1,39 +1,84 @@
-﻿# This script checks a folder of PowerShell scripts or an individual PowerShell script for space indentation and replaces with tab indentation
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script checks a folder of PowerShell scripts or an individual PowerShell script for space indentation and replaces it with tab indentation
+
+# Optional flags:
+#     -Backup: Automatically create backups before modifying files (skips interactive prompt)
+#     -Recurse: Include files in subdirectories
+#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -Help / -?: Display this help message
+
+[CmdletBinding(PositionalBinding=$false)]
+param (
+	[switch]$Backup,
+	[switch]$Recurse,
+	[string]$SaveResults,
+	[switch]$Help
+)
+
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -Backup              Automatically create backups before modifying files (skips interactive prompt)" -ForegroundColor Cyan
+	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
+	Write-Host ""  # extra newline for readability
+	exit 0
+}
 
 # Number of spaces per tab
-# Converts leading spaces to tabs (preserves leftover spaces beyond full tabs)
 $spacesPerTab = 4
 
 # Prompt the user for a directory or individual script file
-$scriptFileOrDirectory = Read-Host "Enter the path to a PowerShell script directory or a single .ps1 file"
+$scriptFileOrDirectory = Read-Host "`nEnter the path to a PowerShell script directory or a single .ps1 file"
 
 # Validate the path
 if (-not (Test-Path $scriptFileOrDirectory)) {
-	Write-Host "`nThe path '$scriptFileOrDirectory' does not exist. Exiting..." -ForegroundColor Red
-	exit
+	Write-Error "The path '$scriptFileOrDirectory' does not exist."
+	exit 1
 }
 
 # Determine if path is a directory or a single file
 if ((Get-Item $scriptFileOrDirectory).PSIsContainer) {
-	# Directory: get all .ps1 files recursively
-	$files = Get-ChildItem -Path $scriptFileOrDirectory -Filter *.ps1 -Recurse
+	$files = Get-ChildItem -Path $scriptFileOrDirectory -Filter *.ps1 -Recurse:$Recurse
 	if ($files.Count -eq 0) {
-		Write-Host "`nNo .ps1 files found in the directory. Exiting..." -ForegroundColor Yellow
-		exit
+		Write-Host "`nNo .ps1 files found in the directory." -ForegroundColor Yellow
+		exit 0
 	}
-} else {
-	# Single file: check extension
+}
+else {
 	if ($scriptFileOrDirectory -notlike "*.ps1") {
-		Write-Host "`nThe file '$scriptFileOrDirectory' is not a .ps1 script. Exiting..." -ForegroundColor Red
-		exit
+		Write-Error "The file '$scriptFileOrDirectory' is not a .ps1 script."
+		exit 1
 	}
-	$files = @(Get-Item $scriptFileOrDirectory)  # wrap in array for consistency
+	$files = @(Get-Item $scriptFileOrDirectory)
+}
+
+# Initialize counters and output lines
+$modifiedCount = 0
+$FileOutputLines = @()
+
+# Determine whether to create backups
+$doBackup = $false
+if ($Backup) {
+	$doBackup = $true
+}
+else {
+	Write-Host ""
+	$backupResponse = Read-Host "Would you like to create backups before modifying? (Y/N)"
+	if ($backupResponse -match '^[Yy]$') {
+		$doBackup = $true
+	}
 }
 
 # Process each file
 foreach ($fileObj in $files) {
 	$file = $fileObj.FullName
-	Write-Host "`nProcessing $file" -ForegroundColor Cyan
+	Write-Host "`nProcessing: $file" -ForegroundColor Cyan
 
 	$changed = $false
 	$newContent = @()
@@ -48,7 +93,6 @@ foreach ($fileObj in $files) {
 
 			# Count total spaces: treat tabs as $spacesPerTab spaces
 			$spaceCount = ($leading -replace "`t", (" " * $spacesPerTab)).Length
-
 			$tabCount = [math]::Floor($spaceCount / $spacesPerTab)
 			$remainingSpaces = $spaceCount % $spacesPerTab
 
@@ -59,23 +103,61 @@ foreach ($fileObj in $files) {
 			# Only mark as changed if the line actually differs
 			if ($newLine -ne $line) {
 				$line = $newLine
-				Write-Host "  Replaced leading whitespace with $tabCount tabs + $remainingSpaces spaces on line $lineNumber" -ForegroundColor Yellow
 				$changed = $true
+				Write-Host "  Line $lineNumber`: replaced leading spaces with $tabCount tab(s) + $remainingSpaces space(s)" -ForegroundColor Yellow
 			}
 		}
-
 		$newContent += $line
 	}
 
 	if ($changed) {
-		# Backup original file
-		Copy-Item $file "$file.bak" -Force
-		# Save modified content
-		Set-Content $file $newContent  # Comment this line if you want to preview any changes
-		Write-Host "`nUpdated $file (backup saved as $file.bak)." -ForegroundColor Green
-	} else {
-		Write-Host "`nNo changes needed." -ForegroundColor Green
+		try {
+			if ($doBackup) {
+				$backupPath = "$file.bak"
+				Copy-Item $file $backupPath -Force -ErrorAction Stop
+				Write-Host "  Backup created: $backupPath" -ForegroundColor Cyan
+				if ($SaveResults) {
+					$FileOutputLines += "Backup created: $backupPath"
+				}
+			}
+
+			$utf8Bom = New-Object System.Text.UTF8Encoding $true
+			[System.IO.File]::WriteAllLines($file, $newContent, $utf8Bom)
+			Write-Host "  Updated: $file" -ForegroundColor Green
+			if ($SaveResults) {
+				$FileOutputLines += "Updated: $file"
+			}
+			$modifiedCount++
+		}
+		catch {
+			Write-Warning "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+		}
 	}
+	else {
+		Write-Host "  No changes needed." -ForegroundColor Green
+		if ($SaveResults) {
+			$FileOutputLines += "No changes needed: $file"
+		}
+	}
+}
+
+# Summary
+$summaryLine = "Complete. $modifiedCount file(s) modified."
+Write-Host "`n$summaryLine" -ForegroundColor Green
+
+# Save results if requested
+if ($SaveResults) {
+	$FileOutputLines += ""
+	$FileOutputLines += $summaryLine
+
+	while ($FileOutputLines[-1] -eq '') {
+		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	}
+
+	$outputString = ($FileOutputLines -join "`n")
+	[System.IO.File]::WriteAllText($SaveResults, $outputString)
+
+	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

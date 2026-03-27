@@ -41,7 +41,6 @@ if ($Help) {
 
 # Prompt user for file or folder path
 $Path = Read-Host "`nEnter the full path to a .ps1 or .reg file, or a folder"
-Write-Host ""  # blank line after initial user-input
 
 # Validate path exists
 if (-not (Test-Path $Path)) {

@@ -6,23 +6,38 @@
 
 # Specify the directory to process
 $appleComputerInstallerCacheFolder = 'C:\ProgramData\Apple Computer\Installer Cache'
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+Write-Host "`nChecking '$appleComputerInstallerCacheFolder'..." -ForegroundColor Cyan
 
 # Check if the directory exists
 if (Test-Path -Path $appleComputerInstallerCacheFolder) {
 	try {
 		# Check if the directory has any items
 		$items = Get-ChildItem -Path $appleComputerInstallerCacheFolder -Force
+
 		# Guard clause that activates and exits if the directory is empty
 		if (-not $items) {
 			Write-Warning "The directory '$appleComputerInstallerCacheFolder' exists but is empty."
-			return
+			exit 0
 		}
+
+		# Calculate size before deletion
+		$totalBytesFreed = (Get-ChildItem -Path $appleComputerInstallerCacheFolder -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+		if (-not $totalBytesFreed) { $totalBytesFreed = 0 }
+
 		# Output what will be deleted
-		Write-Host "Deleting the following items:"
+		Write-Host "`nDeleting the following items:" -ForegroundColor Cyan
 		$items | ForEach-Object { Write-Host " - $($_.FullName)" }
+
 		# Delete all files/folders within the directory
 		Remove-Item -Path "$appleComputerInstallerCacheFolder\*" -Recurse -Force
-		Write-Host "Successfully deleted the contents of '$appleComputerInstallerCacheFolder'." -ForegroundColor Green
+
+		# Summary
+		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
+		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
+		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
+		Write-Host "`n$ScriptName`: Cleanup complete, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$appleComputerInstallerCacheFolder': $($_.Exception.Message)"

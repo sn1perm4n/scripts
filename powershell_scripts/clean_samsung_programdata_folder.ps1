@@ -11,6 +11,9 @@ $directories = @(
 	'C:\ProgramData\Samsung\Samsung Magician\Site Link'
 )
 
+$totalBytesFreed = 0
+$directoriesProcessed = 0
+
 foreach ($dir in $directories) {
 	Write-Host "`nChecking '$dir'..." -ForegroundColor Cyan
 
@@ -25,12 +28,18 @@ foreach ($dir in $directories) {
 				continue
 			}
 
+			# Calculate size before deletion
+			$dirSize = (Get-ChildItem -Path $dir -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+			if (-not $dirSize) { $dirSize = 0 }
+
 			# Output what will be deleted
 			Write-Host "`nDeleting the following items:" -ForegroundColor Cyan
 			$items | ForEach-Object { Write-Host " - $($_.FullName)" }
 
 			# Delete all files and folders within the directory
 			$items | Remove-Item -Recurse -Force
+			$totalBytesFreed += $dirSize
+			$directoriesProcessed++
 			Write-Host "`nSuccessfully deleted the contents of '$dir'." -ForegroundColor Green
 		}
 		catch {
@@ -40,6 +49,15 @@ foreach ($dir in $directories) {
 	else {
 		Write-Warning "The directory '$dir' does not exist."
 	}
+}
+
+# Summary
+if ($directoriesProcessed -gt 0) {
+	$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
+	$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
+	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
+	$dirWord = if ($directoriesProcessed -eq 1) { "directory" } else { "directories" }
+	Write-Host "`nCleanup complete. $freedDisplay freed across $directoriesProcessed $dirWord." -ForegroundColor Green
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

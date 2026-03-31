@@ -43,7 +43,7 @@ if ($SaveResults) {
 }
 
 # Prompt user for directory path
-$searchPath = Read-Host "`nEnter the directory path to search"
+$searchPath = Read-Host "Enter the directory path to search"
 
 # Validate directory exists before proceeding
 if (-not (Test-Path -Path $searchPath -PathType Container)) {

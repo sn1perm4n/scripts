@@ -6,37 +6,53 @@
 
 # Specify the directory to process
 $battlenetAgentFolder = 'C:\ProgramData\Battle.net\Agent'
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+Write-Host "`nChecking '$battlenetAgentFolder'..." -ForegroundColor Cyan
 
 # Check if the directory exists
 if (Test-Path -Path $battlenetAgentFolder) {
 	try {
 		# Get all folders in the directory that start with "A"
-		$foldersStartingWithA = Get-ChildItem -Path $battlenetAgentFolder -Directory | Where-Object { $_.Name -clike "A*" }
+		$foldersStartingWithA = Get-ChildItem -Path $battlenetAgentFolder -Directory | Where-Object { $_.Name -clike 'A*' }
+
 		# Guard clause that activates and exits if no "A" folders exist
 		if (-not $foldersStartingWithA) {
 			Write-Warning "No folders starting with 'A' found in '$battlenetAgentFolder'."
-			return
+			exit 0
 		}
+
 		# Find the most recently modified folder that starts with "A"
 		$latestAFolder = $foldersStartingWithA | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-		# Output which folder is being kept
-		Write-Host "Keeping folder: $($latestAFolder.Name)"
-		# Track if any deletions happen
-		$deleted = $false
+
+		Write-Host "`nKeeping folder: $($latestAFolder.Name)" -ForegroundColor Green
+
+		$totalBytesFreed = 0
+		$deletedCount = 0
+
 		# Delete all "A" folders with the exception of the newest
 		foreach ($folder in $foldersStartingWithA) {
-			if ($latestAFolder -and $folder.FullName -ne $latestAFolder.FullName) {
-				Write-Host "Deleting folder: $($folder.FullName)"
+			if ($folder.FullName -ne $latestAFolder.FullName) {
+				$folderSize = (Get-ChildItem -Path $folder.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+				if (-not $folderSize) { $folderSize = 0 }
+				Write-Host "Deleting folder: $($folder.FullName)" -ForegroundColor Yellow
 				Remove-Item -Path $folder.FullName -Recurse -Force
-				$deleted = $true
+				$totalBytesFreed += $folderSize
+				$deletedCount++
 			}
 		}
-		if ($deleted) {
-			Write-Host "Successfully deleted all 'A' folders with the exception of the newest in '$battlenetAgentFolder'."
+
+		if ($deletedCount -eq 0) {
+			Write-Host "`nOnly one folder starting with 'A' exists. Nothing deleted." -ForegroundColor Yellow
+			exit 0
 		}
-		else {
-			Write-Host "Only one folder starting with 'A' exists. Nothing deleted."
-		}
+
+		# Summary
+		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
+		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
+		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
+		$folderWord = if ($deletedCount -eq 1) { "folder" } else { "folders" }
+		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$battlenetAgentFolder': $($_.Exception.Message)"

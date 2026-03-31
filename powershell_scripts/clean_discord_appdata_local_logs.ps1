@@ -3,26 +3,40 @@
 # $env:LOCALAPPDATA\Discord (resolves to C:\Users\<username>\AppData\Local\Discord)
 
 # Specify the directory to process
-$appdataLocalDiscordLogsFolder = '$env:LOCALAPPDATA\Discord'
+$appdataLocalDiscordLogsFolder = "$env:LOCALAPPDATA\Discord"
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+Write-Host "`nChecking '$appdataLocalDiscordLogsFolder'..." -ForegroundColor Cyan
 
 # Check if the directory exists
 if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 	try {
 		# Get all *.log files in the specified directory
-		# -Filter "*.log" ensures only files with the .log extension are selected
-		# -File ensures only files are processed, not directories
 		$logFiles = Get-ChildItem -Path $appdataLocalDiscordLogsFolder -Filter *.log -File
+
 		# Guard clause that activates and exits if no .log files are found
 		if (-not $logFiles) {
 			Write-Warning "No .log files exist in '$appdataLocalDiscordLogsFolder'."
-			return
+			exit 0
 		}
+
+		# Calculate size before deletion
+		$totalBytesFreed = ($logFiles | Measure-Object -Property Length -Sum).Sum
+		if (-not $totalBytesFreed) { $totalBytesFreed = 0 }
+
 		# Delete each log file
+		Write-Host "`nDeleting the following items:" -ForegroundColor Cyan
 		foreach ($log in $logFiles) {
-			Write-Host "Deleting the following item: $($log.FullName)" -ForegroundColor Yellow
+			Write-Host " - $($log.FullName)"
 			Remove-Item -Path $log.FullName -Force
 		}
-		Write-Host "Successfully deleted all .log files from '$appdataLocalDiscordLogsFolder'." -ForegroundColor Green
+
+		# Summary
+		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
+		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
+		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
+		$fileWord = if ($logFiles.Count -eq 1) { "file" } else { "files" }
+		Write-Host "`n$ScriptName`: $($logFiles.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordLogsFolder': $($_.Exception.Message)"

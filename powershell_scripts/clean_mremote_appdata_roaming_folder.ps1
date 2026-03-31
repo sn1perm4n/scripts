@@ -1,27 +1,47 @@
-﻿# This script deletes all *.backup files aside from the most recent one in a specific folder
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script deletes all *.backup files aside from the most recent one in a specific folder:
+# $env:APPDATA\mRemoteNG (resolves to C:\Users\<username>\AppData\Roaming\mRemoteNG)
 
 # Specify the directory to process
-$appdataRoamingMremoteng = 'C:\Users\<PROFILE>\AppData\Roaming\mRemoteNG'
+$appdataRoamingMremoteng = "$env:APPDATA\mRemoteNG"
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+Write-Host "`nChecking '$appdataRoamingMremoteng'..." -ForegroundColor Cyan
 
 # Check if the directory exists
 if (Test-Path -Path $appdataRoamingMremoteng) {
 	try {
 		# Get all .backup files, sorted by LastWriteTime (newest first)
 		$backupFiles = Get-ChildItem -Path $appdataRoamingMremoteng -Filter "*.backup" -File | Sort-Object LastWriteTime -Descending
+
 		# Guard clause that activates and exits if 0 or 1 .backup file is found
 		if ($backupFiles.Count -le 1) {
-			Write-Warning "Found $($backupFiles.Count) .backup file(s). Nothing to delete."
-			return
+			Write-Warning "Found $($backupFiles.Count) .backup file(s), nothing to delete."
+			exit 0
 		}
+
 		# Keep the most recent .backup file
 		$keepFile = $backupFiles[0]
-		Write-Host "Keeping file: $($keepFile.FullName)"
+		Write-Host "`nKeeping file: $($keepFile.FullName)" -ForegroundColor Green
+
+		$totalBytesFreed = 0
+		$deletedCount = 0
+
 		# Delete the remaining .backup files
 		foreach ($backupFile in $backupFiles | Select-Object -Skip 1) {
-			Write-Host "Deleting: $($backupFile.FullName)"
+			$fileSize = $backupFile.Length
+			Write-Host "Deleting: $($backupFile.FullName)" -ForegroundColor Yellow
 			Remove-Item -Path $backupFile.FullName -Force
+			$totalBytesFreed += $fileSize
+			$deletedCount++
 		}
-		Write-Host "Successfully deleted all .backup files with the exception of the newest from '$appdataRoamingMremoteng'."
+
+		# Summary
+		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
+		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
+		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
+		$fileWord = if ($deletedCount -eq 1) { "file" } else { "files" }
+		Write-Host "`n$ScriptName`: $deletedCount $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Error "An error occurred while trying to delete items in '$appdataRoamingMremoteng': $($_.Exception.Message)"

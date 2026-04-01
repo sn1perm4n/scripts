@@ -2,7 +2,12 @@
 # This script is a parameterized utility that deletes the contents of a specified folder. It can be reused for any folder:
 # Usage: .\clean_folder.ps1 -TargetFolder "C:\ProgramData\Apple Computer\Installer Cache"
 
-
+# Required flag:
+#     -TargetFolder <PATH>: Full path to the folder to clean
+# Optional flags:
+#     -Preview: Show what would be deleted without making any changes
+#     -Recurse: Include files in subdirectories when listing and deleting
+#     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
 

@@ -6,6 +6,8 @@
 
 # Specify the directory to process
 $battlenetCacheFolder = 'C:\ProgramData\Blizzard Entertainment\Battle.net\Cache'
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$battlenetCacheFolder'..." -ForegroundColor Cyan

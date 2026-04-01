@@ -6,6 +6,8 @@
 
 # Specify the directory to process
 $battlenetAgentFolder = 'C:\ProgramData\Battle.net\Agent'
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$battlenetAgentFolder'..." -ForegroundColor Cyan

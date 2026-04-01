@@ -6,6 +6,8 @@
 
 # Specify the directory to process
 $programdataPatchmypcFolder = 'C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates'
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$programdataPatchmypcFolder'..." -ForegroundColor Cyan

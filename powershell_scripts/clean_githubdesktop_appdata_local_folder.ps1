@@ -4,6 +4,8 @@
 
 # Specify the target directory
 $appdataLocalGitHubDesktopFolder = "$env:LOCALAPPDATA\GitHubDesktop"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalGitHubDesktopFolder'..." -ForegroundColor Cyan

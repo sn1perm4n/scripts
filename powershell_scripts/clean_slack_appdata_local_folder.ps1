@@ -4,6 +4,8 @@
 
 # Specify the directory to process
 $appdataLocalSlackFolder = "$env:LOCALAPPDATA\slack"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalSlackFolder'..." -ForegroundColor Cyan

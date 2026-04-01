@@ -4,6 +4,8 @@
 
 # Specify the directory to process (the name of this directory may be different on your computer)
 $appdataLocalAdvinstAnalyticsFolder = "$env:LOCALAPPDATA\AdvinstAnalytics\67167f270d96e6db370a449a"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalAdvinstAnalyticsFolder'..." -ForegroundColor Cyan

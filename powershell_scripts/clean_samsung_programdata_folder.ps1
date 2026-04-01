@@ -10,6 +10,8 @@ $directories = @(
 	'C:\ProgramData\Samsung\Backup',
 	'C:\ProgramData\Samsung\Samsung Magician\Site Link'
 )
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 $totalBytesFreed = 0

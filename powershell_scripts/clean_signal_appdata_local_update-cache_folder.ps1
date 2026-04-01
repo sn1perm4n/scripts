@@ -4,6 +4,8 @@
 
 # Specify the directory to process
 $appdataRoamingSignalFolder = "$env:APPDATA\Signal\update-cache"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataRoamingSignalFolder'..." -ForegroundColor Cyan

@@ -6,6 +6,8 @@
 
 # Specify the directory to process
 $parentFolder = 'C:\Program Files (x86)\Battle.net'
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$parentFolder'..." -ForegroundColor Cyan

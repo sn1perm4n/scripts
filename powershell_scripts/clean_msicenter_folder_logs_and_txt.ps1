@@ -6,6 +6,8 @@
 
 # Specify the directory to process
 $programdataMSIMSICenterFolder = 'C:\ProgramData\MSI\MSI Center'
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$programdataMSIMSICenterFolder'..." -ForegroundColor Cyan

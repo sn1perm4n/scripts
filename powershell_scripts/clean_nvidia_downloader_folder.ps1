@@ -6,6 +6,8 @@
 
 # Specify the directory to process
 $programdataNvidiacorporationDownloader = 'C:\ProgramData\NVIDIA Corporation\Downloader'
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$programdataNvidiacorporationDownloader'..." -ForegroundColor Cyan

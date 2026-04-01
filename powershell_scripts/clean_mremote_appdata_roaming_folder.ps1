@@ -4,6 +4,8 @@
 
 # Specify the directory to process
 $appdataRoamingMremoteng = "$env:APPDATA\mRemoteNG"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataRoamingMremoteng'..." -ForegroundColor Cyan

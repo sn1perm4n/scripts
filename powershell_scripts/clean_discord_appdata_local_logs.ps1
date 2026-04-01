@@ -4,6 +4,8 @@
 
 # Specify the directory to process
 $appdataLocalDiscordLogsFolder = "$env:LOCALAPPDATA\Discord"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalDiscordLogsFolder'..." -ForegroundColor Cyan

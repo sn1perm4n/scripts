@@ -4,6 +4,8 @@
 
 # Specify the directory to process (the name of this directory may be different on your computer)
 $appdataLocalMremotengFolder = "$env:LOCALAPPDATA\mRemoteNG\mRemoteNG.exe_Url_pjpxdehxpaaorqg2thmuhl11a34i3ave"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalMremotengFolder'..." -ForegroundColor Cyan

@@ -4,6 +4,8 @@
 
 # Specify the directory to process
 $appdataLocalPackagesWingetlogFolder = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir"
+
+# Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalPackagesWingetlogFolder'..." -ForegroundColor Cyan

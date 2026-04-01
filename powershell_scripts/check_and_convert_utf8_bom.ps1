@@ -39,6 +39,15 @@ if ($Help) {
 	exit 0
 }
 
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
 # Prompt user for file or folder path
 $Path = Read-Host "`nEnter the full path to a .ps1 or .reg file, or a folder"
 
@@ -67,7 +76,7 @@ if (-not $files -or $files.Count -eq 0) {
 # Counters for statistics
 $TotalFiles = 0
 $MissingBOM = 0
-$Converted  = 0
+$Converted = 0
 
 # Arrays to separate successes and failures for clean output
 $SuccessFiles = @()
@@ -139,14 +148,16 @@ if ($SuccessFiles.Count -and (-not $ConvertAll)) {
 	foreach ($filePath in $SuccessFiles) {
 		$fileName = Split-Path $filePath -Leaf
 		Write-Host "${fileName}: UTF-8 BOM OK" -ForegroundColor Cyan
-		if ($SaveResults) { $FileOutputLines += "${fileName}: UTF-8 BOM OK" }
+		if ($SaveResults) {
+			$FileOutputLines += "${fileName}: UTF-8 BOM OK"
+		}
 	}
 	Write-Host ""  # blank line between successes and failures
 }
 
 # Interactive processing for files missing BOM
 foreach ($filePath in $FailureFiles) {
-	$file     = Get-Item $filePath
+	$file = Get-Item $filePath
 	$fileName = $file.Name
 	Write-Host "${fileName}: UTF-8 BOM Incorrect" -ForegroundColor Yellow
 
@@ -179,30 +190,40 @@ foreach ($filePath in $FailureFiles) {
 						$backupPath = "$($file.FullName).bak"
 						Copy-Item -Path $file.FullName -Destination $backupPath -Force -ErrorAction Stop
 						Write-Host "Backup created: $backupPath" -ForegroundColor Cyan
-						if ($SaveResults) { $FileOutputLines += "Backup created: $backupPath" }
+						if ($SaveResults) {
+							$FileOutputLines += "Backup created: $backupPath"
+						}
 					}
 					elseif (-not $createBackup -and $file) {
 						Write-Host "$($file.FullName): Backup skipped by user" -ForegroundColor Yellow
-						if ($SaveResults) { $FileOutputLines += "$($file.FullName): Backup skipped by user" }
+						if ($SaveResults) {
+							$FileOutputLines += "$($file.FullName): Backup skipped by user"
+						}
 					}
 
 					$content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
 					$utf8Bom = New-Object System.Text.UTF8Encoding $true
 					[System.IO.File]::WriteAllText($file.FullName, $content, $utf8Bom)
 					Write-Host "${fileName}: Converted to UTF-8 BOM" -ForegroundColor Green
-					if ($SaveResults) { $FileOutputLines += "${fileName}: Converted to UTF-8 BOM" }
+					if ($SaveResults) {
+						$FileOutputLines += "${fileName}: Converted to UTF-8 BOM"
+					}
 					$Converted++
 					$skipFile = $true
 				}
 				catch {
 					Write-Warning "Failed to convert $($fileName): $($_.Exception.Message)"
-					if ($SaveResults) { $FileOutputLines += "Failed to convert ${fileName}: $($_.Exception.Message)" }
+					if ($SaveResults) {
+						$FileOutputLines += "Failed to convert ${fileName}: $($_.Exception.Message)"
+					}
 					$skipFile = $true
 				}
 			}
 			'N' {
 				Write-Host "${fileName}: Skipped by user" -ForegroundColor Yellow
-				if ($SaveResults) { $FileOutputLines += "${fileName}: Skipped by user" }
+				if ($SaveResults) {
+					$FileOutputLines += "${fileName}: Skipped by user"
+				}
 				$skipFile = $true
 			}
 			default {
@@ -234,10 +255,15 @@ if ($SaveResults) {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 	}
 
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

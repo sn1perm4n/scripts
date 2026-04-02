@@ -40,6 +40,15 @@ if ($Help) {
 	exit 0
 }
 
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
 # Prompt the user for the folder to process
 $Path = Read-Host "`nEnter the directory to scan"
 
@@ -163,7 +172,7 @@ if ($response -match '^[Yy]$') {
 		}
 		catch {
 			$unblockErrors += [PSCustomObject]@{
-				File  = $file.FullName
+				File = $file.FullName
 				Error = $_.Exception.Message
 			}
 		}
@@ -200,10 +209,15 @@ if ($SaveResults) {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 	}
 
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

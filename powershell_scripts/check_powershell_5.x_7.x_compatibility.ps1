@@ -1,4 +1,4 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script uses PSScriptAnalyzer to check all PowerShell scripts in a user-specified directory for compatibility with PowerShell 5.x and 7.x
 
 # Optional flags:
@@ -36,6 +36,15 @@ if ($Help) {
 	exit 0
 }
 
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
 # Ensure PSScriptAnalyzer module is installed
 try {
 	Write-Host "`nChecking for PSScriptAnalyzer module..." -ForegroundColor Cyan
@@ -52,7 +61,7 @@ try {
 catch {
 	Write-Host "Failed to install or import PSScriptAnalyzer: $($_.Exception.Message)" -ForegroundColor Red
 	Write-Host ""  # blank line before prompt
-	exit
+	exit 1
 }
 
 Write-Host ""  # blank line before prompt
@@ -64,7 +73,7 @@ Write-Host ""  # blank line after prompt
 
 if (-not (Test-Path $Path)) {
 	Write-Error "The specified path does not exist."
-	exit
+	exit 1
 }
 
 # Collect scripts
@@ -77,13 +86,13 @@ else {
 	}
 	else {
 		Write-Error "The specified file is not a PowerShell script (.ps1)."
-		exit
+		exit 1
 	}
 }
 
 if ($scripts.Count -eq 0) {
 	Write-Host "No PowerShell scripts (.ps1) found." -ForegroundColor Cyan
-	exit
+	exit 0
 }
 
 # Detect installed PowerShell versions
@@ -214,7 +223,7 @@ if ($Summary) {
 	Write-Host $summaryLine -ForegroundColor Cyan
 }
 
-# Save results to text file if requested, no trailing newline at the end
+# Save results to text file if requested
 if ($SaveResults) {
 	# Remove trailing blank lines
 	while ($FileOutputLines[-1] -eq '') {
@@ -227,15 +236,19 @@ if ($SaveResults) {
 		$FileOutputLines += $summaryLine
 	}
 
-	# Join lines with a single newline
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	if ($Failures -and -not $CompactOutput -and -not $Summary) {
-		Write-Host "Results saved to text file: $SaveResults" -ForegroundColor Green
+		try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		if ($Failures -and -not $CompactOutput -and -not $Summary) {
+			Write-Host "Results saved to text file: $SaveResults" -ForegroundColor Green
+		}
+		else {
+			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		}
 	}
-	else {
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
 }
 

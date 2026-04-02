@@ -33,6 +33,15 @@ if ($Help) {
 	exit 0
 }
 
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
 # Prompt user for path, search string, and replacement string
 $Path = Read-Host "`nEnter the full path to a file or directory"
 
@@ -160,7 +169,7 @@ foreach ($file in $files) {
 $summaryLine = "Complete. $matchedCount file(s) contained matches, $replacedCount file(s) updated."
 Write-Host "`n$summaryLine" -ForegroundColor Green
 
-# Save results if requested
+# Save results to text file if requested
 if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine

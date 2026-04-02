@@ -164,7 +164,7 @@ else {
 	Write-Host "`n$summaryLine" -ForegroundColor Yellow
 }
 
-# Save results if requested
+# Save results to text file if requested
 if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine

@@ -203,7 +203,7 @@ else {
 	}
 }
 
-# Save results if requested
+# Save results to text file if requested
 if ($SaveResults) {
 	while ($FileOutputLines[-1] -eq '') {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]

@@ -245,7 +245,7 @@ else {
 	Write-Host $summaryLine -ForegroundColor Yellow
 }
 
-# Save results to text file if requested, no trailing newline at the end
+# Save results to text file if requested
 if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine

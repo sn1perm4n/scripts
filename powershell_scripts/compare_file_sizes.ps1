@@ -36,6 +36,15 @@ if ($Help) {
 	exit 0
 }
 
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
 # Prompt user for both paths
 $Path1st = Read-Host "`nEnter the full path to the first file or directory"
 
@@ -218,7 +227,7 @@ else {
 	}
 }
 
-# Save results if requested
+# Save results to text file if requested
 if ($SaveResults) {
 	while ($FileOutputLines[-1] -eq '') {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]

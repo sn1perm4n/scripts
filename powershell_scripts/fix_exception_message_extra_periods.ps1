@@ -66,8 +66,8 @@ if (-not $files -or $files.Count -eq 0) {
 }
 
 # Initialize counters and output lines
-$issueCount      = 0
-$fixedCount      = 0
+$issueCount = 0
+$fixedCount = 0
 $FileOutputLines = @()
 
 Write-Host "`nScanning for trailing periods after `$(`$_.Exception.Message)...`n" -ForegroundColor Cyan
@@ -76,7 +76,7 @@ Write-Host "`nScanning for trailing periods after `$(`$_.Exception.Message)...`n
 $fileIssuesMap = @{}
 
 foreach ($file in $files) {
-	$lines      = @(Get-Content -LiteralPath $file.FullName)
+	$lines = @(Get-Content -LiteralPath $file.FullName)
 	$fileIssues = @()
 
 	for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -187,7 +187,7 @@ else {
 }
 
 # Second pass: fix files
-$firstFix     = $true
+$firstFix = $true
 $firstFixFile = $true
 foreach ($file in $files) {
 	if (-not $fileIssuesMap.ContainsKey($file.FullName)) {

@@ -118,9 +118,15 @@ if ($issueCount -eq 0) {
 
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
-		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
 	}
 
 	exit 0
@@ -151,9 +157,15 @@ if (-not $doFix) {
 			$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 		}
 
-		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
 	}
 
 	exit 0
@@ -190,7 +202,7 @@ foreach ($file in $files) {
 		}
 	}
 
-	$lines    = @(Get-Content -LiteralPath $file.FullName)
+	$lines = @(Get-Content -LiteralPath $file.FullName)
 	$newLines = @()
 
 	for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -240,10 +252,15 @@ if ($SaveResults) {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 	}
 
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

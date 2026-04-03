@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script compares files between two directories or two individual files by name and size in bytes, highlighting matches, differences, and files unique to each directory.
+# This script compares files between two directories or two individual files by name and size in bytes, highlighting matches, differences, and files unique to each directory
 
 # Optional flags:
 #     -Different: Only show files that differ or are unique to one directory
@@ -30,7 +30,7 @@ if ($Help) {
 	Write-Host "  -Filenames           Show filenames only instead of full paths (useful with -Recurse)" -ForegroundColor Cyan
 	Write-Host "  -Identical           Only show files that match between both directories" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories (only applicable when comparing directories)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"") - must be specified last" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0
@@ -233,10 +233,15 @@ if ($SaveResults) {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 	}
 
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

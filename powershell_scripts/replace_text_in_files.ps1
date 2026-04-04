@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script searches files or directories for a user-defined string and replaces it with a user-defined replacement string.
+# This script searches files or directories for a user-defined string and replaces it with a user-defined replacement string
 
 # Optional flags:
 #     -Backup: Automatically create backups before modifying files (skips interactive prompt)
@@ -50,7 +50,7 @@ if (-not (Test-Path $Path)) {
 	exit 1
 }
 
-$searchString  = Read-Host "`nEnter the text to search for"
+$searchString = Read-Host "`nEnter the text to search for"
 $replaceString = Read-Host "`nEnter the replacement text"
 
 $item = Get-Item $Path
@@ -69,8 +69,8 @@ if (-not $files -or $files.Count -eq 0) {
 }
 
 # Initialize counters and output lines
-$matchedCount    = 0
-$replacedCount   = 0
+$matchedCount = 0
+$replacedCount = 0
 $FileOutputLines = @()
 
 Write-Host "`nScanning for '$searchString'...`n" -ForegroundColor Cyan
@@ -109,9 +109,16 @@ if ($matchedCount -eq 0) {
 
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
-		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
 	}
 
 	exit 0
@@ -178,10 +185,15 @@ if ($SaveResults) {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 	}
 
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

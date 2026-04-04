@@ -98,7 +98,7 @@ try {
 
 	if ($updates.Count -eq 0) {
 		Write-Host "`nNo updates available." -ForegroundColor Green
-		Write-Host "`nPress any key to exit..."
+		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		return
 	}
@@ -111,7 +111,7 @@ try {
 
 	# Exit here if -CheckOnly is specified
 	if ($CheckOnly) {
-		Write-Host "`nPress any key to exit..."
+		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 		return
 	}

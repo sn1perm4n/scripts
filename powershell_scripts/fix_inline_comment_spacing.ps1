@@ -1,8 +1,6 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script searches files or directories for inline comments with incorrect spacing (single space before #) and optionally fixes them
 
-# WARNING: This script cannot distinguish between a # inside a string literal or regex pattern and an actual inline comment. Always carefully review the output before applying fixes, as false positives are possible. When in doubt, fix manually rather than using the -Fix flag.
-
 # WARNING: This script cannot distinguish between a # inside a string literal or regex pattern and an actual inline comment. Always carefully review the output before applying fixes, as false positives are possible. When in doubt, decline the fix prompt or avoid using the -Fix flag and fix manually instead.
 
 # Optional flags:
@@ -35,6 +33,15 @@ if ($Help) {
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0
+}
+
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
 }
 
 # Prompt user for file or directory path
@@ -114,9 +121,16 @@ if ($issueCount -eq 0) {
 
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
-		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
 	}
 
 	exit 0
@@ -147,9 +161,15 @@ if (-not $doFix) {
 			$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 		}
 
-		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
 	}
 
 	exit 0
@@ -228,7 +248,7 @@ foreach ($file in $files) {
 $summaryLine = "Scan complete. $issueCount instance(s) found, $fixedCount fixed."
 Write-Host "`n$summaryLine" -ForegroundColor Green
 
-# Save results if requested
+# Save results to text file if requested
 if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine
@@ -237,10 +257,15 @@ if ($SaveResults) {
 		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
 	}
 
-	$outputString = ($FileOutputLines -join "`n")
-	[System.IO.File]::WriteAllText($SaveResults, $outputString)
-
-	Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	try {
+		$outputString = ($FileOutputLines -join "`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

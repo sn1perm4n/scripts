@@ -4,6 +4,8 @@
 # Optional flags:
 #     -CaseSensitive: Enables case-sensitive search
 #     -Filenames: Show unique filenames only instead of full table output
+#     -LinesAbove <N>: Include N lines of context above each match
+#     -LinesBelow <N>: Include N lines of context below each match
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -12,6 +14,8 @@
 param (
 	[switch]$CaseSensitive,
 	[switch]$Filenames,
+	[int]$LinesAbove = 0,
+	[int]$LinesBelow = 0,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -22,10 +26,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Filenames] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Filenames] [-LinesAbove <N>] [-LinesBelow <N>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive       Enables case-sensitive search" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Show unique filenames only instead of full table output" -ForegroundColor Cyan
+	Write-Host "  -LinesAbove <N>      Include N lines of context above each match" -ForegroundColor Cyan
+	Write-Host "  -LinesBelow <N>      Include N lines of context below each match" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -76,6 +82,7 @@ try {
 	if ($Results) {
 		if ($Filenames) {
 			# Show unique filenames only as a clean list
+			# (-LinesAbove and -LinesBelow are ignored in -Filenames mode)
 			$uniqueFiles = $Results | Select-Object -ExpandProperty Filename -Unique
 			Write-Host ""
 			$uniqueFiles | ForEach-Object { Write-Host $_ -ForegroundColor Cyan }
@@ -97,16 +104,83 @@ try {
 			}
 		}
 		else {
-			$Results | Select-Object Path, LineNumber, Line | Format-Table -AutoSize
+			$useContext = ($LinesAbove -gt 0 -or $LinesBelow -gt 0)
 
-			$summaryLine = "$($Results.Count) match(es) found across $($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object | Select-Object -ExpandProperty Count) file(s)."
-			Write-Host $summaryLine -ForegroundColor Green
+			if ($useContext) {
+				# Group results by file for context display
+				$resultsByFile = $Results | Group-Object Path
+
+				foreach ($fileGroup in $resultsByFile) {
+					$fileLines = @(Get-Content -Path $fileGroup.Name)
+					$totalLines = $fileLines.Count
+
+					Write-Host "`n$($fileGroup.Name):" -ForegroundColor Cyan
+
+					foreach ($match in $fileGroup.Group) {
+						$matchLineIndex = $match.LineNumber - 1  # convert to 0-based
+						$contextStart = [math]::Max(0, $matchLineIndex - $LinesAbove)
+						$contextEnd = [math]::Min($totalLines - 1, $matchLineIndex + $LinesBelow)
+
+						for ($i = $contextStart; $i -le $contextEnd; $i++) {
+							$lineNum = $i + 1  # display as 1-based
+							$lineText = $fileLines[$i]
+							if ($i -eq $matchLineIndex) {
+								Write-Host "  Line $lineNum [MATCH]: $($lineText.Trim())" -ForegroundColor Yellow
+							}
+							else {
+								Write-Host "  Line $lineNum        : $($lineText.Trim())" -ForegroundColor Cyan
+							}
+						}
+						Write-Host ""
+					}
+				}
+
+				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
+				$summaryLine = "$($Results.Count) match(es) found across $fileCount file(s)."
+				Write-Host $summaryLine -ForegroundColor Green
+			}
+			else {
+				$Results | Select-Object Path, LineNumber, Line | Format-Table -AutoSize
+
+				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
+				$summaryLine = "$($Results.Count) match(es) found across $fileCount file(s)."
+				Write-Host $summaryLine -ForegroundColor Green
+			}
 
 			if ($SaveResults) {
 				$outputLines = @()
-				foreach ($result in $Results) {
-					$outputLines += "Path: $($result.Path)"
-					$outputLines += "Line $($result.LineNumber): $($result.Line.Trim())"
+
+				if ($useContext) {
+					$resultsByFile = $Results | Group-Object Path
+					foreach ($fileGroup in $resultsByFile) {
+						$fileLines = @(Get-Content -Path $fileGroup.Name)
+						$totalLines = $fileLines.Count
+						$outputLines += "$($fileGroup.Name):"
+
+						foreach ($match in $fileGroup.Group) {
+							$matchLineIndex = $match.LineNumber - 1
+							$contextStart = [math]::Max(0, $matchLineIndex - $LinesAbove)
+							$contextEnd = [math]::Min($totalLines - 1, $matchLineIndex + $LinesBelow)
+
+							for ($i = $contextStart; $i -le $contextEnd; $i++) {
+								$lineNum = $i + 1
+								$lineText = $fileLines[$i]
+								if ($i -eq $matchLineIndex) {
+									$outputLines += "  Line $lineNum [MATCH]: $($lineText.Trim())"
+								}
+								else {
+									$outputLines += "  Line $lineNum        : $($lineText.Trim())"
+								}
+							}
+							$outputLines += ""
+						}
+					}
+				}
+				else {
+					foreach ($result in $Results) {
+						$outputLines += "Path: $($result.Path)"
+						$outputLines += "Line $($result.LineNumber): $($result.Line.Trim())"
+					}
 				}
 
 				while ($outputLines[-1] -eq '') {

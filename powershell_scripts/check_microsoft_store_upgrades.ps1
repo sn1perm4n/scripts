@@ -24,42 +24,26 @@ catch {
 # Get list of installed Microsoft Store apps (PackageFamilyName)
 $installedApps = Get-AppxPackage | Select-Object -ExpandProperty PackageFamilyName
 
-# Try to get winget upgrades in JSON
-try {
-	$wingetOutput = winget upgrade --source msstore --accept-source-agreements --output json 2>$null
-	$availableUpgrades = $wingetOutput | ConvertFrom-Json
-	$usingJson = $true
-}
-catch {
-	Write-Warning "winget JSON output failed. Falling back to parsing table output."
-	$wingetOutput = winget upgrade --source msstore --accept-source-agreements 2>$null
-	$usingJson = $false
-}
+# Get winget upgrade list from Microsoft Store source
+$wingetOutput = winget upgrade --source msstore --accept-source-agreements 2>$null
 
 $relevantUpgrades = @()
 $upgradeIds = @()
 
-if ($usingJson) {
-	# Filter by installed apps using JSON Id
-	$relevantUpgrades = $availableUpgrades | Where-Object { $installedApps -contains $_.Id }
-	$upgradeIds = $availableUpgrades | Select-Object -ExpandProperty Id
-}
-else {
-	# Parse table output and skip header line(s)
-	$lines = $wingetOutput | Where-Object { $_ -and ($_ -notmatch '^Name\s+Id\s+Version\s+Available\s+Source') -and ($_ -notmatch '^-+') }
-	foreach ($line in $lines) {
-		# Split line by whitespace (first few columns)
-		$parts = $line -split '\s{2,}'  # two or more spaces
-		if ($parts.Count -ge 2) {
-			$name = $parts[0].Trim()
-			$id = $parts[1].Trim()
-			$upgradeIds += $id
-			if ($installedApps -contains $id) {
-				$relevantUpgrades += [PSCustomObject]@{
-					Name = $name
-					Id = $id
-					AvailableVersion = if ($parts.Count -ge 4) { $parts[3] } else { "Unknown" }
-				}
+# Parse table output and skip header line(s)
+$lines = $wingetOutput | Where-Object { $_ -and ($_ -notmatch '^Name\s+Id\s+Version\s+Available\s+Source') -and ($_ -notmatch '^-+') }
+foreach ($line in $lines) {
+	# Split line by two or more spaces
+	$parts = $line -split '\s{2,}'
+	if ($parts.Count -ge 2) {
+		$name = $parts[0].Trim()
+		$id = $parts[1].Trim()
+		$upgradeIds += $id
+		if ($installedApps -contains $id) {
+			$relevantUpgrades += [PSCustomObject]@{
+				Name = $name
+				Id = $id
+				AvailableVersion = if ($parts.Count -ge 4) { $parts[3] } else { "Unknown" }
 			}
 		}
 	}
@@ -70,7 +54,7 @@ $skippedApps = $installedApps | Where-Object { $upgradeIds -notcontains $_ }
 
 # Display results
 if ($relevantUpgrades.Count -eq 0) {
-	Write-Host "No installed Microsoft Store apps have available updates." -ForegroundColor Green
+	Write-Host "`nNo installed Microsoft Store apps have available updates." -ForegroundColor Green
 }
 else {
 	Write-Host "Found updates for installed Microsoft Store apps:" -ForegroundColor Green

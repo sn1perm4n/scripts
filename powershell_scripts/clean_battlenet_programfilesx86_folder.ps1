@@ -4,11 +4,11 @@
 
 #Requires -RunAsAdministrator
 
-# Specify the directory to process
-$parentFolder = 'C:\Program Files (x86)\Battle.net'
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$parentFolder = 'C:\Program Files (x86)\Battle.net'
 
 Write-Host "`nChecking '$parentFolder'..." -ForegroundColor Cyan
 
@@ -40,6 +40,7 @@ if (Test-Path -Path $parentFolder) {
 
 		$totalBytesFreed = 0
 		$deletedCount = 0
+
 		foreach ($folder in $foldersToDelete) {
 			$folderSize = (Get-ChildItem -Path $folder.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
 			if (-not $folderSize) { $folderSize = 0 }

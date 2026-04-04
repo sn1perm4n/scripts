@@ -4,11 +4,11 @@
 
 #Requires -RunAsAdministrator
 
-# Specify the directory to process
-$battlenetAgentFolder = 'C:\ProgramData\Battle.net\Agent'
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$battlenetAgentFolder = 'C:\ProgramData\Battle.net\Agent'
 
 Write-Host "`nChecking '$battlenetAgentFolder'..." -ForegroundColor Cyan
 
@@ -26,7 +26,6 @@ if (Test-Path -Path $battlenetAgentFolder) {
 
 		# Find the most recently modified folder that starts with "A"
 		$latestAFolder = $foldersStartingWithA | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-
 		Write-Host "`nKeeping folder: $($latestAFolder.Name)" -ForegroundColor Green
 
 		$totalBytesFreed = 0

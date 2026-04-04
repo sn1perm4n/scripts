@@ -71,7 +71,7 @@ else {
 }
 
 # Initialize counters and output lines
-$modifiedCount   = 0
+$modifiedCount = 0
 $FileOutputLines = @()
 
 # Determine whether to create backups
@@ -94,7 +94,7 @@ foreach ($fileObj in $files) {
 	$file = $fileObj.FullName
 	Write-Host "`nProcessing: $file" -ForegroundColor Cyan
 
-	$changed    = $false
+	$changed = $false
 	$newContent = @()
 	$lineNumber = 0
 
@@ -106,17 +106,17 @@ foreach ($fileObj in $files) {
 			$leading = $matches[1]
 
 			# Count total spaces: treat tabs as $spacesPerTab spaces
-			$spaceCount      = ($leading -replace "`t", (" " * $spacesPerTab)).Length
-			$tabCount        = [math]::Floor($spaceCount / $spacesPerTab)
+			$spaceCount = ($leading -replace "`t", (" " * $spacesPerTab)).Length
+			$tabCount = [math]::Floor($spaceCount / $spacesPerTab)
 			$remainingSpaces = $spaceCount % $spacesPerTab
 
 			# Build new leading whitespace (tabs + leftover spaces)
 			$newIndent = ("`t" * $tabCount) + (" " * $remainingSpaces)
-			$newLine   = $newIndent + $line.Substring($leading.Length)
+			$newLine = $newIndent + $line.Substring($leading.Length)
 
 			# Only mark as changed if the line actually differs
 			if ($newLine -ne $line) {
-				$line    = $newLine
+				$line = $newLine
 				$changed = $true
 				Write-Host "  Line $lineNumber`: replaced leading spaces with $tabCount tab(s) + $remainingSpaces space(s)" -ForegroundColor Yellow
 			}
@@ -148,7 +148,7 @@ foreach ($fileObj in $files) {
 		}
 	}
 	else {
-		Write-Host "  No changes needed." -ForegroundColor Green
+		Write-Host "  No changes needed." -ForegroundColor Yellow
 		if ($SaveResults) {
 			$FileOutputLines += "No changes needed: $file"
 		}

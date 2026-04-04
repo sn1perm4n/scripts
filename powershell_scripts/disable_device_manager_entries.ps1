@@ -15,38 +15,77 @@
 #Requires -RunAsAdministrator
 
 # Realtek Digital Output (Realtek(R) Audio)
-Get-PnpDevice -FriendlyName "Realtek Digital Output (Realtek(R) Audio)" | Disable-PnpDevice -Confirm:$false
-Write-Host "Realtek Digital Output (Realtek(R) Audio) disabled." -ForegroundColor Green
+$device = Get-PnpDevice -FriendlyName "Realtek Digital Output (Realtek(R) Audio)" -ErrorAction SilentlyContinue
+if ($device) {
+	$device | Disable-PnpDevice -Confirm:$false
+	Write-Host "Realtek Digital Output (Realtek(R) Audio) disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "Realtek Digital Output (Realtek(R) Audio) not found." -ForegroundColor Yellow
+}
 
 # A-Volute Nh3 Audio Effects Component
-Get-PnpDevice -FriendlyName "A-Volute Nh3 Audio Effects Component" | Disable-PnpDevice -Confirm:$false
-Write-Host "A-Volute Nh3 Audio Effects Component disabled." -ForegroundColor Green
+$device = Get-PnpDevice -FriendlyName "A-Volute Nh3 Audio Effects Component" -ErrorAction SilentlyContinue
+if ($device) {
+	$device | Disable-PnpDevice -Confirm:$false
+	Write-Host "A-Volute Nh3 Audio Effects Component disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "A-Volute Nh3 Audio Effects Component not found." -ForegroundColor Yellow
+}
 
 # Dell AW2518HF(DisplayPort)
 # Invisible monitor entry after Nvidia Driver upgrade. InstanceId must be used for this since it shares the exact same name as the active Dell AW2518HF monitor. Furthermore, pnputil must be used in conjunction with Get-PnpDevice.
 $dellMonitor = Get-PnpDevice -InstanceId "DISPLAY\DELA103\1&8713bca&0&UID0" -ErrorAction SilentlyContinue
 if ($dellMonitor) {
-	Get-PnpDevice -InstanceId "DISPLAY\DELA103\1&8713bca&0&UID0" | ForEach-Object { &"pnputil" /remove-device $_.InstanceId }
+	$dellMonitor | ForEach-Object { &"pnputil" /remove-device $_.InstanceId }
 	Write-Host "Dell AW2518HF(DisplayPort) deleted." -ForegroundColor Green
-} else {
+}
+else {
 	Write-Host "Dell AW2518HF(DisplayPort) not found." -ForegroundColor Yellow
 }
 
 # Nahimic Mirroring Component
-Get-PnpDevice -FriendlyName "Nahimic Mirroring Component" | Disable-PnpDevice -Confirm:$false
-Write-Host "Nahimic Mirroring Component disabled." -ForegroundColor Green
+$device = Get-PnpDevice -FriendlyName "Nahimic Mirroring Component" -ErrorAction SilentlyContinue
+if ($device) {
+	$device | Disable-PnpDevice -Confirm:$false
+	Write-Host "Nahimic Mirroring Component disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "Nahimic Mirroring Component not found." -ForegroundColor Yellow
+}
 
 # Nahimic mirroring device
-Get-PnpDevice -FriendlyName "Nahimic mirroring device" | Disable-PnpDevice -Confirm:$false
-Write-Host "Nahimic mirroring device disabled." -ForegroundColor Green
+$device = Get-PnpDevice -FriendlyName "Nahimic mirroring device" -ErrorAction SilentlyContinue
+if ($device) {
+	$device | Disable-PnpDevice -Confirm:$false
+	Write-Host "Nahimic mirroring device disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "Nahimic mirroring device not found." -ForegroundColor Yellow
+}
 
 # NVIDIA High Definition Audio
-Get-PnpDevice -FriendlyName "NVIDIA High Definition Audio" | Disable-PnpDevice -Confirm:$false
-Write-Host "NVIDIA High Definition Audio disabled." -ForegroundColor Green
+$device = Get-PnpDevice -FriendlyName "NVIDIA High Definition Audio" -ErrorAction SilentlyContinue
+if ($device) {
+	$device | Disable-PnpDevice -Confirm:$false
+	Write-Host "NVIDIA High Definition Audio disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "NVIDIA High Definition Audio not found." -ForegroundColor Yellow
+}
 
 # NVIDIA Virtual Audio Device (Wave Extensible) (WDM)
-Get-PnpDevice -FriendlyName "NVIDIA Virtual Audio Device (Wave Extensible) (WDM)" | Disable-PnpDevice -Confirm:$false
-Write-Host "NVIDIA Virtual Audio Device (Wave Extensible) (WDM) disabled." -ForegroundColor Green
+$device = Get-PnpDevice -FriendlyName "NVIDIA Virtual Audio Device (Wave Extensible) (WDM)" -ErrorAction SilentlyContinue
+if ($device) {
+	$device | Disable-PnpDevice -Confirm:$false
+	Write-Host "NVIDIA Virtual Audio Device (Wave Extensible) (WDM) disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "NVIDIA Virtual Audio Device (Wave Extensible) (WDM) not found." -ForegroundColor Yellow
+}
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

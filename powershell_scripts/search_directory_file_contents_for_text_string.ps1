@@ -71,8 +71,7 @@ try {
 	}
 
 	$selectStringParams = @{
-		Pattern = $searchText
-		SimpleMatch = $true
+		Pattern = [regex]::Escape($searchText)
 		CaseSensitive = $CaseSensitive
 		ErrorAction = 'Stop'
 	}

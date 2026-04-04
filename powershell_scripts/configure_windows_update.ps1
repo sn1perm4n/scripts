@@ -1,4 +1,5 @@
-﻿# This script enables the following settings in Windows Update:
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script enables the following settings in Windows Update:
 # 1. Get the latest updates as soon as they're available
 # 2. Windows Update -> Advanced options -> Receive updates for other Microsoft products
 

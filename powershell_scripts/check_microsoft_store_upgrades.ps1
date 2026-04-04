@@ -1,4 +1,7 @@
-﻿# This script checks the Microsoft Store for apps that have upgrades available, with the intention being to upgrade. Unfortunately, Microsoft Store app upgrades can't be installed in this manner because none of them appear in winget upgrade. I'm releasing this script purely for informational purposes. Please note this script also must be run as Administrator, which requires the following:
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script checks the Microsoft Store for apps that have upgrades available via winget
+
+# NOTE: Microsoft Store app upgrades do not appear in winget upgrade. This script is released for informational purposes only.
 
 #Requires -RunAsAdministrator
 
@@ -49,7 +52,7 @@ else {
 		$parts = $line -split '\s{2,}'  # two or more spaces
 		if ($parts.Count -ge 2) {
 			$name = $parts[0].Trim()
-			$id   = $parts[1].Trim()
+			$id = $parts[1].Trim()
 			$upgradeIds += $id
 			if ($installedApps -contains $id) {
 				$relevantUpgrades += [PSCustomObject]@{
@@ -76,6 +79,7 @@ else {
 	}
 
 	try {
+		# NOTE: This upgrade attempt will never find anything — Microsoft Store updates do not surface via winget upgrade
 		winget upgrade --source msstore --all --accept-package-agreements --accept-source-agreements
 		Write-Host "Microsoft Store apps updated successfully." -ForegroundColor Green
 	}
@@ -93,9 +97,9 @@ if ($skippedApps.Count -gt 0) {
 }
 
 # Prompt for user input to close
-Write-Host "`nPress any key to exit..." -ForegroundColor Red
+Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-exit 1
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

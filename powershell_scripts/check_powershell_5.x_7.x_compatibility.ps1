@@ -4,6 +4,7 @@
 # Optional flags:
 #     -CompactOutput: Simplifies console output to match saved file style (removes separators and extra spacing)
 #     -Failures: Shows only scripts with issues in output
+#     -Recurse: Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Successes: Shows only scripts with no issues in output
 #     -Summary: Shows a summary of analyzed scripts at the end
@@ -13,6 +14,7 @@
 param (
 	[switch]$CompactOutput,
 	[switch]$Failures,
+	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Successes,
 	[switch]$Summary,
@@ -24,10 +26,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-Successes] [-Summary] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-Recurse] [-Successes] [-Summary] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CompactOutput       Simplifies console output to match saved file style (removes separators and extra spacing)" -ForegroundColor Cyan
 	Write-Host "  -Failures            Show only scripts with compatibility issues" -ForegroundColor Cyan
+	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -Successes           Show only scripts with no compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
@@ -43,6 +46,12 @@ if ($SaveResults) {
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
+}
+
+# Warn if -Successes and -Failures are both specified (mutually exclusive)
+if ($Successes -and $Failures) {
+	Write-Warning "-Successes and -Failures are mutually exclusive. Please use only one at a time."
+	exit 1
 }
 
 # Ensure PSScriptAnalyzer module is installed
@@ -78,7 +87,7 @@ if (-not (Test-Path $Path)) {
 
 # Collect scripts
 if ((Get-Item $Path).PSIsContainer) {
-	$scripts = Get-ChildItem -Path $Path -Recurse -Filter *.ps1
+	$scripts = Get-ChildItem -Path $Path -Recurse:$Recurse -Filter *.ps1
 }
 else {
 	if ($Path -like "*.ps1") {
@@ -207,7 +216,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 # Display summary if requested
 if ($Summary) {
 	$TotalScripts = $scripts.Count
-	$TotalIssues  = $AllResults.Count
+	$TotalIssues = $AllResults.Count
 	$FailedScripts = ($AllResults | Select-Object -ExpandProperty ScriptName | Sort-Object -Unique).Count
 	$PassedScripts = $TotalScripts - $FailedScripts
 
@@ -236,7 +245,7 @@ if ($SaveResults) {
 		$FileOutputLines += $summaryLine
 	}
 
-		try {
+	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
 		if ($Failures -and -not $CompactOutput -and -not $Summary) {
@@ -254,10 +263,10 @@ if ($SaveResults) {
 
 # Keep window open
 if ($Failures -and -not $CompactOutput -and -not $Summary -and -not $SaveResults) {
-	Write-Host "Press any key to exit..."
+	Write-Host "Press any key to exit..." -ForegroundColor Cyan
 }
 else {
-	Write-Host "`nPress any key to exit..."
+	Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 }
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 

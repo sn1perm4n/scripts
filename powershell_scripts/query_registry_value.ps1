@@ -1,4 +1,5 @@
-﻿# This script prompts the user to enter a full registry path that includes both the registry key and the value name. Both common input formats are handled, i.e.:
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script prompts the user to enter a full registry path that includes both the registry key and the value name. Both common input formats are handled, i.e.:
 # HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProductName
 # HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProductName
 # Must be run as Administrator if querying protected registry locations
@@ -19,7 +20,7 @@ $registryPath = $registryPath -replace '^HKCC\\', 'HKCC:\'
 # Split registry path into key and value
 try {
 	$registryKey = Split-Path $registryPath -Parent
-	$valueName   = Split-Path $registryPath -Leaf
+	$valueName = Split-Path $registryPath -Leaf
 
 	if (-not $registryKey -or -not $valueName) {
 		throw "Invalid registry path format."
@@ -63,7 +64,9 @@ if ($registryKey -and $valueName) {
 }
 
 # Pause for any key press before exiting
-Write-Host "`nPress any key to exit..."
+Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+
+# Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 
 # End.

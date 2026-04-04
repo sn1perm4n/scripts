@@ -4,11 +4,11 @@
 
 #Requires -RunAsAdministrator
 
-# Specify the directory to process
-$appleInstallerCacheFolder = 'C:\ProgramData\Apple\Installer Cache'
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$appleInstallerCacheFolder = 'C:\ProgramData\Apple\Installer Cache'
 
 Write-Host "`nChecking '$appleInstallerCacheFolder'..." -ForegroundColor Cyan
 

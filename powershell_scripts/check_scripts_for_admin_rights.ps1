@@ -1,4 +1,5 @@
-﻿# This script checks a directory of scripts to determine which of them need to be run as administrator to function properly. It also shows which scripts already include an admin check, and also detects the presence of #Requires -RunAsAdministrator in those that need it.
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script checks a directory of scripts to determine which of them need to be run as administrator to function properly. It also shows which scripts already include an admin check, and also detects the presence of #Requires -RunAsAdministrator in those that require it.
 
 # Specify the script directory to check
 $ScriptPath = "\\Synology\Volume_1\Documents\Scripts\powershell_scripts"

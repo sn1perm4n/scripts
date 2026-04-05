@@ -3,10 +3,9 @@
 
 #Requires -RunAsAdministrator
 
-$ErrorActionPreference = "Continue"
 $hadErrors = $false
 
-Write-Host "Disabling Windows Spotlight features..." -ForegroundColor Cyan
+Write-Host "`nDisabling Windows Spotlight features..." -ForegroundColor Cyan
 
 # Disable Spotlight on Lock Screen
 Write-Host "`nDisabling Lock Screen Spotlight:" -ForegroundColor Cyan
@@ -22,7 +21,8 @@ try {
 	Write-Host "Lock Screen Spotlight disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Lock Screen Spotlight section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Lock Screen Spotlight section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -37,7 +37,8 @@ try {
 	Write-Host "Desktop Spotlight disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Desktop Spotlight section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Desktop Spotlight section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -55,7 +56,8 @@ try {
 	Write-Host "Spotlight Tips, Fun Facts, and Local Content disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Tips and Local Content section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Tips and Local Content section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -70,7 +72,8 @@ try {
 	Write-Host "Cloud and Consumer Content disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Cloud/Consumer Content section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Cloud/Consumer Content section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -85,7 +88,8 @@ try {
 	Write-Host "Spotlight Desktop Icon hidden." -ForegroundColor Green
 }
 catch {
-	Write-Host "Spotlight Desktop Icon section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Spotlight Desktop Icon section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -100,7 +104,8 @@ try {
 	Write-Host "'Learn about this picture' Desktop Icon hidden." -ForegroundColor Green
 }
 catch {
-	Write-Host "'Learn about this picture' Desktop Icon section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "'Learn about this picture' Desktop Icon section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -117,7 +122,8 @@ try {
 	Write-Host "Spotlight Policy Enforcement disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Policy Enforcement section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Policy Enforcement section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -132,7 +138,8 @@ try {
 	Write-Host "Lock Screen widgets disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Lock Screen widgets section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Lock Screen widgets section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -146,7 +153,8 @@ try {
 	Write-Host "Spotlight Wallpaper disabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "Desktop Wallpaper section failed: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Desktop Wallpaper section failed: $($_.Exception.Message)"
 	$hadErrors = $true
 }
 
@@ -157,7 +165,8 @@ Write-Host "`nSign out or restart File Explorer for all changes to take effect."
 if ($hadErrors) {
 	Write-Host "`nCompleted with errors." -ForegroundColor Red
 	exit 1
-} else {
+}
+else {
 	Write-Host "`nCompleted successfully." -ForegroundColor Green
 	exit 0
 }

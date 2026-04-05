@@ -21,7 +21,7 @@ else {
 	else {
 		try {
 			Set-Service -Name $dsaService -StartupType Disabled -ErrorAction Stop
-			Write-Host "`nService '$dsaService' startup type set to Disabled." -ForegroundColor Green
+			Write-Host "`nService '$dsaService' startup type successfully set to Disabled." -ForegroundColor Green
 		}
 		catch {
 			Write-Host ""

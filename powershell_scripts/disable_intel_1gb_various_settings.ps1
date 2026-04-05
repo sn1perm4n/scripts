@@ -9,6 +9,8 @@
 
 #Requires -RunAsAdministrator
 
+Write-Host "`nChecking Intel 1Gb NIC settings..." -ForegroundColor Cyan
+
 # Disable Enable PME
 try {
 	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "EnablePME" -RegistryValue 0 -ErrorAction Stop

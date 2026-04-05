@@ -1,8 +1,6 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script disables all Windows Spotlight features in Windows 11 and sets the desktop background to blank
 
-#Requires -RunAsAdministrator
-
 $hadErrors = $false
 
 Write-Host "`nDisabling Windows Spotlight features..." -ForegroundColor Cyan

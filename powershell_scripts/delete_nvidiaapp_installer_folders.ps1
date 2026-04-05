@@ -5,7 +5,7 @@
 
 #Requires -RunAsAdministrator
 
-# Define the paths to the directories you want to delete
+# Specify the directories to delete
 $programdataNvidiaappInstallerFolder = "C:\ProgramData\NVIDIA Corporation\NVIDIA app\Installer"
 $programdataNvidiaappInstaller2Folder = "C:\ProgramData\NVIDIA Corporation\NVIDIA app\Installer2"
 

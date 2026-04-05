@@ -3,33 +3,86 @@
 
 #Requires -RunAsAdministrator
 
-# Define the service names you want to enable and start
 $dsaService = "DSAService"
 $dsaUpdateService = "DSAUpdateService"
 
-# Set the service startup type to "Automatic"
-try {
-	Set-Service -Name $dsaService -StartupType Automatic -ErrorAction Stop
-	Write-Host "Service '$dsaService' startup type set to Automatic."
-	Set-Service -Name $dsaUpdateService -StartupType Automatic -ErrorAction Stop
-	Write-Host "Service '$dsaUpdateService' startup type set to Automatic."
+Write-Host "`nChecking Intel Driver and Support Assistant service(s) status..." -ForegroundColor Cyan
+
+# Process DSAService
+$svc = Get-Service -Name $dsaService -ErrorAction SilentlyContinue
+if (-not $svc) {
+	Write-Host "`nService '$dsaService' not found." -ForegroundColor Yellow
 }
-catch {
-	Write-Host "Could not set startup type for service '$dsaService'. Error: $($_.Exception.Message)"
-	Write-Host "Could not set startup type for service '$dsaUpdateService'. Error: $($_.Exception.Message)"
+else {
+	# Enable DSAService
+	if ($svc.StartType -eq 'Automatic') {
+		Write-Host "`nService '$dsaService' is already set to Automatic." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Set-Service -Name $dsaService -StartupType Automatic -ErrorAction Stop
+			Write-Host "`nService '$dsaService' startup type successfully set to Automatic." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not enable service '$dsaService': $($_.Exception.Message)"
+		}
+	}
+
+	# Start DSAService
+	if ($svc.Status -eq 'Running') {
+		Write-Host "Service '$dsaService' is already running." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Start-Service -Name $dsaService -ErrorAction Stop
+			Write-Host "Service '$dsaService' started successfully." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not start service '$dsaService': $($_.Exception.Message)"
+		}
+	}
 }
 
-# Start the DSAService and DSAUpdateService services
-try {
-	Start-Service -Name $dsaService -ErrorAction Stop
-	Write-Host "Service '$dsaService' started successfully."
-	Start-Service -Name $dsaUpdateService -ErrorAction Stop
-	Write-Host "Service '$dsaUpdateService' started successfully."
+# Process DSAUpdateService
+$svc = Get-Service -Name $dsaUpdateService -ErrorAction SilentlyContinue
+if (-not $svc) {
+	Write-Host "`nService '$dsaUpdateService' not found." -ForegroundColor Yellow
 }
-catch {
-	Write-Host "Could not start service '$dsaService'. Error: $($_.Exception.Message)"
-	Write-Host "Could not start service '$dsaUpdateService'. Error: $($_.Exception.Message)"
+else {
+	# Enable DSAUpdateService
+	if ($svc.StartType -eq 'Automatic') {
+		Write-Host "`nService '$dsaUpdateService' is already set to Automatic." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Set-Service -Name $dsaUpdateService -StartupType Automatic -ErrorAction Stop
+			Write-Host "`nService '$dsaUpdateService' startup type successfully set to Automatic." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not enable service '$dsaUpdateService': $($_.Exception.Message)"
+		}
+	}
+
+	# Stop DSAUpdateService
+	if ($svc.Status -eq 'Running') {
+		Write-Host "Service '$dsaUpdateService' is already running." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Start-Service -Name $dsaUpdateService -ErrorAction Stop
+			Write-Host "Service '$dsaUpdateService' started successfully." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not start service '$dsaUpdateService': $($_.Exception.Message)"
+		}
+	}
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

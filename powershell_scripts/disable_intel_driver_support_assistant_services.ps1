@@ -3,33 +3,86 @@
 
 #Requires -RunAsAdministrator
 
-# Define the service names you want to disable and stop
 $dsaService = "DSAService"
 $dsaUpdateService = "DSAUpdateService"
 
-# Set the service startup type to "Disabled"
-try {
-	Set-Service -Name $dsaService -StartupType Disabled -ErrorAction Stop
-	Write-Host "Service '$dsaService' startup type set to Disabled."
-	Set-Service -Name $dsaUpdateService -StartupType Disabled -ErrorAction Stop
-	Write-Host "Service '$dsaUpdateService' startup type set to Disabled."
+Write-Host "`nChecking Intel Driver and Support Assistant service(s) status..." -ForegroundColor Cyan
+
+# Process DSAService
+$svc = Get-Service -Name $dsaService -ErrorAction SilentlyContinue
+if (-not $svc) {
+	Write-Host "`nService '$dsaService' not found." -ForegroundColor Yellow
 }
-catch {
-	Write-Host "Could not set startup type for service '$dsaService'. Error: $($_.Exception.Message)"
-	Write-Host "Could not set startup type for service '$dsaUpdateService'. Error: $($_.Exception.Message)"
+else {
+	# Disable DSAService
+	if ($svc.StartType -eq 'Disabled') {
+		Write-Host "`nService '$dsaService' is already disabled." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Set-Service -Name $dsaService -StartupType Disabled -ErrorAction Stop
+			Write-Host "`nService '$dsaService' startup type set to Disabled." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not disable service '$dsaService': $($_.Exception.Message)"
+		}
+	}
+
+	# Stop DSAService
+	if ($svc.Status -eq 'Stopped') {
+		Write-Host "Service '$dsaService' is already stopped." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Stop-Service -Name $dsaService -Force -ErrorAction Stop
+			Write-Host "Service '$dsaService' stopped successfully." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not stop service '$dsaService': $($_.Exception.Message)"
+		}
+	}
 }
 
-# Stop the DSAService and DSAUpdateService services
-try {
-	Stop-Service -Name $dsaService -Force -ErrorAction Stop
-	Write-Host "Service '$dsaService' stopped successfully."
-	Stop-Service -Name $dsaUpdateService -Force -ErrorAction Stop
-	Write-Host "Service '$dsaUpdateService' stopped successfully."
+# Process DSAUpdateService
+$svc = Get-Service -Name $dsaUpdateService -ErrorAction SilentlyContinue
+if (-not $svc) {
+	Write-Host "`nService '$dsaUpdateService' not found." -ForegroundColor Yellow
 }
-catch {
-	Write-Host "Could not stop service '$dsaService'. Error: $($_.Exception.Message)"
-	Write-Host "Could not stop service '$dsaUpdateService'. Error: $($_.Exception.Message)"
+else {
+	# Disable DSAUpdateService
+	if ($svc.StartType -eq 'Disabled') {
+		Write-Host "`nService '$dsaUpdateService' is already disabled." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Set-Service -Name $dsaUpdateService -StartupType Disabled -ErrorAction Stop
+			Write-Host "`nService '$dsaUpdateService' startup type successfully set to Disabled." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not disable service '$dsaUpdateService': $($_.Exception.Message)"
+		}
+	}
+
+	# Stop DSAUpdateService
+	if ($svc.Status -eq 'Stopped') {
+		Write-Host "Service '$dsaUpdateService' is already stopped." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Stop-Service -Name $dsaUpdateService -Force -ErrorAction Stop
+			Write-Host "Service '$dsaUpdateService' stopped successfully." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not stop service '$dsaUpdateService': $($_.Exception.Message)"
+		}
+	}
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

@@ -4,6 +4,8 @@
 #Requires -RunAsAdministrator
 
 try {
+	# Check current Bluetooth status
+	Write-Host "Checking Bluetooth status..." -ForegroundColor Cyan
 	$devices = Get-PnpDevice -Class Bluetooth -ErrorAction Stop
 
 	if (-not $devices) {

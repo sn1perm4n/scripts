@@ -5,6 +5,7 @@
 # I also recommend re-running this script every time you update your Intel Ethernet driver as there's a chance the settings could be reset to their default values
 # Lastly, it would be a good idea to confirm the below settings exist for your NIC by running the following PowerShell command and comparing the output to this script:
 # Get-NetAdapterAdvancedProperty -Name "Ethernet" | Sort-Object "DisplayName"
+
 # NOTE: These Registry settings are located in one of the subfolders located here: HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}
 
 #Requires -RunAsAdministrator

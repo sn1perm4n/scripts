@@ -82,9 +82,9 @@ Write-Host "Service NetTcpPortSharing startup type set to Disabled."
 
 # Netlogon (Netlogon)
 Stop-Service -Name Netlogon -Force -ErrorAction Stop
-Write-Host "Service NetTcpPortSharing stopped successfully."
+Write-Host "Service Netlogon stopped successfully."
 Set-Service -Name Netlogon -StartupType Disabled -ErrorAction Stop
-Write-Host "Service NetTcpPortSharing startup type set to Disabled."
+Write-Host "Service Netlogon startup type set to Disabled."
 
 # CscService (Offline Files)
 Stop-Service -Name CscService -Force -ErrorAction Stop

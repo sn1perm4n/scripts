@@ -1,11 +1,9 @@
-﻿# This script queries Registry values from file "keys.txt". Create keys.txt and include the values you'd like to query. Here's an example:
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script queries Registry values from file "keys.txt". Create keys.txt and include the values you'd like to query. Here's an example:
 # HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\ShowSyncProviderNotifications
 # HKLM:\SOFTWARE\Policies\Microsoft\Dsh\AllowWidgets
 # HKCU\Software\Policies\Microsoft\Windows\Explorer\DisableSearchBoxSuggestions
 # To make things simple, place the script and keys.txt in the same folder and run from there. Please also note that the lines in keys.txt can either use a colon or no colon (i.e. HKCU:\ or HKCU\).
-
-# Ensure the script never terminates early
-$ErrorActionPreference = 'Continue'
 
 # Locate keys.txt in the same directory as the script
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -13,13 +11,12 @@ $registryListFile = Join-Path $scriptDir 'keys.txt'
 
 # Verify the input file exists
 if (-not (Test-Path $registryListFile)) {
-	Write-Host "File not found: $registryListFile" -ForegroundColor Red
-	return
+	Write-Error "File not found: $registryListFile"
+	exit 1
 }
 
 # Process each line in the file
 Get-Content -Path $registryListFile | ForEach-Object {
-
 	# Clean up input
 	$rawPath = $_.Trim()
 	if (-not $rawPath) { return }
@@ -43,7 +40,7 @@ Get-Content -Path $registryListFile | ForEach-Object {
 
 	# Split into parent key and leaf
 	$parentKey = Split-Path $path -Parent
-	$leafName  = Split-Path $path -Leaf
+	$leafName = Split-Path $path -Leaf
 
 	try {
 		# Case 1: Full path is a registry KEY
@@ -80,5 +77,9 @@ Get-Content -Path $registryListFile | ForEach-Object {
 
 	Write-Host ""
 }
+
+exit 0
+
+# Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 
 # End.

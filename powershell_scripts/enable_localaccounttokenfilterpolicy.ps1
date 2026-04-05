@@ -3,21 +3,32 @@
 
 #Requires -RunAsAdministrator
 
-# Enable LocalAccountTokenFilterPolicy
 $regPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+
+Write-Host "`nChecking LocalAccountTokenFilterPolicy status..." -ForegroundColor Cyan
 
 try {
 	if (-not (Test-Path $regPath)) {
 		New-Item -Path $regPath -Force | Out-Null
 	}
 
-	Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 1 -Force
+	$currentValue = (Get-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -ErrorAction SilentlyContinue).LocalAccountTokenFilterPolicy
 
+	if ($currentValue -eq 1) {
+		Write-Host "`nLocalAccountTokenFilterPolicy is already enabled." -ForegroundColor Yellow
+		exit 0
+	}
+
+	Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 1 -Force -ErrorAction Stop
 	Write-Host "`nLocalAccountTokenFilterPolicy successfully enabled." -ForegroundColor Green
 }
 catch {
-	Write-Host "`nFailed to enable LocalAccountTokenFilterPolicy: $($_.Exception.Message)." -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Failed to enable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
+	exit 1
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

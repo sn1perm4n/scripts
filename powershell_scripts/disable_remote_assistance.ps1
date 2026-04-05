@@ -3,11 +3,13 @@
 
 #Requires -RunAsAdministrator
 
-Write-Host "`nDisabling Remote Assistance..." -ForegroundColor Cyan
+$raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
+$registryChanged = $false
+$firewallChanged = $false
+
+Write-Host "`nChecking Remote Assistance status..." -ForegroundColor Cyan
 
 try {
-	$raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
-
 	# Check current registry value
 	$currentValue = Get-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -ErrorAction Stop | Select-Object -ExpandProperty fAllowToGetHelp
 
@@ -17,6 +19,7 @@ try {
 	else {
 		Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 0 -Type DWord -ErrorAction Stop
 		Write-Host "`nRegistry setting updated." -ForegroundColor Green
+		$registryChanged = $true
 	}
 }
 catch {
@@ -30,9 +33,11 @@ try {
 
 	if ($fwRules) {
 		$enabledRules = $fwRules | Where-Object { $_.Enabled -eq "True" }
+
 		if ($enabledRules) {
 			$enabledRules | Disable-NetFirewallRule -ErrorAction Stop
 			Write-Host "`nWindows Firewall rules disabled (Remote Assistance group)." -ForegroundColor Green
+			$firewallChanged = $true
 		}
 		else {
 			Write-Host "`nRemote Assistance firewall rules are already disabled." -ForegroundColor Yellow
@@ -46,7 +51,14 @@ catch {
 	Write-Warning "Firewall rule modification failed: $($_.Exception.Message)"
 }
 
-Write-Host "`nRemote Assistance has been successfully disabled." -ForegroundColor Green
+if ($registryChanged -or $firewallChanged) {
+	Write-Host "`nRemote Assistance has been successfully disabled." -ForegroundColor Green
+}
+else {
+	Write-Host "`nRemote Assistance was already disabled. No changes made." -ForegroundColor Yellow
+}
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

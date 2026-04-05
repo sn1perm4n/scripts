@@ -4,207 +4,107 @@
 # Instructions:
 # 1. Open PowerShell and type the following:
 # 2. Get-Service | Select-Object Name, Status, StartType | Out-File -FilePath C:\Users\<username>\Desktop\Service_Status.txt
-# NOTE: Substitute <username> with whatever your username is
+
+# NOTE: Substitute <username> with whatever your username is in the above command
 
 #Requires -RunAsAdministrator
 
-# AssignedAccessManagerSvc (AssignedAccessManager Service)
-Stop-Service -Name AssignedAccessManagerSvc -Force -ErrorAction Stop
-Write-Host "Service AssignedAccessManagerSvc stopped successfully."
-Set-Service -Name AssignedAccessManagerSvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service AssignedAccessManagerSvc startup type set to Disabled."
+Write-Host "`nChecking service status..." -ForegroundColor Cyan
 
-# BDESVC (BitLocker Drive Encryption Service)
-Stop-Service -Name BDESVC -Force -ErrorAction Stop
-Write-Host "Service BDESVC stopped successfully."
-Set-Service -Name BDESVC -StartupType Disabled -ErrorAction Stop
-Write-Host "Service BDESVC startup type set to Disabled."
+$totalProcessed = 0
+$totalChanged = 0
+$totalAlreadyDisabled = 0
 
-# DiagTrack (Connected User Experiences and Telemetry)
-Stop-Service -Name DiagTrack -Force -ErrorAction Stop
-Write-Host "Service DiagTrack stopped successfully."
-Set-Service -Name DiagTrack -StartupType Disabled -ErrorAction Stop
-Write-Host "Service DiagTrack startup type set to Disabled."
+$services = @(
+	@{ Name = "AssignedAccessManagerSvc"; Display = "AssignedAccessManager Service" },
+	@{ Name = "BDESVC";                   Display = "BitLocker Drive Encryption Service" },
+	@{ Name = "DiagTrack";                Display = "Connected User Experiences and Telemetry" },
+	@{ Name = "dmwappushservice";         Display = "Device Management WAP Push message Routing Service" },
+	@{ Name = "WdiServiceHost";           Display = "Diagnostic Service Host" },
+	@{ Name = "DialogBlockingService";    Display = "DialogBlockingService" },
+	@{ Name = "MapsBroker";               Display = "Downloaded Maps Manager" },
+	@{ Name = "lfsvc";                    Display = "Geolocation Service" },
+	@{ Name = "SharedAccess";             Display = "Internet Connection Sharing (ICS)" },
+	@{ Name = "AppVClient";               Display = "Microsoft App-V Client" },
+	@{ Name = "MsKeyboardFilter";         Display = "Microsoft Keyboard Filter" },
+	@{ Name = "NetTcpPortSharing";        Display = "Net.Tcp Port Sharing Service" },
+	@{ Name = "Netlogon";                 Display = "Netlogon" },
+	@{ Name = "CscService";               Display = "Offline Files" },
+	@{ Name = "WpcMonSvc";                Display = "Parental Controls" },
+	@{ Name = "PhoneSvc";                 Display = "Phone Service" },
+	@{ Name = "WPDBusEnum";               Display = "Portable Device Enumerator Service" },
+	@{ Name = "RetailDemo";               Display = "Retail Demo Service" },
+	@{ Name = "RemoteAccess";             Display = "Routing and Remote Access" },
+	@{ Name = "seclogon";                 Display = "Secondary Logon" },
+	@{ Name = "SensorService";            Display = "Sensor Service" },
+	@{ Name = "shpamsvc";                 Display = "Shared PC Account Manager" },
+	@{ Name = "ShellHWDetection";         Display = "Shell Hardware Detection" },
+	@{ Name = "UevAgentService";          Display = "User Experience Virtualization Service" },
+	@{ Name = "WalletService";            Display = "WalletService" },
+	@{ Name = "WbioSrvc";                 Display = "Windows Biometric Service" },
+	@{ Name = "wcncsvc";                  Display = "Windows Connect Now - Config Registrar" },
+	@{ Name = "WMPNetworkSvc";            Display = "Windows Media Player Network Sharing Service" },
+	@{ Name = "icssvc";                   Display = "Windows Mobile Hotspot Service" },
+	@{ Name = "XboxGipSvc";               Display = "Xbox Accessory Management Service" },
+	@{ Name = "XblAuthManager";           Display = "Xbox Live Auth Manager" },
+	@{ Name = "XblGameSave";              Display = "Xbox Live Game Save" },
+	@{ Name = "XboxNetApiSvc";            Display = "Xbox Live Networking Service" }
+)
 
-# dmwappushservice (Device Management Wireless Application Protocol (WAP) Push message Routing Service)
-Stop-Service -Name dmwappushservice -Force -ErrorAction Stop
-Write-Host "Service dmwappushservice stopped successfully."
-Set-Service -Name dmwappushservice -StartupType Disabled -ErrorAction Stop
-Write-Host "Service dmwappushservice startup type set to Disabled."
+foreach ($entry in $services) {
+	$name = $entry.Name
+	$display = $entry.Display
+	$totalProcessed++
+	$serviceChanged = $false
 
-# WdiServiceHost (Diagnostic Service Host)
-Stop-Service -Name WdiServiceHost -Force -ErrorAction Stop
-Write-Host "Service WdiServiceHost stopped successfully."
-Set-Service -Name WdiServiceHost -StartupType Disabled -ErrorAction Stop
-Write-Host "Service WdiServiceHost startup type set to Disabled."
+	$svc = Get-Service -Name $name -ErrorAction SilentlyContinue
 
-# DialogBlockingService (DialogBlockingService)
-Stop-Service -Name DialogBlockingService -Force -ErrorAction Stop
-Write-Host "Service DialogBlockingService stopped successfully."
-Set-Service -Name DialogBlockingService -StartupType Disabled -ErrorAction Stop
-Write-Host "Service DialogBlockingService startup type set to Disabled."
+	if (-not $svc) {
+		Write-Host "`nService '$name' ($display) not found." -ForegroundColor Yellow
+		continue
+	}
 
-# MapsBroker (Downloaded Maps Manager)
-Stop-Service -Name MapsBroker -Force -ErrorAction Stop
-Write-Host "Service MapsBroker stopped successfully."
-Set-Service -Name MapsBroker -StartupType Disabled -ErrorAction Stop
-Write-Host "Service MapsBroker startup type set to Disabled."
+	# Disable the service
+	if ($svc.StartType -eq 'Disabled') {
+		Write-Host "`nService '$name' ($display) is already disabled." -ForegroundColor Yellow
+		$totalAlreadyDisabled++
+	}
+	else {
+		try {
+			Set-Service -Name $name -StartupType Disabled -ErrorAction Stop
+			Write-Host "`nService '$name' ($display) startup type successfully set to Disabled." -ForegroundColor Green
+			$serviceChanged = $true
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not disable service '$name' ($display): $($_.Exception.Message)"
+		}
+	}
 
-# lfsvc (Geolocation Service)
-Stop-Service -Name lfsvc -Force -ErrorAction Stop
-Write-Host "Service lfsvc stopped successfully."
-Set-Service -Name lfsvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service lfsvc startup type set to Disabled."
+	# Stop the service if it's currently running
+	if ($svc.Status -eq 'Stopped') {
+		Write-Host "Service '$name' ($display) is already stopped." -ForegroundColor Yellow
+	}
+	else {
+		try {
+			Stop-Service -Name $name -Force -ErrorAction Stop
+			Write-Host "Service '$name' ($display) stopped successfully." -ForegroundColor Green
+			$serviceChanged = $true
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not stop service '$name' ($display): $($_.Exception.Message)"
+		}
+	}
 
-# SharedAccess (Internet Connection Sharing (ICS)
-Stop-Service -Name SharedAccess -Force -ErrorAction Stop
-Write-Host "Service SharedAccess stopped successfully."
-Set-Service -Name SharedAccess -StartupType Disabled -ErrorAction Stop
-Write-Host "Service SharedAccess startup type set to Disabled."
+	if ($serviceChanged) { $totalChanged++ }
+}
 
-# AppVClient (Microsoft App-V Client)
-Stop-Service -Name AppVClient -Force -ErrorAction Stop
-Write-Host "Service AppVClient stopped successfully."
-Set-Service -Name AppVClient -StartupType Disabled -ErrorAction Stop
-Write-Host "Service AppVClient startup type set to Disabled."
+# Summary
+$summaryLine = "$totalProcessed service(s) processed: $totalChanged changed, $totalAlreadyDisabled already disabled."
+Write-Host "`n$summaryLine" -ForegroundColor $(if ($totalChanged -gt 0) { 'Green' } else { 'Yellow' })
 
-# MsKeyboardFilter (Microsoft Keyboard Filter)
-Stop-Service -Name MsKeyboardFilter -Force -ErrorAction Stop
-Write-Host "Service MsKeyboardFilter stopped successfully."
-Set-Service -Name MsKeyboardFilter -StartupType Disabled -ErrorAction Stop
-Write-Host "Service MsKeyboardFilter startup type set to Disabled."
-
-# NetTcpPortSharing (Net.Tcp Port Sharing Service)
-Stop-Service -Name NetTcpPortSharing -Force -ErrorAction Stop
-Write-Host "Service NetTcpPortSharing stopped successfully."
-Set-Service -Name NetTcpPortSharing -StartupType Disabled -ErrorAction Stop
-Write-Host "Service NetTcpPortSharing startup type set to Disabled."
-
-# Netlogon (Netlogon)
-Stop-Service -Name Netlogon -Force -ErrorAction Stop
-Write-Host "Service Netlogon stopped successfully."
-Set-Service -Name Netlogon -StartupType Disabled -ErrorAction Stop
-Write-Host "Service Netlogon startup type set to Disabled."
-
-# CscService (Offline Files)
-Stop-Service -Name CscService -Force -ErrorAction Stop
-Write-Host "Service CscService stopped successfully."
-Set-Service -Name CscService -StartupType Disabled -ErrorAction Stop
-Write-Host "Service CscService startup type set to Disabled."
-
-# WpcMonSvc (Parental Controls)
-Stop-Service -Name WpcMonSvc -Force -ErrorAction Stop
-Write-Host "Service WpcMonSvc stopped successfully."
-Set-Service -Name WpcMonSvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service WpcMonSvc startup type set to Disabled."
-
-# PhoneSvc (Phone Service)
-Stop-Service -Name PhoneSvc -Force -ErrorAction Stop
-Write-Host "Service PhoneSvc stopped successfully."
-Set-Service -Name PhoneSvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service PhoneSvc startup type set to Disabled."
-
-# WPDBusEnum (Portable Device Enumerator Service)
-Stop-Service -Name WPDBusEnum -Force -ErrorAction Stop
-Write-Host "Service WPDBusEnum stopped successfully."
-Set-Service -Name WPDBusEnum -StartupType Disabled -ErrorAction Stop
-Write-Host "Service WPDBusEnum startup type set to Disabled."
-
-# RetailDemo (Retail Demo Service)
-Stop-Service -Name RetailDemo -Force -ErrorAction Stop
-Write-Host "Service RetailDemo stopped successfully."
-Set-Service -Name RetailDemo -StartupType Disabled -ErrorAction Stop
-Write-Host "Service RetailDemo startup type set to Disabled."
-
-# RemoteAccess (Routing and Remote Access)
-Stop-Service -Name RemoteAccess -Force -ErrorAction Stop
-Write-Host "Service RemoteAccess stopped successfully."
-Set-Service -Name RemoteAccess -StartupType Disabled -ErrorAction Stop
-Write-Host "Service RemoteAccess startup type set to Disabled."
-
-# seclogon (Secondary Logon)
-Stop-Service -Name seclogon -Force -ErrorAction Stop
-Write-Host "Service seclogon stopped successfully."
-Set-Service -Name seclogon -StartupType Disabled -ErrorAction Stop
-Write-Host "Service seclogon startup type set to Disabled."
-
-# SensorService (Sensor Service)
-Stop-Service -Name SensorService -Force -ErrorAction Stop
-Write-Host "Service SensorService stopped successfully."
-Set-Service -Name SensorService -StartupType Disabled -ErrorAction Stop
-Write-Host "Service SensorService startup type set to Disabled."
-
-# shpamsvc (Shared PC Account Manager)
-Stop-Service -Name shpamsvc -Force -ErrorAction Stop
-Write-Host "Service shpamsvc stopped successfully."
-Set-Service -Name shpamsvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service shpamsvc startup type set to Disabled."
-
-# ShellHWDetection (Shell Hardware Detection)
-Stop-Service -Name ShellHWDetection -Force -ErrorAction Stop
-Write-Host "Service ShellHWDetection stopped successfully."
-Set-Service -Name ShellHWDetection -StartupType Disabled -ErrorAction Stop
-Write-Host "Service ShellHWDetection startup type set to Disabled."
-
-# UevAgentService (User Experience Virtualization Service)
-Stop-Service -Name UevAgentService -Force -ErrorAction Stop
-Write-Host "Service UevAgentService stopped successfully."
-Set-Service -Name UevAgentService -StartupType Disabled -ErrorAction Stop
-Write-Host "Service UevAgentService startup type set to Disabled."
-
-# WalletService (WalletService)
-Stop-Service -Name WalletService -Force -ErrorAction Stop
-Write-Host "Service WalletService stopped successfully."
-Set-Service -Name WalletService -StartupType Disabled -ErrorAction Stop
-Write-Host "Service WalletService startup type set to Disabled."
-
-# WbioSrvc (Windows Biometric Service)
-Stop-Service -Name WbioSrvc -Force -ErrorAction Stop
-Write-Host "Service WbioSrvc stopped successfully."
-Set-Service -Name WbioSrvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service WbioSrvc startup type set to Disabled."
-
-# wcncsvc (Windows Connect Now - Config Registrar)
-Stop-Service -Name wcncsvc -Force -ErrorAction Stop
-Write-Host "Service wcncsvc stopped successfully."
-Set-Service -Name wcncsvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service wcncsvc startup type set to Disabled."
-
-# WMPNetworkSvc (Windows Media Player Network Sharing Service)
-Stop-Service -Name WMPNetworkSvc -Force -ErrorAction Stop
-Write-Host "Service WMPNetworkSvc stopped successfully."
-Set-Service -Name WMPNetworkSvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service WMPNetworkSvc startup type set to Disabled."
-
-# icssvc (Windows Mobile Hotspot Service)
-Stop-Service -Name icssvc -Force -ErrorAction Stop
-Write-Host "Service icssvc stopped successfully."
-Set-Service -Name icssvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service icssvc startup type set to Disabled."
-
-# XboxGipSvc (Xbox Accessory Management Service)
-Stop-Service -Name XboxGipSvc -Force -ErrorAction Stop
-Write-Host "Service XboxGipSvc stopped successfully."
-Set-Service -Name XboxGipSvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service XboxGipSvc startup type set to Disabled."
-
-# XblAuthManager (Xbox Live Auth Manager)
-Stop-Service -Name XblAuthManager -Force -ErrorAction Stop
-Write-Host "Service XblAuthManager stopped successfully."
-Set-Service -Name XblAuthManager -StartupType Disabled -ErrorAction Stop
-Write-Host "Service XblAuthManager startup type set to Disabled."
-
-# XblGameSave (Xbox Live Game Save)
-Stop-Service -Name XblGameSave -Force -ErrorAction Stop
-Write-Host "Service XblGameSave stopped successfully."
-Set-Service -Name XblGameSave -StartupType Disabled -ErrorAction Stop
-Write-Host "Service XblGameSave startup type set to Disabled."
-
-# XboxNetApiSvc (Xbox Live Networking Service)
-Stop-Service -Name XboxNetApiSvc -Force -ErrorAction Stop
-Write-Host "Service XboxNetApiSvc stopped successfully."
-Set-Service -Name XboxNetApiSvc -StartupType Disabled -ErrorAction Stop
-Write-Host "Service XboxNetApiSvc startup type set to Disabled."
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

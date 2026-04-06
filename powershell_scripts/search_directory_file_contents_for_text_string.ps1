@@ -9,6 +9,7 @@
 #     -LinesBelow <N>: Include N lines of context below each match
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -ShowLines: Show full line content grouped by file with line numbers (replaces default table output)
 #     -Help / -?: Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -20,6 +21,7 @@ param (
 	[int]$LinesBelow = 0,
 	[switch]$Recurse,
 	[string]$SaveResults,
+	[switch]$ShowLines,
 	[switch]$Help
 )
 
@@ -28,7 +30,7 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Exact] [-Filenames] [-LinesAbove <N>] [-LinesBelow <N>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Exact] [-Filenames] [-LinesAbove <N>] [-LinesBelow <N>] [-Recurse] [-SaveResults <PATH>] [-ShowLines] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive       Enables case-sensitive search" -ForegroundColor Cyan
 	Write-Host "  -Exact               Match only lines where the entire line equals the search text" -ForegroundColor Cyan
@@ -37,6 +39,7 @@ if ($Help) {
 	Write-Host "  -LinesBelow <N>      Include N lines of context below each match" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -ShowLines           Show full line content grouped by file with line numbers (replaces default table output)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0
@@ -87,7 +90,7 @@ try {
 	if ($Results) {
 		if ($Filenames) {
 			# Show unique filenames only as a clean list
-			# (-LinesAbove and -LinesBelow are ignored in -Filenames mode)
+			# (-ShowLines, -LinesAbove, and -LinesBelow are ignored in -Filenames mode)
 			$uniqueFiles = $Results | Select-Object -ExpandProperty Filename -Unique
 			Write-Host ""
 			$uniqueFiles | ForEach-Object { Write-Host $_ -ForegroundColor Cyan }
@@ -144,6 +147,21 @@ try {
 				$summaryLine = "$($Results.Count) match(es) found across $fileCount file(s)."
 				Write-Host $summaryLine -ForegroundColor Green
 			}
+			elseif ($ShowLines) {
+				# Show full line content grouped by file with line numbers
+				$resultsByFile = $Results | Group-Object Path
+
+				foreach ($fileGroup in $resultsByFile) {
+					Write-Host "`n$($fileGroup.Name):" -ForegroundColor Cyan
+					foreach ($match in $fileGroup.Group) {
+						Write-Host "  Line $($match.LineNumber): $($match.Line.Trim())" -ForegroundColor Yellow
+					}
+				}
+
+				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
+				$summaryLine = "$($Results.Count) match(es) found across $fileCount file(s)."
+				Write-Host "`n$summaryLine" -ForegroundColor Green
+			}
 			else {
 				$Results | Select-Object Path, LineNumber, Line | Format-Table -AutoSize
 
@@ -179,6 +197,16 @@ try {
 							}
 							$outputLines += ""
 						}
+					}
+				}
+				elseif ($ShowLines) {
+					$resultsByFile = $Results | Group-Object Path
+					foreach ($fileGroup in $resultsByFile) {
+						$outputLines += "$($fileGroup.Name):"
+						foreach ($match in $fileGroup.Group) {
+							$outputLines += "  Line $($match.LineNumber): $($match.Line.Trim())"
+						}
+						$outputLines += ""
 					}
 				}
 				else {

@@ -3,6 +3,7 @@
 
 # Optional flags:
 #     -CaseSensitive: Enables case-sensitive search
+#     -Exact: Match only lines where the entire line equals the search text
 #     -Filenames: Show unique filenames only instead of full table output
 #     -LinesAbove <N>: Include N lines of context above each match
 #     -LinesBelow <N>: Include N lines of context below each match
@@ -13,6 +14,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$CaseSensitive,
+	[switch]$Exact,
 	[switch]$Filenames,
 	[int]$LinesAbove = 0,
 	[int]$LinesBelow = 0,
@@ -26,9 +28,10 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Filenames] [-LinesAbove <N>] [-LinesBelow <N>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Exact] [-Filenames] [-LinesAbove <N>] [-LinesBelow <N>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive       Enables case-sensitive search" -ForegroundColor Cyan
+	Write-Host "  -Exact               Match only lines where the entire line equals the search text" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Show unique filenames only instead of full table output" -ForegroundColor Cyan
 	Write-Host "  -LinesAbove <N>      Include N lines of context above each match" -ForegroundColor Cyan
 	Write-Host "  -LinesBelow <N>      Include N lines of context below each match" -ForegroundColor Cyan
@@ -70,8 +73,11 @@ try {
 		ErrorAction = 'Stop'
 	}
 
+	$escapedText = [regex]::Escape($searchText)
+	$pattern = if ($Exact) { "^\s*$escapedText\s*$" } else { $escapedText }
+
 	$selectStringParams = @{
-		Pattern = [regex]::Escape($searchText)
+		Pattern = $pattern
 		CaseSensitive = $CaseSensitive
 		ErrorAction = 'Stop'
 	}

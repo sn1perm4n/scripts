@@ -9,29 +9,58 @@
 
 # NOTE: On a fresh system where winget has never been run, this script may appear to hang until the priming step completes. This ensures first-run agreements are accepted non-interactively using v1.28.220 flags.
 
+# Optional flags:
+#     -InstallIfMissing: Install winget if it is not found on the system
+#     -LogToDesktop: Save results to a file named winget_<COMPUTERNAME>.txt on the desktop
+#     -SaveResults <PATH>: Append results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -UpgradeAll: Upgrade all available packages after displaying the upgrade list
+#     -Help / -?: Display this help message
+
 #Requires -RunAsAdministrator
 
+[CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$InstallIfMissing,
 	[switch]$LogToDesktop,
-	[switch]$UpgradeAll
+	[string]$SaveResults,
+	[switch]$UpgradeAll,
+	[switch]$Help
 )
 
-$ErrorActionPreference = "Stop"
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
 
-# Optional log file path
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-InstallIfMissing] [-LogToDesktop] [-SaveResults <PATH>] [-UpgradeAll] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -InstallIfMissing    Install winget if it is not found on the system" -ForegroundColor Cyan
+	Write-Host "  -LogToDesktop        Save results to a file named winget_<COMPUTERNAME>.txt on the desktop" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Append results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -UpgradeAll          Upgrade all available packages after displaying the upgrade list" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
+	Write-Host ""  # extra newline for readability
+	exit 0
+}
+
+# Validate -SaveResults path if specified
+if ($SaveResults) {
+	$saveDir = Split-Path $SaveResults -Parent
+	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		exit 1
+	}
+}
+
+# Optional log file path for -LogToDesktop
 if ($LogToDesktop) {
 	$desktopPath = [Environment]::GetFolderPath("Desktop")
 	$logFile = Join-Path $desktopPath "winget_$($env:COMPUTERNAME).txt"
 }
 
-# Temporary files for Start-Process output
-$tempOut = Join-Path $env:TEMP "winget_temp_$PID.txt"
-$tempErr = Join-Path $env:TEMP "winget_temp_err_$PID.txt"
-
 try {
 	# Ensure winget is installed
-	Write-Host "Checking for winget..." -ForegroundColor Cyan
+	Write-Host "`nChecking for winget..." -ForegroundColor Cyan
 	if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 		if ($InstallIfMissing) {
 			Write-Host "winget not found. Attempting installation..." -ForegroundColor Cyan
@@ -41,10 +70,12 @@ try {
 				throw "winget installation failed."
 			}
 			Write-Host "winget installed successfully." -ForegroundColor Green
-		} else {
+		}
+		else {
 			throw "winget is not installed. Use -InstallIfMissing to install it."
 		}
-	} else {
+	}
+	else {
 		Write-Host "winget is already installed." -ForegroundColor Green
 	}
 
@@ -57,16 +88,18 @@ try {
 	$pinnedApps = @()
 	$pinnedAppsRaw = winget pin list 2>$null
 	if ($pinnedAppsRaw) {
-		$pinnedApps = $pinnedAppsRaw | Select-Object -Skip 1 | ForEach-Object { ($_ -split '\s+')[0] }
+		$pinnedApps = $pinnedAppsRaw | Select-Object -Skip 1 | ForEach-Object {
+			if ($_ -match '^\S') { ($_ -split '\s{2,}')[1] }
+		} | Where-Object { $_ }
 	}
 
 	# Pre-check upgrades using winget native table
 	Write-Host "`nChecking for available upgrades..." -ForegroundColor Cyan
 
-	# Capture all upgradeable packages, but filter pinned apps for logging purposes
+	# Capture all upgradeable packages, filtering pinned apps for logging purposes
 	$allUpgrades = winget upgrade --accept-source-agreements --disable-interactivity | Tee-Object -Variable rawOutput
 	$upgradeable = $allUpgrades | Where-Object {
-		$appId = ($_ -split '\s+')[0]
+		$appId = ($_ -split '\s{2,}')[1]
 		-not $pinnedApps.Contains($appId)
 	}
 
@@ -80,28 +113,53 @@ try {
 		Write-Host "`nUpgrade operation completed." -ForegroundColor Green
 	}
 
-	# Prepare log file
+	# Save to desktop log if requested
 	if ($LogToDesktop) {
 		if ($upgradeable) {
 			$logLines = @($env:COMPUTERNAME) + $upgradeable
-		} else {
+		}
+		else {
 			$logLines = @(
 				$env:COMPUTERNAME
 				"No upgradeable apps found (excluding pinned)."
 			)
 		}
-
 		$logLines | Out-File -FilePath $logFile -Encoding UTF8
 		Write-Host "`nwinget log saved to $logFile." -ForegroundColor Green
 	}
 
-	# Read-Host # Uncomment when testing to prevent window from closing
+	# Append to -SaveResults file if requested
+	if ($SaveResults) {
+		$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+		$appendLines = @()
+		$appendLines += "=== $($env:COMPUTERNAME) ($timestamp) ==="
+
+		if ($upgradeable) {
+			$appendLines += $upgradeable
+		}
+		else {
+			$appendLines += "No upgradeable apps found (excluding pinned)."
+		}
+
+		$appendLines += ""
+
+		try {
+			$appendString = ($appendLines -join "`n")
+			[System.IO.File]::AppendAllText($SaveResults, $appendString)
+			Write-Host "`nResults appended to text file: $SaveResults" -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not append results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 
 	Write-Host "`nCompleted successfully." -ForegroundColor Green
 	exit 0
-
-} catch {
-	Write-Host "`nERROR: $($_.Exception.Message)" -ForegroundColor Red
+}
+catch {
+	Write-Host ""
+	Write-Warning "An error occurred: $($_.Exception.Message)"
 	exit 1
 }
 

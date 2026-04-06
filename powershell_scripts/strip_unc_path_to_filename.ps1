@@ -1,4 +1,4 @@
-﻿# Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script sanitizes a file containing UNC (local) network file paths, each on a new line, down to just the filenames
 # It is meant to be used in conjunction with File Explorer's "Copy Path" option:
 # 1. Select file(s) in File Explorer -> Press CTRL-SHIFT-C -> Press CTRL-V into the appropriate application
@@ -29,7 +29,7 @@ $inputFile = Read-Host "Enter the full path to the file containing UNC/network p
 
 # Check if the input file exists
 if (-not (Test-Path $inputFile)) {
-	Write-Host "`nError: Input file not found at '$inputFile'" -ForegroundColor Red
+	Write-Error "Input file not found at '$inputFile'"
 	exit 1
 }
 
@@ -73,28 +73,30 @@ try {
 		}
 		catch {
 			# Handle errors per line
-			Write-Host "`nError processing line: $($_.Exception.Message)" -ForegroundColor Red
+			Write-Host ""
+			Write-Warning "Error processing line: $($_.Exception.Message)"
 		}
 	}
 
-	Write-Host "`nFilename extraction complete!" -ForegroundColor Green
+	Write-Host "`nFilename extraction successful." -ForegroundColor Green
 
 	# Ask user what to do with the processed list
 	$overwriteOrNew = Read-Host "`nEnter 'Y' to overwrite the original file, 'N' to skip, or type a new file path to save results"
 
 	if ($overwriteOrNew -match '^(?i)Y$') {
 		try {
-			# # Remove any empty or whitespace-only lines before saving
+			# Remove any empty or whitespace-only lines before saving
 			$processedLines = $processedLines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
-			# # Join lines with `n, no trailing newline
+			# Join lines with `n, no trailing newline
 			$finalContent = ($processedLines -join "`n")
 			[System.IO.File]::WriteAllText($inputFile, $finalContent)
 
 			Write-Host "`nProcessed filenames saved to '$inputFile'." -ForegroundColor Green
 		}
 		catch {
-			Write-Host "`nError writing to file '$inputFile': $($_.Exception.Message)" -ForegroundColor Red
+			Write-Host ""
+			Write-Warning "Error writing to file '$inputFile': $($_.Exception.Message)"
 		}
 	}
 	elseif ($overwriteOrNew -match '^(?i)N$') {
@@ -114,14 +116,18 @@ try {
 			Write-Host "`nProcessed filenames saved to '$overwriteOrNew'." -ForegroundColor Green
 		}
 		catch {
-			Write-Host "`nError writing to file '$overwriteOrNew': $($_.Exception.Message)" -ForegroundColor Red
+			Write-Host ""
+			Write-Warning "Error writing to file '$overwriteOrNew': $($_.Exception.Message)"
 		}
 	}
 }
 catch {
-	Write-Host "`nError reading file: $($_.Exception.Message)" -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Error reading file: $($_.Exception.Message)"
 	exit 1
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

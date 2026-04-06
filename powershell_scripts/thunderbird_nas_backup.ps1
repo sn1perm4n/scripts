@@ -16,9 +16,9 @@
 #     -IncludeCache: Include cache/temp/log files in backup (excluded by default)
 #     -Help / -?: Display this help message
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding=$false)]
 param (
-	[switch]$IncludeCache,  # Include cache/temp/log files in backup (excluded by default)
+	[switch]$IncludeCache,
 	[switch]$Help
 )
 
@@ -42,12 +42,10 @@ $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
-	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
-	return
+	Write-Error "Backup aborted: $nasHost is not reachable."
+	exit 1
 }
-else {
-	Write-Host "$nasHost is reachable." -ForegroundColor Green
-}
+Write-Host "$nasHost is reachable." -ForegroundColor Green
 
 # Detect if Thunderbird is running and close it if y/Y is pressed (otherwise abort)
 $thunderbirdProcess = Get-Process -Name thunderbird -ErrorAction SilentlyContinue
@@ -59,8 +57,8 @@ if ($thunderbirdProcess) {
 		Start-Sleep -Seconds 2
 	}
 	else {
-		Write-Host "`nBackup aborted: Please re-run the script and select 'Y' to close Thunderbird, or close Thunderbird manually before running again." -ForegroundColor Red
-		return
+		Write-Error "Backup aborted: Please re-run the script and select 'Y' to close Thunderbird, or close Thunderbird manually before running again."
+		exit 1
 	}
 }
 
@@ -68,8 +66,8 @@ if ($thunderbirdProcess) {
 $profilesIni = Join-Path $env:APPDATA "Thunderbird\profiles.ini"
 
 if (-not (Test-Path $profilesIni)) {
-	Write-Host "profiles.ini not found." -ForegroundColor Red
-	return
+	Write-Error "profiles.ini not found."
+	exit 1
 }
 
 # Parse Default profile
@@ -92,8 +90,8 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
 }
 
 if (-not $profilePath) {
-	Write-Host "Default profile not found." -ForegroundColor Red
-	return
+	Write-Error "Default profile not found."
+	exit 1
 }
 
 if ($isRelative) {
@@ -104,8 +102,8 @@ else {
 }
 
 if (-not (Test-Path $Source)) {
-	Write-Host "Profile path not found: $Source" -ForegroundColor Red
-	return
+	Write-Error "Profile path not found: $Source"
+	exit 1
 }
 
 Write-Host "`nSource Profile: $Source" -ForegroundColor Green
@@ -141,9 +139,11 @@ robocopy @robocopyArgs
 $exitCode = $LASTEXITCODE
 if ($exitCode -le 3) {
 	Write-Host "`nThunderbird profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
+	exit 0
 }
 else {
 	Write-Host "`nThunderbird profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
+	exit 1
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

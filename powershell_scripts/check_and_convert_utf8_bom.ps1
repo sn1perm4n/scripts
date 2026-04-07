@@ -11,7 +11,7 @@
 #     -Help / -?: Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
-param(
+param (
 	[switch]$Backup,
 	[switch]$ConvertAll,
 	[switch]$Failures,
@@ -69,8 +69,9 @@ else {
 
 # Quick check for no .ps1 or .reg files
 if (-not $files -or $files.Count -eq 0) {
-	Write-Host "No PowerShell (.ps1) or Registry (.reg) files found in '$Path'. Exiting..." -ForegroundColor Red
-	exit 1
+	Write-Host ""
+	Write-Warning "No PowerShell (.ps1) or Registry (.reg) files found in '$Path'."
+	exit 0
 }
 
 # Counters for statistics
@@ -265,6 +266,8 @@ if ($SaveResults) {
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

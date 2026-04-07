@@ -82,7 +82,7 @@ foreach ($file in $files) {
 		# Ignore "stream not found" errors (means file is not blocked)
 		if ($_.Exception.Message -notmatch "Zone.Identifier") {
 			$checkErrors += [PSCustomObject]@{
-				File  = $file.FullName
+				File = $file.FullName
 				Error = $_.Exception.Message
 			}
 		}
@@ -114,8 +114,8 @@ if ($SaveResults) {
 if ($checkErrors.Count -gt 0) {
 	Write-Host "`nSome files could not be checked:" -ForegroundColor Yellow
 	foreach ($err in $checkErrors) {
-		Write-Host "  File: $($err.File)" -ForegroundColor Red
-		Write-Host "  Error: $($err.Error)" -ForegroundColor Red
+		Write-Host ""
+		Write-Warning "File: $($err.File) — $($err.Error)"
 		if ($SaveResults) {
 			$FileOutputLines += "File: $($err.File)"
 			$FileOutputLines += "Error: $($err.Error)"
@@ -187,8 +187,8 @@ if ($response -match '^[Yy]$') {
 	if ($unblockErrors.Count -gt 0) {
 		Write-Host "`nSome files failed to unblock:" -ForegroundColor Yellow
 		foreach ($err in $unblockErrors) {
-			Write-Host "  File: $($err.File)" -ForegroundColor Red
-			Write-Host "  Error: $($err.Error)" -ForegroundColor Red
+			Write-Host ""
+			Write-Warning "File: $($err.File) — $($err.Error)"
 			if ($SaveResults) {
 				$FileOutputLines += "File: $($err.File)"
 				$FileOutputLines += "Error: $($err.Error)"
@@ -219,6 +219,8 @@ if ($SaveResults) {
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

@@ -68,8 +68,9 @@ try {
 	Import-Module PSScriptAnalyzer -ErrorAction Stop
 }
 catch {
-	Write-Host "Failed to install or import PSScriptAnalyzer: $($_.Exception.Message)" -ForegroundColor Red
 	Write-Host ""  # blank line before prompt
+	Write-Warning "Failed to install or import PSScriptAnalyzer: $($_.Exception.Message)"
+	Write-Host ""
 	exit 1
 }
 

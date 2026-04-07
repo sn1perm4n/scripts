@@ -10,15 +10,16 @@
 # 3			Files copied and extra files/directories deleted (1 + 2)
 # 4–7		Success with minor issues (mismatched files, skipped files, retryable errors)
 # 8+		Failure — serious errors (network issue, permissions, etc.)
+
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
 # Optional flags:
 #     -IncludeCache: Include cache/temp/log files in backup (excluded by default)
 #     -Help / -?: Display this help message
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding=$false)]
 param (
-	[switch]$IncludeCache,  # Include cache/temp/log files in backup (excluded by default)
+	[switch]$IncludeCache,
 	[switch]$Help
 )
 
@@ -42,12 +43,10 @@ $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
-	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
-	return
+	Write-Error "Backup aborted: $nasHost is not reachable."
+	exit 1
 }
-else {
-	Write-Host "$nasHost is reachable." -ForegroundColor Green
-}
+Write-Host "$nasHost is reachable." -ForegroundColor Green
 
 # Detect if Chrome is running and close it if y/Y is pressed (otherwise abort)
 $chromeProcess = Get-Process -Name chrome -ErrorAction SilentlyContinue
@@ -59,8 +58,8 @@ if ($chromeProcess) {
 		Start-Sleep -Seconds 2
 	}
 	else {
-		Write-Host "`nBackup aborted: Please re-run the script and select 'Y' to close Chrome, or close Chrome manually before running again." -ForegroundColor Red
-		return
+		Write-Error "Backup aborted: Please re-run the script and select 'Y' to close Chrome, or close Chrome manually before running again."
+		exit 1
 	}
 }
 
@@ -68,8 +67,8 @@ if ($chromeProcess) {
 $Source = Join-Path $env:LOCALAPPDATA "Google\Chrome\User Data\Default"
 
 if (-not (Test-Path $Source)) {
-	Write-Host "Chrome profile path not found: $Source" -ForegroundColor Red
-	return
+	Write-Error "Chrome profile path not found: $Source"
+	exit 1
 }
 
 Write-Host "`nSource Profile: $Source" -ForegroundColor Green
@@ -105,9 +104,12 @@ robocopy @robocopyArgs
 $exitCode = $LASTEXITCODE
 if ($exitCode -le 3) {
 	Write-Host "`nGoogle Chrome profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
+	exit 0
 }
 else {
-	Write-Host "`nGoogle Chrome profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Google Chrome profile backup completed with errors (Robocopy exit code: $exitCode)."
+	exit 1
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

@@ -16,7 +16,7 @@
 
 #Requires -RunAsAdministrator
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$CheckOnly,
 	[switch]$InstallAll,
@@ -84,7 +84,7 @@ try {
 		$updates += $windowsUpdates | ForEach-Object {
 			[PSCustomObject]@{
 				Title = $_.Title
-				Type  = "Windows/Microsoft"
+				Type = "Windows/Microsoft"
 			}
 		}
 	}
@@ -100,7 +100,7 @@ try {
 		Write-Host "`nNo updates available." -ForegroundColor Green
 		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		return
+		exit 0
 	}
 
 	# Print all available updates
@@ -113,7 +113,7 @@ try {
 	if ($CheckOnly) {
 		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		return
+		exit 0
 	}
 
 	# Prompt user unless -InstallAll is specified
@@ -146,8 +146,12 @@ try {
 	}
 }
 catch {
+	Write-Host ""
 	Write-Warning "An error occurred while checking or installing updates: $($_.Exception.Message)"
+	exit 1
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

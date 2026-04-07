@@ -7,8 +7,6 @@
 
 # NOTE2: Cumulative and feature updates delivered via the UUP pipeline (i.e. monthly security rollups) may not be detected by this script due to a Windows Update COM API limitation. Always verify via the Windows Update GUI or Settings > Windows Update to ensure all critical updates are installed.
 
-# NOTE3: Cumulative and feature updates delivered via the UUP pipeline (e.g. monthly security rollups) may not be detected by this script due to a PSWindowsUpdate/Windows Update API limitation. Always verify via the Windows Update GUI or Settings > Windows Update to ensure all critical updates are installed.
-
 # Optional flags:
 #     -CheckOnly: Check for updates without prompting to install
 #     -InstallAll: Automatically install all available updates without prompting
@@ -16,7 +14,7 @@
 
 #Requires -RunAsAdministrator
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$CheckOnly,
 	[switch]$InstallAll,
@@ -52,7 +50,7 @@ try {
 	) | Out-Null
 
 	# Create a Windows Update session
-	$updateSession  = New-Object -ComObject Microsoft.Update.Session
+	$updateSession = New-Object -ComObject Microsoft.Update.Session
 	$updateSearcher = $updateSession.CreateUpdateSearcher()
 
 	# Search for all available updates
@@ -71,7 +69,7 @@ try {
 		Write-Host "`nNo updates available." -ForegroundColor Green
 		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		return
+		exit 0
 	}
 
 	# Print available updates
@@ -84,7 +82,7 @@ try {
 	if ($CheckOnly) {
 		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 		$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-		return
+		exit 0
 	}
 
 	# Prompt user unless -InstallAll is specified
@@ -147,8 +145,12 @@ try {
 	}
 }
 catch {
+	Write-Host ""
 	Write-Warning "An error occurred while checking or installing updates: $($_.Exception.Message)"
+	exit 1
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

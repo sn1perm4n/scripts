@@ -43,6 +43,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -53,6 +54,7 @@ $Path = Read-Host "`nEnter the full path to a .ps1 or .reg file, or a folder"
 
 # Validate path exists
 if (-not (Test-Path $Path)) {
+	Write-Host ""
 	Write-Error "Path not found: $Path"
 	exit 1
 }
@@ -94,6 +96,7 @@ foreach ($file in $files) {
 		$bytes = [System.IO.File]::ReadAllBytes($file.FullName)
 	}
 	catch {
+		Write-Host ""
 		Write-Warning "Could not read $($file.Name): $($_.Exception.Message)"
 		continue
 	}
@@ -213,6 +216,7 @@ foreach ($filePath in $FailureFiles) {
 					$skipFile = $true
 				}
 				catch {
+					Write-Host ""
 					Write-Warning "Failed to convert $($fileName): $($_.Exception.Message)"
 					if ($SaveResults) {
 						$FileOutputLines += "Failed to convert ${fileName}: $($_.Exception.Message)"

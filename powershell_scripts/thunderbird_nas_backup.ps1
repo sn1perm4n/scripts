@@ -42,6 +42,7 @@ $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
+	Write-Host ""
 	Write-Error "Backup aborted: $nasHost is not reachable."
 	exit 1
 }
@@ -57,6 +58,7 @@ if ($thunderbirdProcess) {
 		Start-Sleep -Seconds 2
 	}
 	else {
+		Write-Host ""
 		Write-Error "Backup aborted: Please re-run the script and select 'Y' to close Thunderbird, or close Thunderbird manually before running again."
 		exit 1
 	}
@@ -66,6 +68,7 @@ if ($thunderbirdProcess) {
 $profilesIni = Join-Path $env:APPDATA "Thunderbird\profiles.ini"
 
 if (-not (Test-Path $profilesIni)) {
+	Write-Host ""
 	Write-Error "profiles.ini not found."
 	exit 1
 }
@@ -90,6 +93,7 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
 }
 
 if (-not $profilePath) {
+	Write-Host ""
 	Write-Error "Default profile not found."
 	exit 1
 }
@@ -102,6 +106,7 @@ else {
 }
 
 if (-not (Test-Path $Source)) {
+	Write-Host ""
 	Write-Error "Profile path not found: $Source"
 	exit 1
 }

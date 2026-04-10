@@ -39,6 +39,7 @@ if ($Help) {
 Write-Host "`nChecking '$TargetFolder'..." -ForegroundColor Cyan
 
 if (-not (Test-Path -Path $TargetFolder)) {
+	Write-Host ""
 	Write-Warning "The directory '$TargetFolder' does not exist."
 	exit 0
 }
@@ -47,6 +48,7 @@ try {
 	$items = Get-ChildItem -Path $TargetFolder -Force -Recurse:$Recurse
 
 	if ($items.Count -eq 0) {
+		Write-Host ""
 		Write-Warning "The directory '$TargetFolder' exists but is empty."
 		exit 0
 	}
@@ -83,6 +85,7 @@ try {
 	Write-Host "`n$ScriptName`: Cleanup complete, $freedDisplay freed." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred while trying to delete items in '$TargetFolder': $($_.Exception.Message)"
 }
 

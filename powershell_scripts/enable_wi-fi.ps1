@@ -18,6 +18,7 @@ try {
 	Write-Host "`nWi-Fi enabled successfully." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred while enabling Wi-Fi: $($_.Exception.Message)"
 	exit 1
 }

@@ -19,6 +19,7 @@ if (Test-Path -Path $parentFolder) {
 		$folders = Get-ChildItem -Path $parentFolder -Directory | Where-Object { $_.Name -like 'B*' }
 
 		if (-not $folders) {
+			Write-Host ""
 			Write-Warning "No folders starting with 'B' found in '$parentFolder'."
 			exit 0
 		}
@@ -58,10 +59,12 @@ if (Test-Path -Path $parentFolder) {
 		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$parentFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$parentFolder' does not exist."
 }
 

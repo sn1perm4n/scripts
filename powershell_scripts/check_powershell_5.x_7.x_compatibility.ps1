@@ -43,6 +43,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -50,6 +51,7 @@ if ($SaveResults) {
 
 # Warn if -Successes and -Failures are both specified (mutually exclusive)
 if ($Successes -and $Failures) {
+	Write-Host ""
 	Write-Warning "-Successes and -Failures are mutually exclusive. Please use only one at a time."
 	exit 1
 }
@@ -81,6 +83,7 @@ $Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
 Write-Host ""  # blank line after prompt
 
 if (-not (Test-Path $Path)) {
+	Write-Host ""
 	Write-Error "The specified path does not exist."
 	exit 1
 }
@@ -94,6 +97,7 @@ else {
 		$scripts = @(Get-Item $Path)
 	}
 	else {
+		Write-Host ""
 		Write-Error "The specified file is not a PowerShell script (.ps1)."
 		exit 1
 	}
@@ -142,6 +146,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 		}
 		catch {
 			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $($_.Exception.Message)"
+			Write-Host ""
 			Write-Warning $warningLine
 			if ($SaveResults) {
 				$FileOutputLines += $warningLine

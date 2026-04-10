@@ -7,7 +7,7 @@
 
 $regPath = 'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
 
-Write-Host "Configuring Windows Update..." -ForegroundColor Cyan
+Write-Host "`nConfiguring Windows Update..." -ForegroundColor Cyan
 
 # Configure Windows Update via Registry changes
 try {
@@ -32,6 +32,7 @@ try {
 	Write-Host "`nWindows Update has been configured." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred: $($_.Exception.Message)"
 	exit 1
 }

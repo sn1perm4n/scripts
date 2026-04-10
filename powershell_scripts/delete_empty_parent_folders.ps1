@@ -33,6 +33,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -72,6 +73,7 @@ function Remove-ParentEmptyFolderStrict {
 
 	# Validate the path
 	if (-not (Test-Path -Path $Path -PathType Container)) {
+		Write-Host ""
 		Write-Error "The specified path '$Path' does not exist or is not a directory."
 		return
 	}

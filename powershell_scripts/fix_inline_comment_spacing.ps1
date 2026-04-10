@@ -39,6 +39,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -48,6 +49,7 @@ if ($SaveResults) {
 $Path = Read-Host "`nEnter the full path to a file or directory"
 
 if (-not (Test-Path $Path)) {
+	Write-Host ""
 	Write-Error "Path not found: $Path"
 	exit 1
 }
@@ -240,6 +242,7 @@ foreach ($file in $files) {
 		}
 	}
 	catch {
+		Write-Host ""
 		Write-Warning "Could not write to $($file.Name): $($_.Exception.Message)"
 	}
 }

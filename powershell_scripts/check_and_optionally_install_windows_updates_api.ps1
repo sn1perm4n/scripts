@@ -128,10 +128,12 @@ try {
 					Write-Host "`nDefender definition update completed via MpCmdRun.exe." -ForegroundColor Green
 				}
 				catch {
+					Write-Host ""
 					Write-Warning "Defender definition update via MpCmdRun.exe also failed: $($_.Exception.Message)"
 				}
 			}
 			else {
+				Write-Host ""
 				Write-Warning "Update installation completed with result code: $($installResult.ResultCode)"
 			}
 		}

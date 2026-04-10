@@ -18,6 +18,7 @@ if (Test-Path -Path $appdataRoamingMremoteng) {
 
 		# Guard clause that activates and exits if 0 or 1 .backup file is found
 		if ($backupFiles.Count -le 1) {
+			Write-Host ""
 			Write-Warning "Found $($backupFiles.Count) .backup file(s), nothing to delete."
 			exit 0
 		}
@@ -46,10 +47,12 @@ if (Test-Path -Path $appdataRoamingMremoteng) {
 		Write-Host "`n$ScriptName`: $deletedCount $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataRoamingMremoteng': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$appdataRoamingMremoteng' does not exist."
 }
 

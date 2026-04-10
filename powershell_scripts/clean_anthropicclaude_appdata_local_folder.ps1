@@ -18,6 +18,7 @@ if (Test-Path -Path $appdataLocalAnthropicClaudeFolder) {
 
 		# Guard clause that activates and exits if there's only 0 or 1 "app-" folder
 		if ($appDirs.Count -le 1) {
+			Write-Host ""
 			Write-Warning "Only $($appDirs.Count) 'app-' folder found, nothing to delete."
 			exit 0
 		}
@@ -36,6 +37,7 @@ if (Test-Path -Path $appdataLocalAnthropicClaudeFolder) {
 		} | Sort-Object Version -Descending
 
 		if (-not $appNumbers) {
+			Write-Host ""
 			Write-Warning "No folders starting with 'app-' found in '$appdataLocalAnthropicClaudeFolder'."
 			exit 0
 		}
@@ -64,10 +66,12 @@ if (Test-Path -Path $appdataLocalAnthropicClaudeFolder) {
 		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalAnthropicClaudeFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$appdataLocalAnthropicClaudeFolder' does not exist."
 }
 

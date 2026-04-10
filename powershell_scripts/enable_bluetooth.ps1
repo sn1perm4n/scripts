@@ -24,6 +24,7 @@ try {
 	Write-Host "`nBluetooth enabled successfully." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred while enabling Bluetooth: $($_.Exception.Message)"
 	exit 1
 }

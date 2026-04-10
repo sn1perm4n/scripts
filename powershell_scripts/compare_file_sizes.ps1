@@ -40,6 +40,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -49,6 +50,7 @@ if ($SaveResults) {
 $Path1st = Read-Host "`nEnter the full path to the first file or directory"
 
 if (-not (Test-Path -Path $Path1st)) {
+	Write-Host ""
 	Write-Error "Path not found: $Path1st"
 	exit 1
 }
@@ -56,6 +58,7 @@ if (-not (Test-Path -Path $Path1st)) {
 $Path2nd = Read-Host "`nEnter the full path to the second file or directory"
 
 if (-not (Test-Path -Path $Path2nd)) {
+	Write-Host ""
 	Write-Error "Path not found: $Path2nd"
 	exit 1
 }
@@ -68,7 +71,7 @@ $FileOutputLines = @()
 
 # Handle file vs directory mismatch
 if ($item1st.PSIsContainer -ne $item2nd.PSIsContainer) {
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	Write-Error "Cannot compare a file with a directory."
 	exit 1
 }
@@ -116,7 +119,7 @@ else {
 	$onlyIn2ndCount = 0
 
 	# Track the last displayed and last saved line types independently to add blank lines between groups
-	$lastLineType  = ""
+	$lastLineType = ""
 	$lastSavedType = ""
 
 	# Compare files in 1st against 2nd

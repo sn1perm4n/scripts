@@ -23,6 +23,7 @@ try {
 	}
 }
 catch {
+	Write-Host ""
 	Write-Error "Failed to check or modify Remote Assistance registry setting: $($_.Exception.Message)"
 	exit 1
 }
@@ -48,6 +49,7 @@ try {
 	}
 }
 catch {
+	Write-Host ""
 	Write-Warning "Firewall rule modification failed: $($_.Exception.Message)"
 }
 

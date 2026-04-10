@@ -18,6 +18,7 @@ try {
 	Write-Host "`nWi-Fi disabled successfully." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred while disabling Wi-Fi: $($_.Exception.Message)"
 	exit 1
 }

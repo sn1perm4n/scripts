@@ -40,6 +40,7 @@ try {
 	if ($csvPath -and $csvPath.Trim() -ne "") {
 		$csvDirectory = Split-Path -Path $csvPath -Parent
 		if (-not (Test-Path -Path $csvDirectory)) {
+			Write-Host ""
 			Write-Warning "CSV export skipped because the directory does not exist: $csvDirectory."
 		}
 		else {
@@ -48,6 +49,7 @@ try {
 				Write-Host "`nCSV exported to $csvPath." -ForegroundColor Green
 			}
 			catch {
+				Write-Host ""
 				Write-Warning "Failed to export CSV: $($_.Exception.Message)"
 			}
 		}
@@ -56,6 +58,7 @@ try {
 	Write-Host "`nInstalled program query completed successfully." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred while querying installed programs: $($_.Exception.Message)"
 	exit 1
 }

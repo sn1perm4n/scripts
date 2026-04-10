@@ -37,6 +37,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -50,6 +51,7 @@ $scriptFileOrDirectory = Read-Host "`nEnter the path to a PowerShell script dire
 
 # Validate the path
 if (-not (Test-Path $scriptFileOrDirectory)) {
+	Write-Host ""
 	Write-Error "The path '$scriptFileOrDirectory' does not exist."
 	exit 1
 }
@@ -64,6 +66,7 @@ if ((Get-Item $scriptFileOrDirectory).PSIsContainer) {
 }
 else {
 	if ($scriptFileOrDirectory -notlike "*.ps1") {
+		Write-Host ""
 		Write-Error "The file '$scriptFileOrDirectory' is not a .ps1 script."
 		exit 1
 	}
@@ -144,6 +147,7 @@ foreach ($fileObj in $files) {
 			$modifiedCount++
 		}
 		catch {
+			Write-Host ""
 			Write-Warning "Could not write to $($fileObj.Name): $($_.Exception.Message)"
 		}
 	}

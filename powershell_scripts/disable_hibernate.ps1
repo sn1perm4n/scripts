@@ -34,6 +34,7 @@ try {
 	}
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred while managing Hibernation: $($_.Exception.Message)"
 	exit 1
 }

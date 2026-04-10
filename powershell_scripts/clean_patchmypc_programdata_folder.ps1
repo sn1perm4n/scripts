@@ -14,11 +14,13 @@ Write-Host "`nChecking '$programdataPatchmypcFolder'..." -ForegroundColor Cyan
 
 # Guard clauses
 if (-not (Test-Path $programdataPatchmypcFolder)) {
+	Write-Host ""
 	Write-Warning "The directory '$programdataPatchmypcFolder' does not exist."
 	exit 0
 }
 
 if (-not (Get-ChildItem -Path $programdataPatchmypcFolder -Force)) {
+	Write-Host ""
 	Write-Warning "The directory '$programdataPatchmypcFolder' is empty."
 	exit 0
 }

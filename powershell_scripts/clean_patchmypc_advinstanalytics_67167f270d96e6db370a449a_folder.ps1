@@ -18,6 +18,7 @@ if (Test-Path -Path $appdataLocalAdvinstAnalyticsFolder) {
 
 		# Guard clause that activates and exits if there's only 0 or 1 folder
 		if ($items.Count -le 1) {
+			Write-Host ""
 			Write-Warning "The directory '$appdataLocalAdvinstAnalyticsFolder' contains $($items.Count) folder(s), nothing to delete."
 			exit 0
 		}
@@ -49,10 +50,12 @@ if (Test-Path -Path $appdataLocalAdvinstAnalyticsFolder) {
 		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalAdvinstAnalyticsFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$appdataLocalAdvinstAnalyticsFolder' does not exist."
 }
 

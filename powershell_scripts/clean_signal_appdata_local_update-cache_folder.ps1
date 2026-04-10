@@ -18,6 +18,7 @@ if (Test-Path -Path $appdataRoamingSignalFolder) {
 
 		# Guard clause that activates and exits if the directory is empty
 		if (-not $items) {
+			Write-Host ""
 			Write-Warning "The directory '$appdataRoamingSignalFolder' exists but is empty."
 			exit 0
 		}
@@ -40,10 +41,12 @@ if (Test-Path -Path $appdataRoamingSignalFolder) {
 		Write-Host "`n$ScriptName`: Cleanup complete, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataRoamingSignalFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$appdataRoamingSignalFolder' does not exist."
 }
 

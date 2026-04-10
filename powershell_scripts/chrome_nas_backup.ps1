@@ -43,6 +43,7 @@ $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
+	Write-Host ""
 	Write-Error "Backup aborted: $nasHost is not reachable."
 	exit 1
 }
@@ -58,6 +59,7 @@ if ($chromeProcess) {
 		Start-Sleep -Seconds 2
 	}
 	else {
+		Write-Host ""
 		Write-Error "Backup aborted: Please re-run the script and select 'Y' to close Chrome, or close Chrome manually before running again."
 		exit 1
 	}
@@ -67,6 +69,7 @@ if ($chromeProcess) {
 $Source = Join-Path $env:LOCALAPPDATA "Google\Chrome\User Data\Default"
 
 if (-not (Test-Path $Source)) {
+	Write-Host ""
 	Write-Error "Chrome profile path not found: $Source"
 	exit 1
 }

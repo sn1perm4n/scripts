@@ -27,6 +27,7 @@ if (Test-Path -Path $programdataNvidiaappInstallerFolder -PathType Container) {
 		Write-Host "Deleted '$programdataNvidiaappInstallerFolder'." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "Failed to delete '$programdataNvidiaappInstallerFolder': $($_.Exception.Message)"
 	}
 }
@@ -46,6 +47,7 @@ if (Test-Path -Path $programdataNvidiaappInstaller2Folder -PathType Container) {
 		Write-Host "Deleted '$programdataNvidiaappInstaller2Folder'." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "Failed to delete '$programdataNvidiaappInstaller2Folder': $($_.Exception.Message)"
 	}
 }

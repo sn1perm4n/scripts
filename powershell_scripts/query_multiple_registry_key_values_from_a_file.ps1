@@ -11,6 +11,7 @@ $registryListFile = Join-Path $scriptDir 'keys.txt'
 
 # Verify the input file exists
 if (-not (Test-Path $registryListFile)) {
+	Write-Host ""
 	Write-Error "File not found: $registryListFile"
 	exit 1
 }

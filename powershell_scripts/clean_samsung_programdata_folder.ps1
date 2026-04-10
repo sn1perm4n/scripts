@@ -27,6 +27,7 @@ foreach ($dir in $directories) {
 
 			# Guard clause that activates and exits if the directory is empty
 			if (-not $items) {
+				Write-Host ""
 				Write-Warning "The directory '$dir' exists but is empty."
 				continue
 			}
@@ -46,10 +47,12 @@ foreach ($dir in $directories) {
 			Write-Host "`nSuccessfully deleted the contents of '$dir'." -ForegroundColor Green
 		}
 		catch {
+			Write-Host ""
 			Write-Error "An error occurred while trying to delete items in '$dir': $($_.Exception.Message)"
 		}
 	}
 	else {
+		Write-Host ""
 		Write-Warning "The directory '$dir' does not exist."
 	}
 }

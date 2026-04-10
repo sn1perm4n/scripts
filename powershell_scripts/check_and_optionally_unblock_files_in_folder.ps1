@@ -44,6 +44,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -53,6 +54,7 @@ if ($SaveResults) {
 $Path = Read-Host "`nEnter the directory to scan"
 
 if (-not (Test-Path -Path $Path -PathType Container)) {
+	Write-Host ""
 	Write-Error "The specified path does not exist or is not a directory."
 	exit 1
 }
@@ -64,6 +66,7 @@ try {
 	$files = Get-ChildItem -Path $Path -Recurse:$Recurse -File -ErrorAction Stop
 }
 catch {
+	Write-Host ""
 	Write-Error "Error enumerating files: $($_.Exception.Message)"
 	exit 1
 }

@@ -20,6 +20,7 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 	$files = Get-ChildItem -Path "$programdataMSIMSICenterFolder\*" -Include *.log, *.txt -File
 
 	if (-not $files) {
+		Write-Host ""
 		Write-Warning "No .log or .txt files found in '$programdataMSIMSICenterFolder'."
 		exit 0
 	}
@@ -35,6 +36,7 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 			Remove-Item -Path $file.FullName -Force
 		}
 		catch {
+			Write-Host ""
 			Write-Error "An error occurred while trying to delete '$($file.FullName)': $($_.Exception.Message)"
 		}
 	}
@@ -47,6 +49,7 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 	Write-Host "`n$ScriptName`: $($files.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$programdataMSIMSICenterFolder' does not exist."
 }
 

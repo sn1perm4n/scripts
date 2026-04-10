@@ -18,6 +18,7 @@ if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 
 		# Guard clause that activates and exits if no .log files are found
 		if (-not $logFiles) {
+			Write-Host ""
 			Write-Warning "No .log files exist in '$appdataLocalDiscordLogsFolder'."
 			exit 0
 		}
@@ -41,10 +42,12 @@ if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 		Write-Host "`n$ScriptName`: $($logFiles.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordLogsFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$appdataLocalDiscordLogsFolder' does not exist."
 }
 

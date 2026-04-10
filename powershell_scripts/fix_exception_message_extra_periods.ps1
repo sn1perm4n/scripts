@@ -37,6 +37,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -46,6 +47,7 @@ if ($SaveResults) {
 $InputPath = Read-Host "`nEnter the full path to a script (.ps1) or a folder containing scripts"
 
 if (-not (Test-Path -LiteralPath $InputPath)) {
+	Write-Host ""
 	Write-Error "Path '$InputPath' does not exist."
 	exit 1
 }
@@ -235,6 +237,7 @@ foreach ($file in $files) {
 		}
 	}
 	catch {
+		Write-Host ""
 		Write-Warning "Could not write to $($file.Name): $($_.Exception.Message)"
 	}
 }

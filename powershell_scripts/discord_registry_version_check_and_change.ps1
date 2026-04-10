@@ -9,6 +9,7 @@ $propertyName = "DisplayVersion"
 
 # Check if the registry path exists
 if (-not (Test-Path $registryPath)) {
+	Write-Host ""
 	Write-Error "The specified Registry path does not exist: '$registryPath'"
 	exit 1
 }
@@ -19,6 +20,7 @@ try {
 	Write-Host "`nCurrent value of '$propertyName' at '$registryPath': $currentValue" -ForegroundColor Cyan
 }
 catch {
+	Write-Host ""
 	Write-Error "Could not retrieve the current value: $($_.Exception.Message)"
 	exit 1
 }
@@ -32,6 +34,7 @@ try {
 	Write-Host "`nRegistry value '$propertyName' successfully updated to '$newValue'." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Error "Could not update the Registry value: $($_.Exception.Message)"
 	exit 1
 }

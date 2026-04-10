@@ -49,6 +49,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -59,6 +60,7 @@ $searchPath = Read-Host "Enter the directory path to search"
 
 # Validate directory exists before proceeding
 if (-not (Test-Path -Path $searchPath -PathType Container)) {
+	Write-Host ""
 	Write-Error "The directory '$searchPath' does not exist."
 	exit 1
 }
@@ -240,6 +242,7 @@ try {
 	}
 }
 catch {
+	Write-Host ""
 	Write-Error "An error occurred during the search: $($_.Exception.Message)"
 	exit 1
 }

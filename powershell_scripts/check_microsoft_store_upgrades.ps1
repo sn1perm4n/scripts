@@ -7,6 +7,7 @@
 
 # Ensure winget is available
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+	Write-Host ""
 	Write-Error "winget is not installed. Please install the Windows Package Manager from the Microsoft Store."
 	exit 1
 }
@@ -18,6 +19,7 @@ try {
 	Write-Host "Winget sources updated successfully." -ForegroundColor Green
 }
 catch {
+	Write-Host ""
 	Write-Warning "Failed to update winget sources: $($_.Exception.Message)"
 }
 
@@ -68,6 +70,7 @@ else {
 		Write-Host "Microsoft Store apps updated successfully." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while updating Microsoft Store apps: $($_.Exception.Message)"
 	}
 }

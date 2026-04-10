@@ -29,6 +29,7 @@ $inputFile = Read-Host "Enter the full path to the file containing UNC/network p
 
 # Check if the input file exists
 if (-not (Test-Path $inputFile)) {
+	Write-Host ""
 	Write-Error "Input file not found at '$inputFile'"
 	exit 1
 }

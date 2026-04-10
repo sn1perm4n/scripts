@@ -18,6 +18,7 @@ if (Test-Path -Path $appdataLocalGitHubDesktopFolder) {
 
 		# Guard clause that activates and exits if there's only 0 or 1 "app-" folder
 		if ($appDirs.Count -le 1) {
+			Write-Host ""
 			Write-Warning "Only $($appDirs.Count) 'app-' folder found, nothing to delete."
 			exit 0
 		}
@@ -28,14 +29,15 @@ if (Test-Path -Path $appdataLocalGitHubDesktopFolder) {
 			$path = $_.FullName
 			if ($name -match '^app-(\d+(?:\.\d+)*)$') {
 				[PSCustomObject]@{
-					Name    = $name
-					Path    = $path
+					Name = $name
+					Path = $path
 					Version = [version]$matches[1]
 				}
 			}
 		} | Sort-Object Version -Descending
 
 		if (-not $appNumbers) {
+			Write-Host ""
 			Write-Warning "No folders starting with 'app-' found in '$appdataLocalGitHubDesktopFolder'."
 			exit 0
 		}
@@ -64,10 +66,12 @@ if (Test-Path -Path $appdataLocalGitHubDesktopFolder) {
 		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalGitHubDesktopFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$appdataLocalGitHubDesktopFolder' does not exist."
 }
 

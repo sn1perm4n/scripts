@@ -20,6 +20,7 @@ if (Test-Path -Path $battlenetCacheFolder) {
 
 		# Guard clause that activates and exits if the directory is empty
 		if (-not $items) {
+			Write-Host ""
 			Write-Warning "The directory '$battlenetCacheFolder' exists but is empty."
 			exit 0
 		}
@@ -42,10 +43,12 @@ if (Test-Path -Path $battlenetCacheFolder) {
 		Write-Host "`n$ScriptName`: Cleanup complete, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$battlenetCacheFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$battlenetCacheFolder' does not exist."
 }
 

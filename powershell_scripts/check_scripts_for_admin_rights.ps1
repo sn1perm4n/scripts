@@ -34,6 +34,7 @@ if ($Help) {
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
 	if ($saveDir -and -not (Test-Path $saveDir)) {
+		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
@@ -43,6 +44,7 @@ if ($SaveResults) {
 $ScriptPath = Read-Host "`nEnter the path to the directory to check"
 
 if (-not (Test-Path $ScriptPath -PathType Container)) {
+	Write-Host ""
 	Write-Error "The directory '$ScriptPath' does not exist."
 	exit 1
 }

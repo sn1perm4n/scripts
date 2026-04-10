@@ -20,6 +20,7 @@ if (Test-Path -Path $battlenetAgentFolder) {
 
 		# Guard clause that activates and exits if no "A" folders exist
 		if (-not $foldersStartingWithA) {
+			Write-Host ""
 			Write-Warning "No folders starting with 'A' found in '$battlenetAgentFolder'."
 			exit 0
 		}
@@ -56,10 +57,12 @@ if (Test-Path -Path $battlenetAgentFolder) {
 		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
+		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$battlenetAgentFolder': $($_.Exception.Message)"
 	}
 }
 else {
+	Write-Host ""
 	Write-Warning "The directory '$battlenetAgentFolder' does not exist."
 }
 

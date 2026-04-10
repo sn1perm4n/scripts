@@ -10,6 +10,7 @@ try {
 	Start-Sleep -Seconds 2
 }
 catch {
+	Write-Host ""
 	Write-Error "Failed to stop File Explorer: $($_.Exception.Message)"
 	exit 1
 }
@@ -25,6 +26,7 @@ $cachePaths = @(
 foreach ($pattern in $cachePaths) {
 	$files = Get-Item -Path $pattern -ErrorAction SilentlyContinue
 	if (-not $files) {
+		Write-Host ""
 		Write-Warning "No files matched: $pattern"
 		continue
 	}
@@ -34,6 +36,7 @@ foreach ($pattern in $cachePaths) {
 			Write-Host "  Deleted: $($file.Name)" -ForegroundColor Green
 		}
 		catch {
+			Write-Host ""
 			Write-Warning "Could not delete $($file.Name): $($_.Exception.Message)"
 		}
 	}

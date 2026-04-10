@@ -2,11 +2,11 @@
 # This script deletes all folders with the exception of the most recent in a specific folder:
 # $env:LOCALAPPDATA\AdvinstAnalytics\67167f270d96e6db370a449a (resolves to C:\Users\<username>\AppData\Local\AdvinstAnalytics\67167f270d96e6db370a449a)
 
-# Specify the directory to process (the name of this directory may be different on your computer)
-$appdataLocalAdvinstAnalyticsFolder = "$env:LOCALAPPDATA\AdvinstAnalytics\67167f270d96e6db370a449a"
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process (the name of this directory may be different on your computer)
+$appdataLocalAdvinstAnalyticsFolder = "$env:LOCALAPPDATA\AdvinstAnalytics\67167f270d96e6db370a449a"
 
 Write-Host "`nChecking '$appdataLocalAdvinstAnalyticsFolder'..." -ForegroundColor Cyan
 
@@ -52,12 +52,15 @@ if (Test-Path -Path $appdataLocalAdvinstAnalyticsFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalAdvinstAnalyticsFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$appdataLocalAdvinstAnalyticsFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

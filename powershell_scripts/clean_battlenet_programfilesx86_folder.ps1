@@ -61,12 +61,15 @@ if (Test-Path -Path $parentFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$parentFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$parentFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

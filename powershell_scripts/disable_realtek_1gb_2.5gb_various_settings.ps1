@@ -9,35 +9,81 @@
 
 #Requires -RunAsAdministrator
 
+Write-Host "`nChecking Realtek NIC settings..." -ForegroundColor Cyan
+
 # Disable Advanced EEE (Energy-Efficient Ethernet)
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "AdvancedEEE" -RegistryValue 0
-Write-Host "Advanced EEE has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "AdvancedEEE" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "`nAdvanced EEE has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Advanced EEE: $($_.Exception.Message)"
+}
 
 # Disable Energy-Efficient Ethernet
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*EEE" -RegistryValue 0
-Write-Host "Energy-Efficient Ethernet has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*EEE" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "Energy-Efficient Ethernet has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Energy-Efficient Ethernet: $($_.Exception.Message)"
+}
 
 # Disable Gigabit Lite
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "GigaLite" -RegistryValue 0
-Write-Host "Gigabit Lite has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "GigaLite" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "Gigabit Lite has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Gigabit Lite: $($_.Exception.Message)"
+}
 
 # Disable Green Ethernet
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "EnableGreenEthernet" -RegistryValue 0
-Write-Host "Green Ethernet has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "EnableGreenEthernet" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "Green Ethernet has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Green Ethernet: $($_.Exception.Message)"
+}
 
 # Disable Large Send Offload v2 (IPv4)
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*LsoV2IPv4" -RegistryValue 0
-Write-Host "Large Send Offload v2 (IPv4) has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*LsoV2IPv4" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "Large Send Offload v2 (IPv4) has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Large Send Offload v2 (IPv4): $($_.Exception.Message)"
+}
 
 # Disable Large Send Offload v2 (IPv6)
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*LsoV2IPv6" -RegistryValue 0
-Write-Host "Large Send Offload v2 (IPv6) has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "*LsoV2IPv6" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "Large Send Offload v2 (IPv6) has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Large Send Offload v2 (IPv6): $($_.Exception.Message)"
+}
 
 # Disable Power Saving Mode
-Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "PowerSavingMode" -RegistryValue 0
-Write-Host "Power Saving Mode has been disabled." -ForegroundColor Green
+try {
+	Set-NetAdapterAdvancedProperty -Name "Ethernet" -RegistryKeyword "PowerSavingMode" -RegistryValue 0 -ErrorAction Stop
+	Write-Host "Power Saving Mode has been disabled." -ForegroundColor Green
+}
+catch {
+	Write-Host ""
+	Write-Warning "Could not disable Power Saving Mode: $($_.Exception.Message)"
+}
 
-Write-Host "Successfully disabled Realtek NIC settings." -ForegroundColor Green
+Write-Host "`nSuccessfully disabled Realtek NIC settings." -ForegroundColor Green
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

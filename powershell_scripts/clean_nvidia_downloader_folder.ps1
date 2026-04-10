@@ -4,11 +4,11 @@
 
 #Requires -RunAsAdministrator
 
-# Specify the directory to process
-$programdataNvidiacorporationDownloader = 'C:\ProgramData\NVIDIA Corporation\Downloader'
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$programdataNvidiacorporationDownloader = 'C:\ProgramData\NVIDIA Corporation\Downloader'
 
 Write-Host "`nChecking '$programdataNvidiacorporationDownloader'..." -ForegroundColor Cyan
 
@@ -45,12 +45,15 @@ if (Test-Path -Path $programdataNvidiacorporationDownloader) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$programdataNvidiacorporationDownloader': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$programdataNvidiacorporationDownloader' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

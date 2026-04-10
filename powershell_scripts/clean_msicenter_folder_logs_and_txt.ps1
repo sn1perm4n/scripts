@@ -4,11 +4,11 @@
 
 #Requires -RunAsAdministrator
 
-# Specify the directory to process
-$programdataMSIMSICenterFolder = 'C:\ProgramData\MSI\MSI Center'
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$programdataMSIMSICenterFolder = 'C:\ProgramData\MSI\MSI Center'
 
 Write-Host "`nChecking '$programdataMSIMSICenterFolder'..." -ForegroundColor Cyan
 
@@ -37,7 +37,7 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 		}
 		catch {
 			Write-Host ""
-			Write-Error "An error occurred while trying to delete '$($file.FullName)': $($_.Exception.Message)"
+			Write-Warning "Could not delete '$($file.FullName)': $($_.Exception.Message)"
 		}
 	}
 
@@ -52,6 +52,8 @@ else {
 	Write-Host ""
 	Write-Warning "The directory '$programdataMSIMSICenterFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

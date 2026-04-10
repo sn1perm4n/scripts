@@ -4,11 +4,11 @@
 
 #Requires -RunAsAdministrator
 
-# Specify the directory to process
-$programdataPatchmypcFolder = 'C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates'
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$programdataPatchmypcFolder = 'C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates'
 
 Write-Host "`nChecking '$programdataPatchmypcFolder'..." -ForegroundColor Cyan
 
@@ -70,7 +70,9 @@ try {
 		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
 		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
 		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
-		Write-Host "`n$ScriptName`: $deletedFilesCount file(s) and $deletedFoldersCount folder(s) deleted, $freedDisplay freed." -ForegroundColor Green
+		$fileWord = if ($deletedFilesCount -eq 1) { "file" } else { "files" }
+		$folderWord = if ($deletedFoldersCount -eq 1) { "folder" } else { "folders" }
+		Write-Host "`n$ScriptName`: $deletedFilesCount $fileWord and $deletedFoldersCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	else {
 		Write-Host "`nNo deletions were necessary." -ForegroundColor Yellow
@@ -79,7 +81,10 @@ try {
 catch {
 	Write-Host ""
 	Write-Error "An error occurred while trying to delete items in '$programdataPatchmypcFolder': $($_.Exception.Message)"
+	exit 1
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

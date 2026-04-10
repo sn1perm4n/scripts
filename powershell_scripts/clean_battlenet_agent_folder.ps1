@@ -59,12 +59,15 @@ if (Test-Path -Path $battlenetAgentFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$battlenetAgentFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$battlenetAgentFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

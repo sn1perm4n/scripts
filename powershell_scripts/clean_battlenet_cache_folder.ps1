@@ -45,12 +45,15 @@ if (Test-Path -Path $battlenetCacheFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$battlenetCacheFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$battlenetCacheFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

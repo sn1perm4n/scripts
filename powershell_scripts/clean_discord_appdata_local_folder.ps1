@@ -2,11 +2,11 @@
 # This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
 # $env:LOCALAPPDATA\Discord (resolves to C:\Users\<username>\AppData\Local\Discord)
 
-# Specify the target directory
-$appdataLocalDiscordFolder = "$env:LOCALAPPDATA\Discord"
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the target directory
+$appdataLocalDiscordFolder = "$env:LOCALAPPDATA\Discord"
 
 Write-Host "`nChecking '$appdataLocalDiscordFolder'..." -ForegroundColor Cyan
 
@@ -68,12 +68,15 @@ if (Test-Path -Path $appdataLocalDiscordFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$appdataLocalDiscordFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

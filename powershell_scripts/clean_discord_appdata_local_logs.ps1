@@ -2,11 +2,11 @@
 # This script deletes all *.log files in a specific directory:
 # $env:LOCALAPPDATA\Discord (resolves to C:\Users\<username>\AppData\Local\Discord)
 
-# Specify the directory to process
-$appdataLocalDiscordLogsFolder = "$env:LOCALAPPDATA\Discord"
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process
+$appdataLocalDiscordLogsFolder = "$env:LOCALAPPDATA\Discord"
 
 Write-Host "`nChecking '$appdataLocalDiscordLogsFolder'..." -ForegroundColor Cyan
 
@@ -44,12 +44,15 @@ if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalDiscordLogsFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$appdataLocalDiscordLogsFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

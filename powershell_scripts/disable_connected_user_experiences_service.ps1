@@ -7,8 +7,15 @@ $serviceName = "DiagTrack"
 
 # Stop the service
 try {
-	Stop-Service -Name $serviceName -Force -ErrorAction Stop
-	Write-Host "Service '$serviceName' stopped successfully." -ForegroundColor Green
+	$svc = Get-Service -Name $serviceName -ErrorAction Stop
+
+	if ($svc.Status -eq 'Stopped') {
+		Write-Host "Service '$serviceName' is already stopped." -ForegroundColor Yellow
+	}
+	else {
+		Stop-Service -Name $serviceName -Force -ErrorAction Stop
+		Write-Host "Service '$serviceName' stopped successfully." -ForegroundColor Green
+	}
 }
 catch {
 	Write-Host ""
@@ -17,8 +24,15 @@ catch {
 
 # Disable the service startup type
 try {
-	Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
-	Write-Host "Service '$serviceName' startup type set to Disabled." -ForegroundColor Green
+	$svc = Get-Service -Name $serviceName -ErrorAction Stop
+
+	if ($svc.StartType -eq 'Disabled') {
+		Write-Host "Service '$serviceName' startup type is already set to Disabled." -ForegroundColor Yellow
+	}
+	else {
+		Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
+		Write-Host "Service '$serviceName' startup type successfully set to Disabled." -ForegroundColor Green
+	}
 }
 catch {
 	Write-Host ""

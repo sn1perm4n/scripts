@@ -2,11 +2,11 @@
 # This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
 # $env:LOCALAPPDATA\GitHubDesktop (resolves to C:\Users\<username>\AppData\Local\GitHubDesktop)
 
-# Specify the target directory
-$appdataLocalGitHubDesktopFolder = "$env:LOCALAPPDATA\GitHubDesktop"
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the target directory
+$appdataLocalGitHubDesktopFolder = "$env:LOCALAPPDATA\GitHubDesktop"
 
 Write-Host "`nChecking '$appdataLocalGitHubDesktopFolder'..." -ForegroundColor Cyan
 
@@ -68,12 +68,15 @@ if (Test-Path -Path $appdataLocalGitHubDesktopFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalGitHubDesktopFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$appdataLocalGitHubDesktopFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

@@ -5,14 +5,14 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for summary output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 # Specify the directories to process
 $directories = @(
 	'C:\ProgramData\Samsung\Backup',
 	'C:\ProgramData\Samsung\Samsung Magician\Site Link'
 )
-
-# Get the script name for summary output
-$ScriptName = Split-Path $PSCommandPath -Leaf
 
 $totalBytesFreed = 0
 $directoriesProcessed = 0
@@ -65,6 +65,11 @@ if ($directoriesProcessed -gt 0) {
 	$dirWord = if ($directoriesProcessed -eq 1) { "directory" } else { "directories" }
 	Write-Host "`n$ScriptName`: Cleanup complete. $freedDisplay freed across $directoriesProcessed $dirWord." -ForegroundColor Green
 }
+else {
+	Write-Host "`n$ScriptName`: No cleanup was necessary." -ForegroundColor Yellow
+}
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

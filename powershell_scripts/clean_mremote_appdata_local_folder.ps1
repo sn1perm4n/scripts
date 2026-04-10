@@ -2,11 +2,11 @@
 # This script deletes all but the most recent folder in a specific folder:
 # $env:LOCALAPPDATA\mRemoteNG\mRemoteNG.exe_Url_pjpxdehxpaaorqg2thmuhl11a34i3ave (resolves to C:\Users\<username>\AppData\Local\mRemoteNG\mRemoteNG.exe_Url_pjpxdehxpaaorqg2thmuhl11a34i3ave)
 
-# Specify the directory to process (the name of this directory may be different on your computer)
-$appdataLocalMremotengFolder = "$env:LOCALAPPDATA\mRemoteNG\mRemoteNG.exe_Url_pjpxdehxpaaorqg2thmuhl11a34i3ave"
-
 # Get the script name for summary output
 $ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Specify the directory to process (the name of this directory may be different on your computer)
+$appdataLocalMremotengFolder = "$env:LOCALAPPDATA\mRemoteNG\mRemoteNG.exe_Url_pjpxdehxpaaorqg2thmuhl11a34i3ave"
 
 Write-Host "`nChecking '$appdataLocalMremotengFolder'..." -ForegroundColor Cyan
 
@@ -52,12 +52,15 @@ if (Test-Path -Path $appdataLocalMremotengFolder) {
 	catch {
 		Write-Host ""
 		Write-Error "An error occurred while trying to delete items in '$appdataLocalMremotengFolder': $($_.Exception.Message)"
+		exit 1
 	}
 }
 else {
 	Write-Host ""
 	Write-Warning "The directory '$appdataLocalMremotengFolder' does not exist."
 }
+
+exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

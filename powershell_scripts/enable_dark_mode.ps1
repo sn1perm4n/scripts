@@ -25,7 +25,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Warning "Failed to enable dark mode: $($_.Exception.Message)"
+	Write-Error "Failed to enable dark mode: $($_.Exception.Message)"
 	exit 1
 }
 

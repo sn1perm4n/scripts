@@ -9,21 +9,21 @@
 # 3			Files copied and extra files/directories deleted (1 + 2)
 # 4–7		Success with minor issues (mismatched files, skipped files, retryable errors)
 # 8+		Failure — serious errors (network issue, permissions, etc.)
+
 # NOTE: Exit codes 0–7 are generally considered successful for backup validation
 
 # Specify remote directory to copy to and the NAS hostname
-$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY"  # Change this to your NAS Thunderbird backup directory
+$Destination = "\\NAS\PATH\TO\FIREFOX_BACKUP_DIRECTORY"  # Change this to your NAS Firefox backup directory
 $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 
 # Quick NAS availability check
 Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
-	Write-Host "`nBackup aborted: $nasHost is not reachable." -ForegroundColor Red
-	return
+	Write-Host ""
+	Write-Error "Backup aborted: $nasHost is not reachable."
+	exit 1
 }
-else {
-	Write-Host "$nasHost is reachable." -ForegroundColor Green
-}
+Write-Host "$nasHost is reachable." -ForegroundColor Green
 
 # Detect if Firefox is running and close it if y/Y is pressed (otherwise abort)
 $firefoxProcess = Get-Process -Name firefox -ErrorAction SilentlyContinue
@@ -35,8 +35,9 @@ if ($firefoxProcess) {
 		Start-Sleep -Seconds 2
 	}
 	else {
-		Write-Host "`nBackup aborted: Please re-run the script and select 'Y' to close Firefox, or close Firefox manually before running again." -ForegroundColor Red
-		return
+		Write-Host ""
+		Write-Error "Backup aborted: Please re-run the script and select 'Y' to close Firefox, or close Firefox manually before running again."
+		exit 1
 	}
 }
 
@@ -44,8 +45,9 @@ if ($firefoxProcess) {
 $profilesIni = Join-Path $env:APPDATA "Mozilla\Firefox\profiles.ini"
 
 if (-not (Test-Path $profilesIni)) {
-	Write-Host "profiles.ini not found." -ForegroundColor Red
-	return
+	Write-Host ""
+	Write-Error "profiles.ini not found: $profilesIni"
+	exit 1
 }
 
 # Parse Default profile
@@ -68,8 +70,9 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
 }
 
 if (-not $profilePath) {
-	Write-Host "Default profile not found." -ForegroundColor Red
-	return
+	Write-Host ""
+	Write-Error "Default Firefox profile not found in profiles.ini."
+	exit 1
 }
 
 if ($isRelative) {
@@ -80,8 +83,9 @@ else {
 }
 
 if (-not (Test-Path $Source)) {
-	Write-Host "Profile path not found: $Source" -ForegroundColor Red
-	return
+	Write-Host ""
+	Write-Error "Profile path not found: $Source"
+	exit 1
 }
 
 Write-Host "`nSource Profile: $Source" -ForegroundColor Green
@@ -116,9 +120,12 @@ robocopy @robocopyArgs
 $exitCode = $LASTEXITCODE
 if ($exitCode -le 3) {
 	Write-Host "`nFirefox profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
+	exit 0
 }
 else {
-	Write-Host "`nFirefox profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Firefox profile backup completed with errors (Robocopy exit code: $exitCode)."
+	exit 1
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

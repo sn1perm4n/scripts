@@ -43,8 +43,8 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for path, search string, and replacement string
-$Path = Read-Host "`nEnter the full path to a file or directory"
+# Prompt user for file or folder path, search string, and replacement string
+$Path = Read-Host "`nEnter the full path to a file or a folder"
 
 if (-not (Test-Path $Path)) {
 	Write-Host ""

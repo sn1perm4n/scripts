@@ -50,8 +50,8 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt the user for the folder to process
-$Path = Read-Host "`nEnter the directory to scan"
+# Prompt user for folder path
+$Path = Read-Host "`nEnter the full path to a folder"
 
 if (-not (Test-Path -Path $Path -PathType Container)) {
 	Write-Host ""

@@ -47,7 +47,7 @@ if ($SaveResults) {
 }
 
 # Prompt user for both paths
-$Path1st = Read-Host "`nEnter the full path to the first file or directory"
+$Path1st = Read-Host "`nEnter the full path to the first file or folder"
 
 if (-not (Test-Path -Path $Path1st)) {
 	Write-Host ""
@@ -55,7 +55,7 @@ if (-not (Test-Path -Path $Path1st)) {
 	exit 1
 }
 
-$Path2nd = Read-Host "`nEnter the full path to the second file or directory"
+$Path2nd = Read-Host "`nEnter the full path to the second file or folder"
 
 if (-not (Test-Path -Path $Path2nd)) {
 	Write-Host ""

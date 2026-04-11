@@ -46,8 +46,8 @@ if ($SaveResults) {
 # Number of spaces per tab
 $spacesPerTab = 4
 
-# Prompt the user for a directory or individual script file
-$scriptFileOrDirectory = Read-Host "`nEnter the path to a PowerShell script directory or a single .ps1 file"
+# Prompt user for file or folder path
+$scriptFileOrDirectory = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
 
 # Validate the path
 if (-not (Test-Path $scriptFileOrDirectory)) {

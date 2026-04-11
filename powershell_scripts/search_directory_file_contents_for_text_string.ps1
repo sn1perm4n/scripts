@@ -55,8 +55,8 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for directory path
-$searchPath = Read-Host "Enter the directory path to search"
+# Prompt user for folder path
+$searchPath = Read-Host "Enter the full path to a folder"
 
 # Validate directory exists before proceeding
 if (-not (Test-Path -Path $searchPath -PathType Container)) {

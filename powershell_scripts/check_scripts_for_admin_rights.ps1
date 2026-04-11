@@ -40,8 +40,8 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for script directory
-$ScriptPath = Read-Host "`nEnter the path to the directory to check"
+# Prompt user for folder path
+$ScriptPath = Read-Host "`nEnter the full path to a folder"
 
 if (-not (Test-Path $ScriptPath -PathType Container)) {
 	Write-Host ""

@@ -45,8 +45,8 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for file or directory path
-$Path = Read-Host "`nEnter the full path to a file or directory"
+# Prompt user for file or folder path
+$Path = Read-Host "`nEnter the full path to a file or a folder"
 
 if (-not (Test-Path $Path)) {
 	Write-Host ""

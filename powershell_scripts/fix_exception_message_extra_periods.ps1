@@ -43,8 +43,8 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for file or directory path
-$InputPath = Read-Host "`nEnter the full path to a script (.ps1) or a folder containing scripts"
+# Prompt user for file or folder path
+$InputPath = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
 
 if (-not (Test-Path -LiteralPath $InputPath)) {
 	Write-Host ""

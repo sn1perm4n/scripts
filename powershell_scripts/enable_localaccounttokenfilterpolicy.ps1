@@ -24,7 +24,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Warning "Failed to enable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
+	Write-Error "Failed to enable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
 	exit 1
 }
 

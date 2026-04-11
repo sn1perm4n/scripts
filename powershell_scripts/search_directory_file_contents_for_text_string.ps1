@@ -247,6 +247,8 @@ catch {
 	exit 1
 }
 
+exit 0
+
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 
 # End.

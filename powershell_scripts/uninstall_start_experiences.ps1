@@ -17,7 +17,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Warning "Failed to uninstall Microsoft Start Experiences App: $($_.Exception.Message)"
+	Write-Error "Failed to uninstall Microsoft Start Experiences App: $($_.Exception.Message)"
 	exit 1
 }
 

@@ -147,7 +147,8 @@ if ($exitCode -le 3) {
 	exit 0
 }
 else {
-	Write-Host "`nThunderbird profile backup completed with errors (Robocopy exit code: $exitCode)." -ForegroundColor Red
+	Write-Host ""
+	Write-Warning "Thunderbird profile backup completed with errors (Robocopy exit code: $exitCode)."
 	exit 1
 }
 

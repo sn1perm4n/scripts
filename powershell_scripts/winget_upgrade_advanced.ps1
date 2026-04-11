@@ -160,7 +160,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Warning "An error occurred: $($_.Exception.Message)"
+	Write-Error "An error occurred: $($_.Exception.Message)"
 	exit 1
 }
 

@@ -161,7 +161,7 @@ Write-Host "`nSign out or restart File Explorer for all changes to take effect."
 
 # Evaluate errors and return exit code
 if ($hadErrors) {
-	Write-Host "`nCompleted with errors." -ForegroundColor Red
+	Write-Host "`nCompleted with errors." -ForegroundColor Yellow
 	exit 1
 }
 else {

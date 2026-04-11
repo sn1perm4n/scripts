@@ -1,12 +1,9 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script queries Installed Programs and deduplicates the final output
-# Query installed programs using WMI/CIM. Output is sorted alphabetically by Name and displayed on screen
-# Optionally export to CSV by setting $csvPath (ENABLED BY DEFAULT, MAKE SURE THE PATH IS CORRECT)
+# This script queries installed programs via WMI/CIM, deduplicates and sorts the output alphabetically, and optionally exports the results to a CSV file on the Desktop
 
-# Optional CSV path (leave empty to skip export)
-# $csvPath = ""  # Uncomment this line to disable CSV export
-# $env:USERPROFILE resolves to C:\Users\<username>
+# NOTE: Querying Win32_Product triggers a Windows Installer consistency check on all installed software. This can be slow and may trigger repair/reconfigure operations on some applications. This is a known limitation of Win32_Product.
 
+# Optional CSV export path — leave empty or comment out to skip. $env:USERPROFILE resolves to C:\Users\<username>
 $csvPath = "$env:USERPROFILE\Desktop\Installed_Programs_List.csv"
 
 try {

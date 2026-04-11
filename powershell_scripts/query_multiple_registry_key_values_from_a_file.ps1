@@ -73,7 +73,8 @@ Get-Content -Path $registryListFile | ForEach-Object {
 		}
 	}
 	catch {
-		Write-Host "Unable to read registry path." -ForegroundColor Red
+		Write-Host ""
+		Write-Warning "Unable to read registry path: $($_.Exception.Message)"
 	}
 
 	Write-Host ""

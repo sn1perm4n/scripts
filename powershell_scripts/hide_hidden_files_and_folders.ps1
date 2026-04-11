@@ -26,7 +26,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Warning "Failed to hide hidden files and folders: $($_.Exception.Message)"
+	Write-Error "Failed to hide hidden files and folders: $($_.Exception.Message)"
 	exit 1
 }
 

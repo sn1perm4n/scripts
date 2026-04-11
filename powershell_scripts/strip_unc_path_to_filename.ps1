@@ -124,7 +124,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Warning "Error reading file: $($_.Exception.Message)"
+	Write-Error "Error reading file: $($_.Exception.Message)"
 	exit 1
 }
 

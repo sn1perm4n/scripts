@@ -66,7 +66,7 @@ else {
 		}
 	}
 
-	# Stop DSAUpdateService
+	# Start DSAUpdateService
 	if ($svc.Status -eq 'Running') {
 		Write-Host "Service '$dsaUpdateService' is already running." -ForegroundColor Yellow
 	}

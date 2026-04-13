@@ -43,7 +43,7 @@ try {
 		else {
 			try {
 				$programsClean | Export-Csv -Path $csvPath -NoTypeInformation -Force
-				Write-Host "`nCSV exported to $csvPath." -ForegroundColor Green
+				Write-Host "CSV exported to $csvPath." -ForegroundColor Green
 			}
 			catch {
 				Write-Host ""

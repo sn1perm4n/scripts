@@ -98,11 +98,15 @@ foreach ($group in $grouped) {
 	$keep = $sorted | Select-Object -First 1
 	$toDelete = $sorted | Select-Object -Skip 1
 
+	$keepSize = (Get-ChildItem -Path $keep.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+	if (-not $keepSize) { $keepSize = 0 }
+	$keepSizeMB = [math]::Round($keepSize / 1MB, 2)
+
 	Write-Host "`n$($group.Name)" -ForegroundColor Cyan
-	Write-Host "  Keeping: $($keep.Name)" -ForegroundColor Green
+	Write-Host "  Keeping: $($keep.Name) ($keepSizeMB MB)" -ForegroundColor Green
 	if ($SaveResults) {
 		$FileOutputLines += $group.Name
-		$FileOutputLines += "  Keeping: $($keep.Name)"
+		$FileOutputLines += "  Keeping: $($keep.Name) ($keepSizeMB MB)"
 	}
 
 	foreach ($folder in $toDelete) {
@@ -112,9 +116,9 @@ foreach ($group in $grouped) {
 
 		if ($Preview) {
 			$folderSizeMB = [math]::Round($folderSize / 1MB, 2)
-			Write-Host "  Would delete: $($folder.FullName) ($folderSizeMB MB)" -ForegroundColor Yellow
+			Write-Host "  Would delete: $($folder.Name) ($folderSizeMB MB)" -ForegroundColor Yellow
 			if ($SaveResults) {
-				$FileOutputLines += "  Would delete: $($folder.FullName) ($folderSizeMB MB)"
+				$FileOutputLines += "  Would delete: $($folder.Name) ($folderSizeMB MB)"
 			}
 			$totalBytesFreed += $folderSize
 			$deletedCount++
@@ -122,11 +126,11 @@ foreach ($group in $grouped) {
 		else {
 			# Prompt unless -DeleteAll is specified
 			if (-not $DeleteAll) {
-				$response = Read-Host "`n  Delete '$($folder.FullName)'? (Y/N)"
+				$response = Read-Host "`n  Delete '$($folder.Name)'? (Y/N)"
 				if ($response -notmatch '^[Yy]$') {
-					Write-Host "  Skipped: $($folder.FullName)" -ForegroundColor Yellow
+					Write-Host "  Skipped: $($folder.Name)" -ForegroundColor Yellow
 					if ($SaveResults) {
-						$FileOutputLines += "  Skipped: $($folder.FullName)"
+						$FileOutputLines += "  Skipped: $($folder.Name)"
 					}
 					continue
 				}
@@ -136,9 +140,9 @@ foreach ($group in $grouped) {
 				$totalBytesFreed += $folderSize
 				Remove-Item -Path $folder.FullName -Recurse -Force -ErrorAction Stop
 				$folderSizeMB = [math]::Round($folderSize / 1MB, 2)
-				Write-Host "  Deleted: $($folder.FullName) ($folderSizeMB MB)" -ForegroundColor Yellow
+				Write-Host "  Deleted: $($folder.Name) ($folderSizeMB MB)" -ForegroundColor Yellow
 				if ($SaveResults) {
-					$FileOutputLines += "  Deleted: $($folder.FullName) ($folderSizeMB MB)"
+					$FileOutputLines += "  Deleted: $($folder.Name) ($folderSizeMB MB)"
 				}
 				$deletedCount++
 			}

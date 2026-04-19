@@ -91,7 +91,7 @@ if (-not (Test-Path $Source)) {
 Write-Host "`nSource Profile: $Source" -ForegroundColor Green
 Write-Host "Destination: $Destination`n" -ForegroundColor Green
 
-# Build Robocopy Arguments
+# Build Robocopy arguments
 # NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup.
 # The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source.
 # This safely maintains a single up-to-date backup at all times.

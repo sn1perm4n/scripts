@@ -1,0 +1,96 @@
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+# This script shows or hides hidden files and folders by making Registry changes and refreshing File Explorer to make the changes active
+
+# Optional flags:
+#     -Hide:   Hide hidden files and folders without prompting
+#     -Show:   Show hidden files and folders without prompting
+#     -Help / -?: Display this help message
+
+[CmdletBinding(PositionalBinding=$false)]
+param (
+	[switch]$Hide,
+	[switch]$Show,
+	[switch]$Help
+)
+
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
+# Handle -Help immediately
+if ($Help) {
+	Write-Host "`nUsage:`n    .\$ScriptName [-Hide] [-Show] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -Hide  Hide hidden files and folders without prompting" -ForegroundColor Cyan
+	Write-Host "  -Show  Show hidden files and folders without prompting" -ForegroundColor Cyan
+	Write-Host "  -Help  Display this help message" -ForegroundColor Cyan
+	Write-Host ""
+	exit 0
+}
+
+# If neither flag is passed, fall through to interactive menu
+if (-not $Show -and -not $Hide) {
+	Write-Host "`n1. Show hidden files and folders"
+	Write-Host "2. Hide hidden files and folders"
+	Write-Host "`nPress 1 or 2 to continue..." -ForegroundColor Cyan
+
+	while ($true) {
+		$key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").Character
+		if ($key -eq '1' -or $key -eq '2') { break }
+		Write-Host "`nInvalid input. Please press 1 or 2..." -ForegroundColor Yellow
+	}
+
+	$Show = $key -eq '1'
+	$Hide = $key -eq '2'
+}
+
+$showing = $Show -eq $true
+$registryPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+
+Write-Host "`nChecking hidden files and folders visibility status..." -ForegroundColor Cyan
+
+try {
+	$props = Get-ItemProperty -Path $registryPath -ErrorAction Stop
+	$hidden = $props.Hidden
+	$showSuperHidden = $props.ShowSuperHidden
+
+	if ($showing) {
+		if ($hidden -eq 1 -and $showSuperHidden -eq 1) {
+			Write-Host "`nHidden files and folders are already visible." -ForegroundColor Yellow
+			exit 0
+		}
+		Set-ItemProperty -Path $registryPath -Name Hidden -Type DWord -Value 1 -Force -ErrorAction Stop
+		Set-ItemProperty -Path $registryPath -Name ShowSuperHidden -Type DWord -Value 1 -Force -ErrorAction Stop
+		# Refresh File Explorer to apply changes immediately
+		$shell = New-Object -ComObject Shell.Application
+		$shell.Windows() | ForEach-Object { $_.Refresh() }
+		Write-Host "`nHidden files and folders successfully made visible." -ForegroundColor Green
+	}
+	else {
+		if ($hidden -eq 0 -and $showSuperHidden -eq 0) {
+			Write-Host "`nHidden files and folders are already hidden." -ForegroundColor Yellow
+			exit 0
+		}
+		Set-ItemProperty -Path $registryPath -Name Hidden -Type DWord -Value 0 -Force -ErrorAction Stop
+		Set-ItemProperty -Path $registryPath -Name ShowSuperHidden -Type DWord -Value 0 -Force -ErrorAction Stop
+		# Refresh File Explorer to apply changes immediately
+		$shell = New-Object -ComObject Shell.Application
+		$shell.Windows() | ForEach-Object { $_.Refresh() }
+		Write-Host "`nHidden files and folders successfully hidden." -ForegroundColor Green
+	}
+}
+catch {
+	Write-Host ""
+	if ($showing) {
+		Write-Error "Failed to show hidden files and folders: $($_.Exception.Message)"
+	}
+	else {
+		Write-Error "Failed to hide hidden files and folders: $($_.Exception.Message)"
+	}
+	exit 1
+}
+
+exit 0
+
+# Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
+
+# End.

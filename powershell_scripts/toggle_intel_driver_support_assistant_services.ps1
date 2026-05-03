@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script enables or disables the Intel Driver and Support Assistant services
+# This script enables or disables the Intel Driver and Support Assistant (DSA) services
 
 # Optional flags:
 #     -Disable: Disable the Intel DSA services without prompting
@@ -48,8 +48,9 @@ if (-not $Enable -and -not $Disable) {
 $enabling = $Enable -eq $true
 $dsaService = "DSAService"
 $dsaUpdateService = "DSAUpdateService"
+$changesMAde = $false
 
-Write-Host "`nChecking Intel Driver and Support Assistant service(s) status..." -ForegroundColor Cyan
+Write-Host "`nChecking Intel DSA service(s) status..." -ForegroundColor Cyan
 
 # Process DSAService
 $svc = Get-Service -Name $dsaService -ErrorAction SilentlyContinue
@@ -66,6 +67,7 @@ else {
 			try {
 				Set-Service -Name $dsaService -StartupType Automatic -ErrorAction Stop
 				Write-Host "`nService '$dsaService' startup type successfully set to Automatic." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -80,6 +82,7 @@ else {
 			try {
 				Start-Service -Name $dsaService -ErrorAction Stop
 				Write-Host "Service '$dsaService' started successfully." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -96,6 +99,7 @@ else {
 			try {
 				Set-Service -Name $dsaService -StartupType Disabled -ErrorAction Stop
 				Write-Host "`nService '$dsaService' startup type successfully set to Disabled." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -110,6 +114,7 @@ else {
 			try {
 				Stop-Service -Name $dsaService -Force -ErrorAction Stop
 				Write-Host "Service '$dsaService' stopped successfully." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -134,6 +139,7 @@ else {
 			try {
 				Set-Service -Name $dsaUpdateService -StartupType Automatic -ErrorAction Stop
 				Write-Host "`nService '$dsaUpdateService' startup type successfully set to Automatic." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -148,6 +154,7 @@ else {
 			try {
 				Start-Service -Name $dsaUpdateService -ErrorAction Stop
 				Write-Host "Service '$dsaUpdateService' started successfully." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -164,6 +171,7 @@ else {
 			try {
 				Set-Service -Name $dsaUpdateService -StartupType Disabled -ErrorAction Stop
 				Write-Host "`nService '$dsaUpdateService' startup type successfully set to Disabled." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
@@ -178,12 +186,30 @@ else {
 			try {
 				Stop-Service -Name $dsaUpdateService -Force -ErrorAction Stop
 				Write-Host "Service '$dsaUpdateService' stopped successfully." -ForegroundColor Green
+				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
 				Write-Warning "Could not stop service '$dsaUpdateService': $($_.Exception.Message)"
 			}
 		}
+	}
+}
+
+if ($enabling) {
+	if ($changesMade) {
+		Write-Host "`nIntel DSA services have been successfully enabled." -ForegroundColor Green
+	}
+	else {
+		Write-Host "`nIntel DSA services were already enabled. No changes made." -ForegroundColor Yellow
+	}
+}
+else {
+	if ($changesMade) {
+		Write-Host "`nIntel DSA services have been successfully disabled." -ForegroundColor Green
+	}
+	else {
+		Write-Host "`nIntel DSA services were already disabled. No changes made." -ForegroundColor Yellow
 	}
 }
 

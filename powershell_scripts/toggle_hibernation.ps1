@@ -8,6 +8,11 @@
 # - If "Hibernate" appears under "The following sleep states are available", it is enabled
 # - If it appears under "not available" or is missing, it is disabled
 
+# Optional flags:
+#     -Disable: Disable Hibernation without prompting
+#     -Enable:  Enable Hibernation without prompting
+#     -Help / -?: Display this help message
+
 #Requires -RunAsAdministrator
 
 [CmdletBinding(PositionalBinding=$false)]

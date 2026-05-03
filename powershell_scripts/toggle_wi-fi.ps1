@@ -55,7 +55,7 @@ try {
 	$adapter = Get-NetAdapter -Name "Wi-Fi" -ErrorAction Stop
 
 	if ($enabling) {
-		if ($adapter.Status -eq 'Up') {
+		if ($adapter.Status -eq 'Up' -or $adapter.Status -eq 'Disconnected') {
 			Write-Host "`nWi-Fi is already enabled." -ForegroundColor Yellow
 			exit 0
 		}

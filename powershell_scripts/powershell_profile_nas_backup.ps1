@@ -1,6 +1,8 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the PowerShell profile to a Linux-based NAS
 
+# NOTE: $PROFILE path differs between PowerShell 5.1 and PowerShell 7+ (intended for use with: <whichever version>)
+
 # Robocopy exit code list:
 # Exit Code Meaning
 # 0			No files copied (no failures)

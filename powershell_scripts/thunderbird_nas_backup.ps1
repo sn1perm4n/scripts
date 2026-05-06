@@ -139,9 +139,9 @@ if (-not $IncludeCache) {
 
 # Execute Robocopy
 Write-Host "Starting Thunderbird profile backup..." -ForegroundColor Cyan
-robocopy @robocopyArgs
-
+$robocopyOutput = robocopy @robocopyArgs
 $exitCode = $LASTEXITCODE
+Write-Host ($robocopyOutput -join "`n").TrimEnd()
 if ($exitCode -le 3) {
 	Write-Host "`nThunderbird profile backup completed successfully (Robocopy exit code: $exitCode)." -ForegroundColor Green
 	exit 0

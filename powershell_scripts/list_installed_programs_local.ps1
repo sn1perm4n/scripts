@@ -1,11 +1,10 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script queries installed programs via WMI/CIM, deduplicates and sorts the output alphabetically, and optionally exports the results to a CSV file
+# This script queries installed programs via CIM, deduplicates and sorts the output alphabetically, and optionally exports the results to a CSV file
 
 # NOTE: Querying Win32_Product triggers a Windows Installer consistency check on all installed software. This can be slow and may trigger repair/reconfigure operations on some applications. This is a known limitation of Win32_Product.
 
 # NOTE: To see all available column names that can be passed to -Columns, run the following command:
 # Get-CimInstance Win32_Product | Select-Object -First 1 | Get-Member -MemberType Property | Select-Object Name
-# (Substitute Get-WmiObject for Get-CimInstance if running PowerShell 5 or earlier)
 
 # Optional flags:
 #     -Columns <string[]>: Specify which columns to display and export (default: Name, Vendor, Version)
@@ -83,14 +82,7 @@ try {
 	Write-Host "`nQuerying installed programs..." -ForegroundColor Cyan
 
 	# Get installed programs
-	if ($PSVersionTable.PSVersion.Major -ge 7) {
-		# PowerShell 7+: use Get-CimInstance
-		$programs = Get-CimInstance Win32_Product -ErrorAction Stop
-	}
-	else {
-		# PowerShell 5: use Get-WmiObject
-		$programs = Get-WmiObject Win32_Product -ErrorAction Stop
-	}
+	$programs = Get-CimInstance Win32_Product -ErrorAction Stop
 
 	if (-not $programs) {
 		Write-Host ""
@@ -114,7 +106,7 @@ try {
 
 	# Output to console
 	if (-not $NoConsoleOutput) {
-		$programsClean | Format-Table -AutoSize
+		$programsClean | Format-Table -AutoSize | Out-String -Stream | Where-Object { $_ -ne '' } | Write-Host
 	}
 
 	# Save results to CSV if requested

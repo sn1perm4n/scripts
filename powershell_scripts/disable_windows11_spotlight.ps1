@@ -161,11 +161,11 @@ Write-Host "`nSign out or restart File Explorer for all changes to take effect."
 
 # Evaluate errors and return exit code
 if ($hadErrors) {
-	Write-Host "`nCompleted with errors." -ForegroundColor Yellow
+	Write-Host "`nWindows Spotlight changes applied with errors — some settings may not have taken effect." -ForegroundColor Yellow
 	exit 1
 }
 else {
-	Write-Host "`nCompleted successfully." -ForegroundColor Green
+	Write-Host "`nWindows Spotlight features disabled successfully." -ForegroundColor Green
 	exit 0
 }
 

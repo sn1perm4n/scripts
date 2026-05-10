@@ -2,6 +2,7 @@
 # This script previews duplicate/redundant keys in HKEY_CURRENT_USER\Control Panel\NotifyIconSettings
 
 # NOTE: This is a preview-only script — it makes no changes to the registry
+# NOTE: This script is intended for Windows 11 only — the NotifyIconSettings registry path does not exist on Windows 10
 
 # Optional flags:
 #     -Help / -?: Display this help message
@@ -109,12 +110,16 @@ foreach ($key in $subkeys) {
 	$exePath = $key.GetValue("ExecutablePath")
 	if (-not $exePath) { continue }
 
+	$isPromoted = $key.GetValue("IsPromoted")
+	$shownInTaskbar = if ($isPromoted -eq 1) { "Yes" } elseif ($isPromoted -eq 0) { "No" } else { "Unknown" }
+
 	$entries += [PSCustomObject]@{
 		KeyName = $key.PSChildName
 		ExecutablePath = $exePath
 		NormalizedPath = Get-NormalizedPath -ExePath $exePath
 		Version = Get-Version -Path $exePath
 		LastWriteTime = Get-RegistryKeyLastWriteTime -SubKeyName $key.PSChildName
+		ShownInTaskbar = $shownInTaskbar
 	}
 }
 
@@ -146,8 +151,9 @@ foreach ($group in $groups | Sort-Object Name) {
 		$ver = if ($entry.Version) { " (v$($entry.Version))" } else { "" }
 
 		Write-Host "  $tag $($entry.KeyName)$ver" -ForegroundColor $color
-		Write-Host "       ExecutablePath : $($entry.ExecutablePath)"
-		Write-Host "       LastWriteTime  : $($entry.LastWriteTime)"
+		Write-Host "       ExecutablePath  : $($entry.ExecutablePath)"
+		Write-Host "       LastWriteTime   : $($entry.LastWriteTime)"
+		Write-Host "       ShownInTaskbar  : $($entry.ShownInTaskbar)"
 
 		if (-not $isKeeper) { $totalFlaggedCount++ }
 	}

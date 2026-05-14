@@ -1,4 +1,4 @@
-# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
+﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script previews duplicate/redundant keys in HKEY_CURRENT_USER\Control Panel\NotifyIconSettings
 
 # NOTE: This is a preview-only script — it makes no changes to the registry

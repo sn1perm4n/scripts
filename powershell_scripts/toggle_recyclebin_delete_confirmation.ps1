@@ -25,7 +25,7 @@ if ($Help) {
 	exit 0
 }
 
-$regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer'
+$regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
 
 if (-not $Enable -and -not $Disable) {
 	Write-Host "`n1. Enable delete confirmation dialog"

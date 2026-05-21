@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script sets Ethernet adapters to interface metric 10 (highest priority) and Wi-Fi adapters to interface metric 20 (second priority)
+# This script sets Ethernet adapters to interface metric 10 (highest priority) and Wi-Fi adapters to interface metric 20 (second priority). This means that Ethernet always has top priority over Wi-Fi if both adapters are enabled and Ethernet is connected.
 
 # NOTE: Virtual adapters (VMware, VirtualBox, Hyper-V, etc.) are automatically excluded
 

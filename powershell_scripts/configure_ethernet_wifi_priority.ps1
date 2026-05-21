@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script sets Ethernet adapters to interface metric 10 (highest priority) and Wi-Fi adapters to interface metric 20 (second priority). This means that Ethernet always has top priority over Wi-Fi if both adapters are enabled and Ethernet is connected.
+# This script sets Ethernet adapters to interface metric 10 (highest priority) and Wi-Fi adapters to interface metric 20 (second priority)
 
 # NOTE: Virtual adapters (VMware, VirtualBox, Hyper-V, etc.) are automatically excluded
 
@@ -10,8 +10,6 @@
 #     -RestoreDefaults: Restore automatic metric for all affected adapters
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
-
-#Requires -RunAsAdministrator
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -85,6 +83,11 @@ if (-not $ethernetAdapters -and -not $wifiAdapters) {
 	exit 0
 }
 
+if (-not $ethernetAdapters) {
+	Write-Host "`nNo Ethernet adapters found, skipping." -ForegroundColor Yellow
+	if ($SaveResults) { $FileOutputLines += "No Ethernet adapters found, skipping." }
+}
+
 if ($ethernetAdapters) {
 	Write-Host "`nEthernet adapter(s) found:" -ForegroundColor Cyan
 	if ($SaveResults) { $FileOutputLines += "`nEthernet adapter(s) found:" }
@@ -127,6 +130,11 @@ if ($ethernetAdapters) {
 			$changedCount++
 		}
 	}
+}
+
+if (-not $wifiAdapters) {
+	Write-Host "`nNo Wi-Fi adapters found, skipping." -ForegroundColor Yellow
+	if ($SaveResults) { $FileOutputLines += "No Wi-Fi adapters found, skipping." }
 }
 
 if ($wifiAdapters) {

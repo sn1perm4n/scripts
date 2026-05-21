@@ -6,7 +6,7 @@
 # NOTE2: If a program is no longer visible in the System Tray that you expect to be there, or vice versa, re-open the affected program and manually reconfigure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
 
 # Optional flags:
-#     -Backup <PATH>: Back up NotifyIconSettings to a .reg file before making changes (default location: Desktop)
+#     -Backup <PATH>: Back up NotifyIconSettings to a .reg file before making changes (default location: %USERPROFILE%\Desktop)
 #     -DeleteAll: Delete all flagged keys without prompting
 #     -List: Show all NotifyIconSettings keys without processing
 #     -Preview: Show what would be deleted without making any changes (backup is skipped)
@@ -29,7 +29,7 @@ if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-DeleteAll] [-List] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup <PATH>       Back up NotifyIconSettings to a .reg file before making changes" -ForegroundColor Cyan
-	Write-Host "                       Default location if no path supplied: $env:USERPROFILE\Desktop" -ForegroundColor Cyan
+	Write-Host "                       Default location if no path supplied: %USERPROFILE%\Desktop" -ForegroundColor Cyan
 	Write-Host "  -DeleteAll           Delete all flagged keys without prompting" -ForegroundColor Cyan
 	Write-Host "  -List                Show all NotifyIconSettings keys without processing" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be deleted without making any changes (backup is skipped)" -ForegroundColor Cyan

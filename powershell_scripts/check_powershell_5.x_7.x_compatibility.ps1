@@ -266,6 +266,10 @@ if ($SaveResults) {
 	}
 }
 
+if ($Failures -and $AllResults.Count -eq 0) {
+	Write-Host "`nNo failures found." -ForegroundColor Green
+}
+
 # Keep window open
 if ($Failures -and -not $CompactOutput -and -not $Summary -and -not $SaveResults) {
 	Write-Host "Press any key to exit..." -ForegroundColor Cyan

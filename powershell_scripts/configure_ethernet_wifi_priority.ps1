@@ -11,6 +11,8 @@
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
 
+#Requires -RunAsAdministrator
+
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Preview,
@@ -92,8 +94,12 @@ if ($ethernetAdapters) {
 	Write-Host "`nEthernet adapter(s) found:" -ForegroundColor Cyan
 	if ($SaveResults) { $FileOutputLines += "`nEthernet adapter(s) found:" }
 	foreach ($adapter in $ethernetAdapters) {
-		$currentMetric = (Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).InterfaceMetric
-		$currentAuto = (Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).AutomaticMetric
+		$ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+		$currentMetric = $ipInterface.InterfaceMetric
+		$currentAuto = $ipInterface.AutomaticMetric
+
+		$alreadyConfigured = (-not $RestoreDefaults -and $currentAuto -eq 'Disabled' -and $currentMetric -eq 10) -or
+		                     ($RestoreDefaults -and $currentAuto -eq 'Enabled')
 
 		if ($RestoreDefaults) {
 			$action = "Restore automatic metric"
@@ -103,14 +109,21 @@ if ($ethernetAdapters) {
 
 		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
 		Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-		Write-Host "       Action          : $action"
 		if ($SaveResults) {
 			$FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))"
 			$FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-			$FileOutputLines += "       Action          : $action"
 		}
 
-		if (-not $Preview) {
+		if ($alreadyConfigured) {
+			Write-Host "       Result          : Already configured, skipping." -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping." }
+		} elseif ($Preview) {
+			Write-Host "       Action          : $action"
+			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
+			$changedCount++
+		} else {
+			Write-Host "       Action          : $action"
+			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
 			try {
 				if ($RestoreDefaults) {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Enabled -ErrorAction Stop
@@ -126,8 +139,6 @@ if ($ethernetAdapters) {
 				Write-Host ""
 				Write-Warning "Could not configure $($adapter.Name): $($_.Exception.Message)"
 			}
-		} else {
-			$changedCount++
 		}
 	}
 }
@@ -141,8 +152,12 @@ if ($wifiAdapters) {
 	Write-Host "`nWi-Fi adapter(s) found:" -ForegroundColor Cyan
 	if ($SaveResults) { $FileOutputLines += "`nWi-Fi adapter(s) found:" }
 	foreach ($adapter in $wifiAdapters) {
-		$currentMetric = (Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).InterfaceMetric
-		$currentAuto = (Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).AutomaticMetric
+		$ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+		$currentMetric = $ipInterface.InterfaceMetric
+		$currentAuto = $ipInterface.AutomaticMetric
+
+		$alreadyConfigured = (-not $RestoreDefaults -and $currentAuto -eq 'Disabled' -and $currentMetric -eq 20) -or
+		                     ($RestoreDefaults -and $currentAuto -eq 'Enabled')
 
 		if ($RestoreDefaults) {
 			$action = "Restore automatic metric"
@@ -152,14 +167,21 @@ if ($wifiAdapters) {
 
 		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
 		Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-		Write-Host "       Action          : $action"
 		if ($SaveResults) {
 			$FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))"
 			$FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-			$FileOutputLines += "       Action          : $action"
 		}
 
-		if (-not $Preview) {
+		if ($alreadyConfigured) {
+			Write-Host "       Result          : Already configured, skipping." -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping." }
+		} elseif ($Preview) {
+			Write-Host "       Action          : $action"
+			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
+			$changedCount++
+		} else {
+			Write-Host "       Action          : $action"
+			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
 			try {
 				if ($RestoreDefaults) {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Enabled -ErrorAction Stop
@@ -175,8 +197,6 @@ if ($wifiAdapters) {
 				Write-Host ""
 				Write-Warning "Could not configure $($adapter.Name): $($_.Exception.Message)"
 			}
-		} else {
-			$changedCount++
 		}
 	}
 }

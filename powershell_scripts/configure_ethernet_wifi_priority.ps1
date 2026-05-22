@@ -5,6 +5,8 @@
 
 # NOTE2: Use -RestoreDefaults to re-enable automatic metric for all affected adapters
 
+# NOTE3: Disabled adapters are skipped — enable the adapter and re-run this script to configure
+
 # Optional flags:
 #     -Preview: Show what would be changed without making any changes
 #     -RestoreDefaults: Restore automatic metric for all affected adapters
@@ -95,6 +97,16 @@ if ($ethernetAdapters) {
 	if ($SaveResults) { $FileOutputLines += "`nEthernet adapter(s) found:" }
 	foreach ($adapter in $ethernetAdapters) {
 		$ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+
+		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
+		if ($SaveResults) { $FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
+
+		if (-not $ipInterface) {
+			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." }
+			continue
+		}
+
 		$currentMetric = $ipInterface.InterfaceMetric
 		$currentAuto = $ipInterface.AutomaticMetric
 
@@ -107,12 +119,8 @@ if ($ethernetAdapters) {
 			$action = "Set interface metric to 10"
 		}
 
-		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
 		Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-		if ($SaveResults) {
-			$FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))"
-			$FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-		}
+		if ($SaveResults) { $FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 
 		if ($alreadyConfigured) {
 			Write-Host "       Result          : Already configured, skipping." -ForegroundColor Yellow
@@ -153,6 +161,16 @@ if ($wifiAdapters) {
 	if ($SaveResults) { $FileOutputLines += "`nWi-Fi adapter(s) found:" }
 	foreach ($adapter in $wifiAdapters) {
 		$ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+
+		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
+		if ($SaveResults) { $FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
+
+		if (-not $ipInterface) {
+			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." }
+			continue
+		}
+
 		$currentMetric = $ipInterface.InterfaceMetric
 		$currentAuto = $ipInterface.AutomaticMetric
 
@@ -165,12 +183,8 @@ if ($wifiAdapters) {
 			$action = "Set interface metric to 20"
 		}
 
-		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
 		Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-		if ($SaveResults) {
-			$FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))"
-			$FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
-		}
+		if ($SaveResults) { $FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 
 		if ($alreadyConfigured) {
 			Write-Host "       Result          : Already configured, skipping." -ForegroundColor Yellow

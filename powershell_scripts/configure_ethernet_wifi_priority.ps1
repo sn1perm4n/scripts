@@ -208,6 +208,9 @@ if ($Preview) {
 } elseif ($RestoreDefaults) {
 	$summaryLine = "$ScriptName`: Automatic metric restored for $changedCount adapter(s)."
 	Write-Host $summaryLine -ForegroundColor Green
+} elseif ($changedCount -eq 0) {
+	$summaryLine = "$ScriptName`: All adapters already configured, no changes made."
+	Write-Host $summaryLine -ForegroundColor Cyan
 } else {
 	$summaryLine = "$ScriptName`: $changedCount adapter(s) configured successfully."
 	Write-Host $summaryLine -ForegroundColor Green

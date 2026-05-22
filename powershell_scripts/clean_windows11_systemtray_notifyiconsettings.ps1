@@ -128,7 +128,9 @@ foreach ($key in $subkeys) {
 				$lastWriteTime = [DateTime]::FromFileTimeUtc($lastWriteRaw).ToLocalTime()
 			}
 		}
-	} catch {}
+	} catch {
+		$null = $_
+	}
 
 	# Strip versioned folder segments from path to normalize for grouping
 	$segments = $exePath -split '\\'
@@ -140,7 +142,7 @@ foreach ($key in $subkeys) {
 	# Extract version from path if present
 	$version = $null
 	if ($exePath -match '(\d+\.\d+[\.\d]*)') {
-		try { $version = [version]$Matches[1] } catch {}
+		try { $version = [version]$Matches[1] } catch { $null = $_ }
 	}
 
 	$entries += [PSCustomObject]@{
@@ -289,9 +291,7 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 	if ($SaveResults) { $FileOutputLines += "" }
 }
 
-Write-Host "========================================"
-if ($SaveResults) { $FileOutputLines += "========================================" }
-
+Write-Host ""
 if ($Preview) {
 	$summaryLine = "$ScriptName`: Preview complete. $deletedCount of $totalFlaggedCount key(s) would be deleted."
 	Write-Host $summaryLine -ForegroundColor Cyan

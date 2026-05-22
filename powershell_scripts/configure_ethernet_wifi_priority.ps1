@@ -182,9 +182,6 @@ if ($wifiAdapters) {
 }
 
 Write-Host ""
-Write-Host "========================================" 
-if ($SaveResults) { $FileOutputLines += "========================================" }
-
 if ($Preview) {
 	$summaryLine = "$ScriptName`: Preview complete. $changedCount adapter(s) would be configured."
 	Write-Host $summaryLine -ForegroundColor Cyan

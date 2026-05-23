@@ -69,10 +69,10 @@ $virtualPatterns = @(
 	'Teredo'
 )
 
-Write-Host "`n$hostname" -ForegroundColor Cyan
+Write-Host "`nHostname: $hostname" -ForegroundColor Cyan
 Write-Host "Detecting network adapters..." -ForegroundColor Cyan
 if ($SaveResults) {
-	$FileOutputLines += $hostname
+	$FileOutputLines += "Hostname: $hostname"
 	$FileOutputLines += "Detecting network adapters..."
 }
 

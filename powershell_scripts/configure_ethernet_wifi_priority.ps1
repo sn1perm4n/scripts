@@ -7,10 +7,10 @@
 
 # NOTE3: Disabled adapters are skipped — enable the adapter and re-run this script to configure
 
-# NOTE4: Use -IPv6 to also configure IPv6 interface metrics (skipped silently if IPv6 is disabled on an adapter)
+# NOTE4: Use -IncludeIPv6 to also configure IPv6 interface metrics (skipped silently if IPv6 is disabled on an adapter)
 
 # Optional flags:
-#     -IPv6: Also configure IPv6 interface metrics
+#     -IncludeIPv6: Also configure IPv6 interface metrics
 #     -Preview: Show what would be changed without making any changes
 #     -RestoreDefaults: Restore automatic metric for all affected adapters
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
@@ -20,7 +20,7 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
-	[switch]$IPv6,
+	[switch]$IncludeIPv6,
 	[switch]$Preview,
 	[switch]$RestoreDefaults,
 	[string]$SaveResults,
@@ -30,9 +30,9 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-IPv6] [-Preview] [-RestoreDefaults] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-IncludeIPv6] [-Preview] [-RestoreDefaults] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -IPv6                Also configure IPv6 interface metrics" -ForegroundColor Cyan
+	Write-Host "  -IncludeIPv6         Also configure IPv6 interface metrics" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be changed without making any changes" -ForegroundColor Cyan
 	Write-Host "  -RestoreDefaults     Restore automatic metric for all affected adapters" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
@@ -154,7 +154,7 @@ if ($ethernetAdapters) {
 			}
 		}
 
-		if ($IPv6) {
+		if ($IncludeIPv6) {
 			$ipv6Interface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction SilentlyContinue
 			if ($ipv6Interface) {
 				$ipv6CurrentMetric = $ipv6Interface.InterfaceMetric
@@ -252,7 +252,7 @@ if ($wifiAdapters) {
 			}
 		}
 
-		if ($IPv6) {
+		if ($IncludeIPv6) {
 			$ipv6Interface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction SilentlyContinue
 			if ($ipv6Interface) {
 				$ipv6CurrentMetric = $ipv6Interface.InterfaceMetric

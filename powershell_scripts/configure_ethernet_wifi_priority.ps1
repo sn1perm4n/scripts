@@ -128,8 +128,8 @@ if ($ethernetAdapters) {
 		if ($SaveResults) { $FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 
 		if ($alreadyConfigured) {
-			Write-Host "       Result          : Already configured, skipping." -ForegroundColor Yellow
-			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping." }
+			Write-Host "       Result          : Already configured, skipping (IPv4)" -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv4)" }
 		} elseif ($Preview) {
 			Write-Host "       Action          : $action"
 			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
@@ -164,8 +164,8 @@ if ($ethernetAdapters) {
 				                         ($RestoreDefaults -and $ipv6CurrentAuto -eq 'Enabled')
 
 				if ($ipv6AlreadyConfigured) {
-					Write-Host "       Result          : Already configured, skipping. (IPv6)" -ForegroundColor Yellow
-					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping. (IPv6)" }
+					Write-Host "       Result          : Already configured, skipping (IPv6)" -ForegroundColor Yellow
+					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv6)" }
 				} elseif ($Preview) {
 					Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })"
 					if ($SaveResults) { $FileOutputLines += "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })" }
@@ -226,8 +226,8 @@ if ($wifiAdapters) {
 		if ($SaveResults) { $FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 
 		if ($alreadyConfigured) {
-			Write-Host "       Result          : Already configured, skipping." -ForegroundColor Yellow
-			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping." }
+			Write-Host "       Result          : Already configured, skipping (IPv4)" -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv4)" }
 		} elseif ($Preview) {
 			Write-Host "       Action          : $action"
 			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
@@ -262,8 +262,8 @@ if ($wifiAdapters) {
 				                         ($RestoreDefaults -and $ipv6CurrentAuto -eq 'Enabled')
 
 				if ($ipv6AlreadyConfigured) {
-					Write-Host "       Result          : Already configured, skipping. (IPv6)" -ForegroundColor Yellow
-					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping. (IPv6)" }
+					Write-Host "       Result          : Already configured, skipping (IPv6)" -ForegroundColor Yellow
+					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv6)" }
 				} elseif ($Preview) {
 					Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })"
 					if ($SaveResults) { $FileOutputLines += "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })" }

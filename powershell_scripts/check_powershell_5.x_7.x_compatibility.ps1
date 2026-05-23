@@ -267,7 +267,7 @@ if ($SaveResults) {
 }
 
 if ($Failures -and $AllResults.Count -eq 0) {
-	Write-Host "No failures found." -ForegroundColor Green
+	Write-Host "Scripts scanned: $($scripts.Count) - No failures found." -ForegroundColor Green
 }
 
 # Keep window open

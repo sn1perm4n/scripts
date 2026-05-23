@@ -53,6 +53,7 @@ if ($SaveResults) {
 
 $FileOutputLines = @()
 $changedCount = 0
+$hostname = $env:COMPUTERNAME
 
 # Known virtual adapter description patterns to exclude
 $virtualPatterns = @(
@@ -68,8 +69,12 @@ $virtualPatterns = @(
 	'Teredo'
 )
 
-Write-Host "`nDetecting network adapters..." -ForegroundColor Cyan
-if ($SaveResults) { $FileOutputLines += "Detecting network adapters..." }
+Write-Host "`n$hostname" -ForegroundColor Cyan
+Write-Host "Detecting network adapters..." -ForegroundColor Cyan
+if ($SaveResults) {
+	$FileOutputLines += $hostname
+	$FileOutputLines += "Detecting network adapters..."
+}
 
 # Get all non-virtual physical adapters
 $adapters = Get-NetAdapter | Where-Object {
@@ -304,6 +309,7 @@ if ($Preview) {
 }
 
 if ($SaveResults) {
+	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine
 
 	while ($FileOutputLines[-1] -eq '') {

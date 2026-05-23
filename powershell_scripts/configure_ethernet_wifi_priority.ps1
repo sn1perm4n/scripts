@@ -72,6 +72,7 @@ $virtualPatterns = @(
 Write-Host "`nHostname: $hostname" -ForegroundColor Cyan
 Write-Host "Detecting network adapters..." -ForegroundColor Cyan
 if ($SaveResults) {
+	$FileOutputLines += ""
 	$FileOutputLines += "Hostname: $hostname"
 	$FileOutputLines += "Detecting network adapters..."
 }
@@ -318,7 +319,7 @@ if ($SaveResults) {
 
 	try {
 		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
 	} catch {
 		Write-Host ""

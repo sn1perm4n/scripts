@@ -7,7 +7,10 @@
 
 # NOTE3: Disabled adapters are skipped — enable the adapter and re-run this script to configure
 
+# NOTE4: Use -IPv6 to also configure IPv6 interface metrics (skipped silently if IPv6 is disabled on an adapter)
+
 # Optional flags:
+#     -IPv6: Also configure IPv6 interface metrics
 #     -Preview: Show what would be changed without making any changes
 #     -RestoreDefaults: Restore automatic metric for all affected adapters
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
@@ -17,6 +20,7 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
+	[switch]$IPv6,
 	[switch]$Preview,
 	[switch]$RestoreDefaults,
 	[string]$SaveResults,
@@ -26,8 +30,9 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Preview] [-RestoreDefaults] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-IPv6] [-Preview] [-RestoreDefaults] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -IPv6                Also configure IPv6 interface metrics" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be changed without making any changes" -ForegroundColor Cyan
 	Write-Host "  -RestoreDefaults     Restore automatic metric for all affected adapters" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
@@ -102,8 +107,8 @@ if ($ethernetAdapters) {
 		if ($SaveResults) { $FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
 
 		if (-not $ipInterface) {
-			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." -ForegroundColor Yellow
-			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." }
+			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." }
 			continue
 		}
 
@@ -135,17 +140,51 @@ if ($ethernetAdapters) {
 			try {
 				if ($RestoreDefaults) {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Enabled -ErrorAction Stop
-					Write-Host "       Result          : Automatic metric restored" -ForegroundColor Green
-					if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored" }
+					Write-Host "       Result          : Automatic metric restored (IPv4)" -ForegroundColor Green
+					if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv4)" }
 				} else {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Disabled -InterfaceMetric 10 -ErrorAction Stop
-					Write-Host "       Result          : Interface metric set to 10" -ForegroundColor Green
-					if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 10" }
+					Write-Host "       Result          : Interface metric set to 10 (IPv4)" -ForegroundColor Green
+					if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 10 (IPv4)" }
 				}
 				$changedCount++
 			} catch {
 				Write-Host ""
-				Write-Warning "Could not configure $($adapter.Name): $($_.Exception.Message)"
+				Write-Warning "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)"
+			}
+		}
+
+		if ($IPv6) {
+			$ipv6Interface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction SilentlyContinue
+			if ($ipv6Interface) {
+				$ipv6CurrentMetric = $ipv6Interface.InterfaceMetric
+				$ipv6CurrentAuto = $ipv6Interface.AutomaticMetric
+
+				$ipv6AlreadyConfigured = (-not $RestoreDefaults -and $ipv6CurrentAuto -eq 'Disabled' -and $ipv6CurrentMetric -eq 10) -or
+				                         ($RestoreDefaults -and $ipv6CurrentAuto -eq 'Enabled')
+
+				if ($ipv6AlreadyConfigured) {
+					Write-Host "       Result          : Already configured, skipping. (IPv6)" -ForegroundColor Yellow
+					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping. (IPv6)" }
+				} elseif ($Preview) {
+					Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })"
+					if ($SaveResults) { $FileOutputLines += "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })" }
+				} else {
+					try {
+						if ($RestoreDefaults) {
+							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Enabled -ErrorAction Stop
+							Write-Host "       Result          : Automatic metric restored (IPv6)" -ForegroundColor Green
+							if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv6)" }
+						} else {
+							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Disabled -InterfaceMetric 10 -ErrorAction Stop
+							Write-Host "       Result          : Interface metric set to 10 (IPv6)" -ForegroundColor Green
+							if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 10 (IPv6)" }
+						}
+					} catch {
+						Write-Host ""
+						Write-Warning "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)"
+					}
+				}
 			}
 		}
 	}
@@ -166,8 +205,8 @@ if ($wifiAdapters) {
 		if ($SaveResults) { $FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
 
 		if (-not $ipInterface) {
-			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." -ForegroundColor Yellow
-			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run to configure." }
+			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." -ForegroundColor Yellow
+			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." }
 			continue
 		}
 
@@ -199,17 +238,51 @@ if ($wifiAdapters) {
 			try {
 				if ($RestoreDefaults) {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Enabled -ErrorAction Stop
-					Write-Host "       Result          : Automatic metric restored" -ForegroundColor Green
-					if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored" }
+					Write-Host "       Result          : Automatic metric restored (IPv4)" -ForegroundColor Green
+					if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv4)" }
 				} else {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Disabled -InterfaceMetric 20 -ErrorAction Stop
-					Write-Host "       Result          : Interface metric set to 20" -ForegroundColor Green
-					if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 20" }
+					Write-Host "       Result          : Interface metric set to 20 (IPv4)" -ForegroundColor Green
+					if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 20 (IPv4)" }
 				}
 				$changedCount++
 			} catch {
 				Write-Host ""
-				Write-Warning "Could not configure $($adapter.Name): $($_.Exception.Message)"
+				Write-Warning "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)"
+			}
+		}
+
+		if ($IPv6) {
+			$ipv6Interface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -ErrorAction SilentlyContinue
+			if ($ipv6Interface) {
+				$ipv6CurrentMetric = $ipv6Interface.InterfaceMetric
+				$ipv6CurrentAuto = $ipv6Interface.AutomaticMetric
+
+				$ipv6AlreadyConfigured = (-not $RestoreDefaults -and $ipv6CurrentAuto -eq 'Disabled' -and $ipv6CurrentMetric -eq 20) -or
+				                         ($RestoreDefaults -and $ipv6CurrentAuto -eq 'Enabled')
+
+				if ($ipv6AlreadyConfigured) {
+					Write-Host "       Result          : Already configured, skipping. (IPv6)" -ForegroundColor Yellow
+					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping. (IPv6)" }
+				} elseif ($Preview) {
+					Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })"
+					if ($SaveResults) { $FileOutputLines += "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })" }
+				} else {
+					try {
+						if ($RestoreDefaults) {
+							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Enabled -ErrorAction Stop
+							Write-Host "       Result          : Automatic metric restored (IPv6)" -ForegroundColor Green
+							if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv6)" }
+						} else {
+							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Disabled -InterfaceMetric 20 -ErrorAction Stop
+							Write-Host "       Result          : Interface metric set to 20 (IPv6)" -ForegroundColor Green
+							if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 20 (IPv6)" }
+						}
+					} catch {
+						Write-Host ""
+						Write-Warning "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)"
+					}
+				}
 			}
 		}
 	}

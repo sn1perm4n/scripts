@@ -3,7 +3,7 @@
 
 # NOTE: This script is intended for Windows 11 only
 
-# NOTE2: File Explorer will be restarted automatically to apply changes — when used interactively, a Taskbar redraw delay of up to ~30 seconds is normal
+# NOTE2: File Explorer will be restarted automatically to apply changes — a Taskbar redraw delay of up to ~30 seconds is normal
 
 # Optional flags:
 #     -Windows10: Switch to Windows 10 style right-click menu without prompting

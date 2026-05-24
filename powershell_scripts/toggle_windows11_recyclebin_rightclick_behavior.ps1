@@ -6,34 +6,34 @@
 # NOTE2: File Explorer will be restarted automatically to apply changes
 
 # Optional flags:
-#     -Disable: Restore Windows 11 style right-click menu without prompting
-#     -Enable:  Enable Windows 10 style right-click menu without prompting
+#     -Windows10: Switch to Windows 10 style right-click menu without prompting
+#     -Windows11: Switch to Windows 11 style right-click menu without prompting
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
-	[switch]$Disable,
-	[switch]$Enable,
+	[switch]$Windows10,
+	[switch]$Windows11,
 	[switch]$Help
 )
 
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Windows10] [-Windows11] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Disable  Restore Windows 11 style right-click menu without prompting" -ForegroundColor Cyan
-	Write-Host "  -Enable   Enable Windows 10 style right-click menu without prompting" -ForegroundColor Cyan
-	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
+	Write-Host "  -Windows10  Switch to Windows 10 style right-click menu without prompting" -ForegroundColor Cyan
+	Write-Host "  -Windows11  Switch to Windows 11 style right-click menu without prompting" -ForegroundColor Cyan
+	Write-Host "  -Help       Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }
 
-if (-not $Enable -and -not $Disable) {
-	Write-Host "`n1. Enable Windows 10 style right-click menu"
-	Write-Host "2. Disable Windows 10 style right-click menu (restore Windows 11 default)"
+if (-not $Windows10 -and -not $Windows11) {
+	Write-Host "`n1. Switch to Windows 10 style right-click menu"
+	Write-Host "2. Switch to Windows 11 style right-click menu"
 	Write-Host "`nPress 1 or 2 to continue..." -ForegroundColor Cyan
 
 	while ($true) {
@@ -42,41 +42,41 @@ if (-not $Enable -and -not $Disable) {
 		Write-Host "`nInvalid input. Please press 1 or 2..." -ForegroundColor Yellow
 	}
 
-	$Enable = $key -eq '1'
-	$Disable = $key -eq '2'
+	$Windows10 = $key -eq '1'
+	$Windows11 = $key -eq '2'
 }
 
-$enabling = $Enable -eq $true
+$usingWindows10Style = $Windows10 -eq $true
 $regPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
 $regParent = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}'
 
-Write-Host "`nChecking Windows 10 style right-click menu status..." -ForegroundColor Cyan
+Write-Host "`nChecking right-click menu style..." -ForegroundColor Cyan
 
 try {
-	if ($enabling) {
+	if ($usingWindows10Style) {
 		if (Test-Path $regPath) {
-			Write-Host "`nWindows 10 style right-click menu is already enabled." -ForegroundColor Yellow
+			Write-Host "`nWindows 10 style right-click menu is already active." -ForegroundColor Yellow
 			exit 0
 		}
 		New-Item -Path $regPath -Value "" -Force | Out-Null
-		Write-Host "`nWindows 10 style right-click menu successfully enabled." -ForegroundColor Green
+		Write-Host "`nSwitched to Windows 10 style right-click menu successfully." -ForegroundColor Green
 	}
 	else {
 		if (-not (Test-Path $regParent)) {
-			Write-Host "`nWindows 10 style right-click menu is already disabled." -ForegroundColor Yellow
+			Write-Host "`nWindows 11 style right-click menu is already active." -ForegroundColor Yellow
 			exit 0
 		}
 		Remove-Item -Path $regParent -Recurse -Force -ErrorAction Stop
-		Write-Host "`nWindows 10 style right-click menu successfully disabled." -ForegroundColor Green
+		Write-Host "`nSwitched to Windows 11 style right-click menu successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
-	if ($enabling) {
-		Write-Error "Failed to enable Windows 10 style right-click menu: $($_.Exception.Message)"
+	if ($usingWindows10Style) {
+		Write-Error "Failed to switch to Windows 10 style right-click menu: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "Failed to disable Windows 10 style right-click menu: $($_.Exception.Message)"
+		Write-Error "Failed to switch to Windows 11 style right-click menu: $($_.Exception.Message)"
 	}
 	exit 1
 }

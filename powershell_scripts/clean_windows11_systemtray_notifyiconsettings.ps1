@@ -300,9 +300,11 @@ if ($Preview) {
 	Write-Host $summaryLine -ForegroundColor Green
 }
 
-Write-Host "`nNOTE: If a program is no longer visible in the System Tray that you expect to be there, or vice versa," -ForegroundColor Cyan
-Write-Host "re-open the affected program and manually reconfigure its System Tray visibility via" -ForegroundColor Cyan
-Write-Host "Settings -> Personalization -> Taskbar -> Other system tray icons" -ForegroundColor Cyan
+Write-Host @"
+`nNOTE: If a program is no longer visible in the System Tray that you expect to be there, or vice versa,
+re-open the affected program and manually reconfigure its System Tray visibility via
+Settings -> Personalization -> Taskbar -> Other system tray icons
+"@ -ForegroundColor Cyan
 
 if ($SaveResults) {
 	$FileOutputLines += $summaryLine

@@ -3,7 +3,7 @@
 
 # Optional flags:
 #     -Description: Include flag descriptions from the # Optional flags comment block
-#     -FlagName: Print only flag names without descriptions (default behavior)
+#     -Path <PATH>: Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a .csv file (appends if file exists)
 #     -Unique: Show only unique deduplicated flag names in an alphabetized list
@@ -12,6 +12,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Description,
+	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Unique,
@@ -21,9 +22,10 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Description] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Description] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Description         Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
+	Write-Host "  -Path <PATH>         Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
 	Write-Host "  -Unique              Show only unique deduplicated flag names in an alphabetized list" -ForegroundColor Cyan
@@ -42,12 +44,12 @@ if ($SaveResults) {
 	}
 }
 
-Write-Host ""
-
-# Prompt the user for the file or folder path
-$Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
-
-Write-Host ""
+# Prompt for path if not specified
+if (-not $Path) {
+	Write-Host ""
+	$Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
+	Write-Host ""
+}
 
 if (-not (Test-Path $Path)) {
 	Write-Host ""
@@ -133,7 +135,6 @@ foreach ($script in $scripts) {
 			if ($inOptionalFlags) {
 				if ($line -match '^\s*#\s+(-\S+)') {
 					$flagKey = $Matches[1] -replace '[^a-zA-Z0-9\-]', ''
-					# Extract description after the colon
 					if ($line -match ':\s+(.+)$') {
 						$descriptionMap[$flagKey] = $Matches[1].Trim()
 					}
@@ -152,7 +153,7 @@ foreach ($script in $scripts) {
 		}
 
 		foreach ($flag in $flags) {
-			$baseName = ($flag -split ' ')[0]  # e.g. -LinesAbove from -LinesAbove <N>
+			$baseName = ($flag -split ' ')[0]
 			$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
 
 			if ($Description -and $desc) {

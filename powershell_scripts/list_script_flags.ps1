@@ -2,7 +2,9 @@
 # This script scans PowerShell scripts and lists all flags defined in their param blocks
 
 # Optional flags:
+#     -Count: Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description: Include flag descriptions from the # Optional flags comment block
+#     -Flag <NAME>: Filter output to only scripts containing the specified flag
 #     -Path <PATH>: Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a .csv file (appends if file exists)
@@ -11,7 +13,9 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
+	[switch]$Count,
 	[switch]$Description,
+	[string]$Flag,
 	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
@@ -22,9 +26,11 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Description] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Count] [-Description] [-Flag <NAME>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -Count               Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description         Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
+	Write-Host "  -Flag <NAME>         Filter output to only scripts containing the specified flag" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
@@ -76,7 +82,8 @@ if ($scripts.Count -eq 0) {
 }
 
 $CsvOutputLines = @()
-$allFlags = @{}  # used for -Unique: key = normalized flag name, value = flag display string
+$allFlags = @{}       # key = normalized flag name, value = flag display string
+$flagCounts = @{}     # key = normalized flag name, value = count of scripts containing it
 $totalFlags = 0
 
 foreach ($script in $scripts) {
@@ -109,7 +116,6 @@ foreach ($script in $scripts) {
 			$type = $Matches[1]
 			$name = $Matches[2]
 
-			# Convert type to display hint
 			$hint = switch ($type) {
 				'string' { ' <PATH>' }
 				'int'    { ' <N>' }
@@ -123,6 +129,13 @@ foreach ($script in $scripts) {
 	}
 
 	if ($flags.Count -eq 0) { continue }
+
+	# If -Flag is specified, skip scripts that don't contain the flag
+	if ($Flag) {
+		$flagNormalized = $Flag.TrimStart('-')
+		$hasFlag = $flags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
+		if (-not $hasFlag) { continue }
+	}
 
 	# Build description lookup from # Optional flags comment block if -Description specified
 	$descriptionMap = @{}
@@ -146,14 +159,32 @@ foreach ($script in $scripts) {
 		}
 	}
 
+	# Accumulate flag counts for -Count
+	foreach ($flag in $flags) {
+		$baseName = ($flag -split ' ')[0]
+		if ($flagCounts.ContainsKey($baseName)) {
+			$flagCounts[$baseName]++
+		} else {
+			$flagCounts[$baseName] = 1
+		}
+	}
+
 	if (-not $Unique) {
-		# Print script name header (skip for single file)
-		if ($scripts.Count -gt 1) {
+		# Print script name header (skip for single file, always show for -Flag)
+		if ($scripts.Count -gt 1 -or $Flag) {
 			Write-Host $script.Name -ForegroundColor Cyan
 			if ($SaveResults) { $CsvOutputLines += $script.Name }
 		}
 
-		foreach ($flag in $flags) {
+		# When -Flag is specified, only show the matching flag
+		$flagsToShow = if ($Flag) {
+			$flagNormalized = $Flag.TrimStart('-')
+			$flags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
+		} else {
+			$flags
+		}
+
+		foreach ($flag in $flagsToShow) {
 			$baseName = ($flag -split ' ')[0]
 			$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
 
@@ -167,7 +198,7 @@ foreach ($script in $scripts) {
 			$totalFlags++
 		}
 
-		if ($scripts.Count -gt 1 -and $script -ne $scripts[-1]) {
+		if (($scripts.Count -gt 1 -or $Flag) -and $script -ne $scripts[-1]) {
 			Write-Host ""
 			if ($SaveResults) { $CsvOutputLines += "" }
 		}
@@ -186,8 +217,15 @@ foreach ($script in $scripts) {
 if ($Unique) {
 	$sorted = $allFlags.Keys | Sort-Object
 	foreach ($key in $sorted) {
-		Write-Host "  $($allFlags[$key])"
-		if ($SaveResults) { $CsvOutputLines += $allFlags[$key] }
+		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" } else { "" }
+		Write-Host "  $($allFlags[$key])$countSuffix"
+		if ($SaveResults) {
+			if ($Count) {
+				$CsvOutputLines += "$($allFlags[$key]),$($flagCounts[$key])"
+			} else {
+				$CsvOutputLines += $allFlags[$key]
+			}
+		}
 		$totalFlags++
 	}
 }
@@ -197,8 +235,9 @@ $summaryLine = if ($Unique) {
 } else {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
 }
+
 if ($Unique) { Write-Host "" }
-Write-Host "$summaryLine" -ForegroundColor Green
+Write-Host $summaryLine -ForegroundColor Green
 
 # Save results
 if ($SaveResults) {

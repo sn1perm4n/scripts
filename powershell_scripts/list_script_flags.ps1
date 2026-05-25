@@ -77,6 +77,7 @@ if ($scripts.Count -eq 0) {
 
 $CsvOutputLines = @()
 $allFlags = @{}  # used for -Unique: key = normalized flag name, value = flag display string
+$totalFlags = 0
 
 foreach ($script in $scripts) {
 	$content = Get-Content -Path $script.FullName -ErrorAction SilentlyContinue
@@ -163,6 +164,7 @@ foreach ($script in $scripts) {
 				Write-Host "  $flag"
 				if ($SaveResults) { $CsvOutputLines += $flag }
 			}
+			$totalFlags++
 		}
 
 		if ($scripts.Count -gt 1) {
@@ -186,8 +188,16 @@ if ($Unique) {
 	foreach ($key in $sorted) {
 		Write-Host "  $($allFlags[$key])"
 		if ($SaveResults) { $CsvOutputLines += $allFlags[$key] }
+		$totalFlags++
 	}
 }
+
+$summaryLine = if ($Unique) {
+	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags unique flag(s) found."
+} else {
+	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
+}
+Write-Host "`n$summaryLine" -ForegroundColor Green
 
 # Save results
 if ($SaveResults) {
@@ -197,7 +207,7 @@ if ($SaveResults) {
 	try {
 		$outputString = ($CsvOutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
-		Write-Host "Results saved to: $SaveResults" -ForegroundColor Green
+		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
 	} catch {
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"

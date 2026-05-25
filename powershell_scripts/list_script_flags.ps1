@@ -167,7 +167,7 @@ foreach ($script in $scripts) {
 			$totalFlags++
 		}
 
-		if ($scripts.Count -gt 1) {
+		if ($scripts.Count -gt 1 -and $script -ne $scripts[-1]) {
 			Write-Host ""
 			if ($SaveResults) { $CsvOutputLines += "" }
 		}
@@ -197,7 +197,8 @@ $summaryLine = if ($Unique) {
 } else {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
 }
-Write-Host "`n$summaryLine" -ForegroundColor Green
+if ($Unique) { Write-Host "" }
+Write-Host "$summaryLine" -ForegroundColor Green
 
 # Save results
 if ($SaveResults) {

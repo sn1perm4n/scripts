@@ -15,7 +15,7 @@
 param (
 	[switch]$Count,
 	[switch]$Description,
-	[string]$Flag,
+	[string]$FlagFilter,
 	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
@@ -82,8 +82,8 @@ if ($scripts.Count -eq 0) {
 }
 
 $CsvOutputLines = @()
-$allFlags = @{}       # key = normalized flag name, value = flag display string
-$flagCounts = @{}     # key = normalized flag name, value = count of scripts containing it
+$allFlags = @{}
+$flagCounts = @{}
 $totalFlags = 0
 
 foreach ($script in $scripts) {
@@ -91,26 +91,34 @@ foreach ($script in $scripts) {
 	if (-not $content) { continue }
 
 	# Find param block
-	$inParam = $false
-	$paramLines = @()
-	$braceDepth = 0
+	$paramStart = -1
+	for ($i = 0; $i -lt $content.Count; $i++) {
+		if ($content[$i] -match '^\s*param\s*\(') {
+			$paramStart = $i
+			break
+		}
+	}
 
-	foreach ($line in $content) {
-		if (-not $inParam -and $line -match '^\s*param\s*\(') {
-			$inParam = $true
+	if ($paramStart -eq -1) { continue }
+
+	$paramLines = @()
+	$depth = 1
+	for ($i = $paramStart + 1; $i -lt $content.Count; $i++) {
+		$line = $content[$i]
+		foreach ($char in $line.ToCharArray()) {
+			if ($char -eq '(') { $depth++ }
+			elseif ($char -eq ')') { $depth-- }
 		}
-		if ($inParam) {
-			$paramLines += $line
-			$braceDepth += ($line.ToCharArray() | Where-Object { $_ -eq '(' } | Measure-Object).Count
-			$braceDepth -= ($line.ToCharArray() | Where-Object { $_ -eq ')' } | Measure-Object).Count
-			if ($braceDepth -le 0) { break }
-		}
+		if ($depth -le 0) { break }
+		$paramLines += $line
 	}
 
 	if ($paramLines.Count -eq 0) { continue }
 
-	# Parse flags from param block
-	$flags = @()
+	$lines = $content
+
+	# Parse flags from param lines
+	$parsedFlags = @()
 	foreach ($line in $paramLines) {
 		if ($line -match '^\s*\[(switch|string|int|bool|double)\]\$(\w+)') {
 			$type = $Matches[1]
@@ -123,17 +131,16 @@ foreach ($script in $scripts) {
 				default  { '' }
 			}
 
-			$flagDisplay = "-$name$hint"
-			$flags += $flagDisplay
+			$parsedFlags += "-$name$hint"
 		}
 	}
 
-	if ($flags.Count -eq 0) { continue }
+	if ($parsedFlags.Count -eq 0) { continue }
 
 	# If -Flag is specified, skip scripts that don't contain the flag
-	if ($Flag) {
-		$flagNormalized = $Flag.TrimStart('-')
-		$hasFlag = $flags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
+	if ($FlagFilter) {
+		$flagNormalized = $FlagFilter.TrimStart('-')
+		$hasFlag = $parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
 		if (-not $hasFlag) { continue }
 	}
 
@@ -141,7 +148,7 @@ foreach ($script in $scripts) {
 	$descriptionMap = @{}
 	if ($Description) {
 		$inOptionalFlags = $false
-		foreach ($line in $content) {
+		foreach ($line in $lines) {
 			if ($line -match '#\s*Optional flags') {
 				$inOptionalFlags = $true
 				continue
@@ -159,9 +166,9 @@ foreach ($script in $scripts) {
 		}
 	}
 
-	# Accumulate flag counts for -Count
-	foreach ($flag in $flags) {
-		$baseName = ($flag -split ' ')[0]
+	# Accumulate flag counts
+	foreach ($f in $parsedFlags) {
+		$baseName = ($f -split ' ')[0]
 		if ($flagCounts.ContainsKey($baseName)) {
 			$flagCounts[$baseName]++
 		} else {
@@ -170,44 +177,41 @@ foreach ($script in $scripts) {
 	}
 
 	if (-not $Unique) {
-		# Print script name header (skip for single file, always show for -Flag)
-		if ($scripts.Count -gt 1 -or $Flag) {
+		if ($scripts.Count -gt 1 -or $FlagFilter) {
 			Write-Host $script.Name -ForegroundColor Cyan
 			if ($SaveResults) { $CsvOutputLines += $script.Name }
 		}
 
-		# When -Flag is specified, only show the matching flag
-		$flagsToShow = if ($Flag) {
-			$flagNormalized = $Flag.TrimStart('-')
-			$flags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
+		$flagsToShow = if ($FlagFilter) {
+			$flagNormalized = $FlagFilter.TrimStart('-')
+			$parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
 		} else {
-			$flags
+			$parsedFlags
 		}
 
-		foreach ($flag in $flagsToShow) {
-			$baseName = ($flag -split ' ')[0]
+		foreach ($f in $flagsToShow) {
+			$baseName = ($f -split ' ')[0]
 			$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
 
 			if ($Description -and $desc) {
-				Write-Host "  $flag`: $desc"
-				if ($SaveResults) { $CsvOutputLines += "$flag,`"$desc`"" }
+				Write-Host "  $f`: $desc"
+				if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
 			} else {
-				Write-Host "  $flag"
-				if ($SaveResults) { $CsvOutputLines += $flag }
+				Write-Host "  $f"
+				if ($SaveResults) { $CsvOutputLines += $f }
 			}
 			$totalFlags++
 		}
 
-		if (($scripts.Count -gt 1 -or $Flag) -and $script -ne $scripts[-1]) {
+		if (($scripts.Count -gt 1 -or $FlagFilter) -and $script -ne $scripts[-1]) {
 			Write-Host ""
 			if ($SaveResults) { $CsvOutputLines += "" }
 		}
 	} else {
-		# Accumulate for -Unique
-		foreach ($flag in $flags) {
-			$baseName = ($flag -split ' ')[0]
+		foreach ($f in $parsedFlags) {
+			$baseName = ($f -split ' ')[0]
 			if (-not $allFlags.ContainsKey($baseName)) {
-				$allFlags[$baseName] = $flag
+				$allFlags[$baseName] = $f
 			}
 		}
 	}

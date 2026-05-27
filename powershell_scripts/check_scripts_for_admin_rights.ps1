@@ -74,18 +74,18 @@ $StrongAdminIndicators = @(
 $Results = @()
 $FileOutputLines = @()
 
-Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | ForEach-Object {
+Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.FullName -ne $PSCommandPath } | ForEach-Object {
 
 	$content = Get-Content $_.FullName -Raw
 	$flags = @()
 
-	# Detect #Requires -RunAsAdministrator or inline admin-rights check block
+	# Detect inline admin-rights check block or #Requires -RunAsAdministrator
 	$hasInlineAdminCheck =
-		($content -match '(?im)^\s*#\s*Requires\s+-RunAsAdministrator\b') -or
 		($content -match 'WindowsPrincipal' -and
 		$content -match 'WindowsIdentity\]::GetCurrent' -and
 		$content -match 'IsInRole' -and
-		$content -match 'WindowsBuiltInRole\]::Administrator')
+		$content -match 'WindowsBuiltInRole\]::Administrator') -or
+		($content -match '(?im)^\s*#\s*Requires\s+-RunAsAdministrator\b')
 
 	# ProgramData analysis
 	if ($content -match 'C:\\ProgramData') {
@@ -158,7 +158,7 @@ else {
 	# Per-script output mode
 	$sorted = $Results | Sort-Object NeedsAdmin, Script
 	foreach ($result in $sorted) {
-		$color = if ($result.NeedsAdmin -eq 'Likely') { 'Yellow' } else { 'Green' }
+		$color = if ($result.NeedsAdmin -eq 'Likely' -and $result.AlreadyContainsAdminRights -eq 'No') { 'Yellow' } else { 'Green' }
 
 		Write-Host $result.Script -ForegroundColor $color
 		Write-Host "  Needs Admin:    $($result.NeedsAdmin)" -ForegroundColor $color

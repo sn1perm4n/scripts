@@ -79,13 +79,13 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | ForEach-Object {
 	$content = Get-Content $_.FullName -Raw
 	$flags = @()
 
-	# Detect inline admin-rights check block or #Requires -RunAsAdministrator
+	# Detect #Requires -RunAsAdministrator or inline admin-rights check block
 	$hasInlineAdminCheck =
+		($content -match '(?im)^\s*#\s*Requires\s+-RunAsAdministrator\b') -or
 		($content -match 'WindowsPrincipal' -and
 		$content -match 'WindowsIdentity\]::GetCurrent' -and
 		$content -match 'IsInRole' -and
-		$content -match 'WindowsBuiltInRole\]::Administrator') -or
-		($content -match '(?im)^\s*#\s*Requires\s+-RunAsAdministrator\b')
+		$content -match 'WindowsBuiltInRole\]::Administrator')
 
 	# ProgramData analysis
 	if ($content -match 'C:\\ProgramData') {

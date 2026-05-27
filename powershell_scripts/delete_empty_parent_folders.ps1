@@ -2,14 +2,14 @@
 # This script scans a user-specified directory for empty parent folders and prompts the user for each deletion. There is also a list of ProtectedFolders that should be avoided at all costs, add to this list as you see fit.
 
 # Optional flags:
-#     -Force: Automatically confirm deletion of all empty folders without prompting
+#     -DeleteAll: Automatically confirm deletion of all empty folders without prompting
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -WhatIf: Preview deletions without actually removing anything (built-in PowerShell parameter)
 #     -Help / -?: Display this help message
 
 [CmdletBinding(PositionalBinding=$false, SupportsShouldProcess=$true)]
 param (
-	[switch]$Force,
+	[switch]$DeleteAll,
 	[string]$SaveResults,
 	[switch]$Help
 )
@@ -19,9 +19,9 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Force] [-SaveResults <PATH>] [-WhatIf] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-DeleteAll] [-SaveResults <PATH>] [-WhatIf] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Force               Automatically confirm deletion of all empty folders without prompting" -ForegroundColor Cyan
+	Write-Host "  -DeleteAll           Automatically confirm deletion of all empty folders without prompting" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -WhatIf              Preview deletions without actually removing anything (built-in PowerShell parameter)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -99,7 +99,7 @@ function Remove-ParentEmptyFolderStrict {
 		$children = Get-ChildItem -LiteralPath $folder.FullName -Force -ErrorAction SilentlyContinue
 
 		if (-not $children) {
-			if ($Force) {
+			if ($DeleteAll) {
 				if ($PSCmdlet.ShouldProcess($folder.FullName, "Remove empty folder")) {
 					Remove-Item -LiteralPath $folder.FullName -Force
 					$deletedFolders += $folder.FullName
@@ -176,7 +176,7 @@ function Remove-ParentEmptyFolderStrict {
 $folderToScan = Read-Host "`nEnter the full path of the folder you want to scan"
 
 # Call the function
-Remove-ParentEmptyFolderStrict -Path $folderToScan -FolderToScan $folderToScan -Force:$Force
+Remove-ParentEmptyFolderStrict -Path $folderToScan -FolderToScan $folderToScan -DeleteAll:$DeleteAll
 
 exit 0
 

@@ -2,6 +2,7 @@
 # This script scans PowerShell scripts and lists all flags defined in their param blocks
 
 # Optional flags:
+#     -Align: Align flag descriptions into two columns when used with -Description (console output only)
 #     -Count: Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description: Include flag descriptions from the # Optional flags comment block
 #     -Flag <NAME>: Filter output to only scripts containing the specified flag
@@ -13,6 +14,7 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
+	[switch]$Align,
 	[switch]$Count,
 	[switch]$Description,
 	[string]$FlagFilter,
@@ -26,8 +28,9 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Count] [-Description] [-Flag <NAME>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Flag <NAME>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -Align               Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count               Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description         Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
 	Write-Host "  -Flag <NAME>         Filter output to only scripts containing the specified flag" -ForegroundColor Cyan
@@ -38,6 +41,18 @@ if ($Help) {
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
+}
+
+# Warn on unsupported flag combinations
+if ($Description -and $Unique) {
+	Write-Host ""
+	Write-Warning "-Description is not supported with -Unique. Descriptions may vary per script and would be misleading in deduplicated output. Run without -Unique to see descriptions per script."
+	exit 1
+}
+
+if ($Align -and -not $Description) {
+	Write-Host ""
+	Write-Warning "-Align has no effect without -Description."
 }
 
 # Validate -SaveResults path if specified
@@ -189,12 +204,24 @@ foreach ($script in $scripts) {
 			$parsedFlags
 		}
 
+		$padWidth = 0
+		if ($Align -and $Description) {
+			foreach ($f in $flagsToShow) {
+				if ($f.Length -gt $padWidth) { $padWidth = $f.Length }
+			}
+		}
+
 		foreach ($f in $flagsToShow) {
 			$baseName = ($f -split ' ')[0]
 			$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
 
 			if ($Description -and $desc) {
-				Write-Host "  $f`: $desc"
+				if ($Align) {
+					$padded = $f.PadRight($padWidth)
+					Write-Host "  $padded  $desc"
+				} else {
+					Write-Host "  $f`: $desc"
+				}
 				if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
 			} else {
 				Write-Host "  $f"

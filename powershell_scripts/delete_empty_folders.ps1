@@ -1,36 +1,32 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script deletes all empty folders from a user-specified folder. It prompts for the folder path and requires confirmation before deleting.
-# Example usage with -WhatIf (preview deletions without actually removing anything):
-# Remove-EmptyFolder -Path C:\PATH\TO\FOLDER -WhatIf
-# Remove-EmptyFolder -Path \\PATH\TO\FOLDER -WhatIf
 
 # Optional flags:
 #     -DeleteAll: Automatically confirm deletion of all empty folders without prompting
+#     -Preview: Show which folders would be deleted without actually removing anything
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -WhatIf: Preview deletions without actually removing anything (built-in PowerShell parameter)
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
 
-[CmdletBinding(PositionalBinding=$false, SupportsShouldProcess=$true)]
+[CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$DeleteAll,
+	[switch]$Preview,
 	[string]$SaveResults,
 	[switch]$Help
 )
 
-# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
-# Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-DeleteAll] [-SaveResults <PATH>] [-WhatIf] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-DeleteAll] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -DeleteAll            Automatically confirm deletion of all empty folders without prompting" -ForegroundColor Cyan
+	Write-Host "  -DeleteAll           Automatically confirm deletion of all empty folders without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show which folders would be deleted without actually removing anything" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
-	Write-Host "  -WhatIf              Preview deletions without actually removing anything (built-in PowerShell parameter)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 
@@ -44,118 +40,118 @@ if ($SaveResults) {
 	}
 }
 
-function Remove-EmptyFolder {
-	[CmdletBinding(SupportsShouldProcess=$true)]
-	param (
-		[Parameter(Mandatory=$true)]
-		[string]$Path
-	)
+# Prompt the user for the directory to process
+$Path = Read-Host "`nEnter the full path to the folder where empty folders should be deleted"
+Write-Host ""
 
-	# Check if the specified folder exists
-	if (-not (Test-Path -Path $Path -PathType Container)) {
-		Write-Host ""
-		Write-Error "The specified path '$Path' does not exist or is not a directory."
-		return
-	}
+if (-not (Test-Path -Path $Path -PathType Container)) {
+	Write-Host ""
+	Write-Error "The specified path '$Path' does not exist or is not a directory."
+	exit 1
+}
 
-	# Get all directories, sorted by depth (deepest first)
-	# This ensures empty subfolders are deleted before their parent folders
-	$folders = Get-ChildItem -LiteralPath $Path -Directory -Recurse | Sort-Object FullName -Descending
+# Get all directories, sorted by depth (deepest first)
+# This ensures empty subfolders are deleted before their parent folders
+$folders = Get-ChildItem -LiteralPath $Path -Directory -Recurse | Sort-Object FullName -Descending
 
-	# Track deleted folders
-	$foldersDeleted = @()
-	$foldersSkipped = @()
+$foldersDeleted = @()
+$foldersSkipped = @()
 
-	foreach ($folder in $folders) {
-		# Check if the folder is empty (contains no files or subfolders)
-		if (-not (Get-ChildItem -LiteralPath $folder.FullName -Recurse -Force | Select-Object -First 1)) {
-			if ($DeleteAll) {
-				# Skip confirmation and delete immediately
-				if ($PSCmdlet.ShouldProcess($folder.FullName, "Remove empty folder")) {
-					Write-Host "Deleting empty folder: $($folder.FullName)" -ForegroundColor Yellow
-					Remove-Item -LiteralPath $folder.FullName -Recurse -Force
-					$foldersDeleted += $folder.FullName
-				}
-			}
-			else {
-				# Prompt the user for confirmation and validate input
-				do {
-					$confirm = Read-Host "`nDelete empty folder '$($folder.FullName)'? (Y/N)"
-					if ($confirm -match '^[yYnN]$') {
-						break
-					}
-					else {
-						Write-Host "Invalid input. Please type Y or N." -ForegroundColor Yellow
-					}
-				} while ($true)
-
-				if ($confirm -match '^[yY]$') {
-					if ($PSCmdlet.ShouldProcess($folder.FullName, "Remove empty folder")) {
-						Write-Host "Deleting empty folder: $($folder.FullName)" -ForegroundColor Yellow
-						Remove-Item -LiteralPath $folder.FullName -Recurse -Force
-						$foldersDeleted += $folder.FullName
-					}
+foreach ($folder in $folders) {
+	# Check if the folder is empty (contains no files or subfolders)
+	if (-not (Get-ChildItem -LiteralPath $folder.FullName -Recurse -Force | Select-Object -First 1)) {
+		if ($Preview) {
+			Write-Host "Would delete: $($folder.FullName)" -ForegroundColor Cyan
+			$foldersDeleted += $folder.FullName
+		}
+		elseif ($DeleteAll) {
+			Remove-Item -LiteralPath $folder.FullName -Recurse -Force
+			$foldersDeleted += $folder.FullName
+			Write-Host "Deleted: $($folder.FullName)" -ForegroundColor Green
+		}
+		else {
+			do {
+				$confirm = Read-Host "Delete empty folder '$($folder.FullName)'? (Y/N)"
+				if ($confirm -match '^[yYnN]$') {
+					break
 				}
 				else {
-					Write-Host "Skipped folder: $($folder.FullName)" -ForegroundColor Cyan
-					$foldersSkipped += $folder.FullName
+					Write-Host "Invalid input. Please type Y or N." -ForegroundColor Yellow
 				}
+			} while ($true)
+
+			if ($confirm -match '^[yY]$') {
+				Remove-Item -LiteralPath $folder.FullName -Recurse -Force
+				$foldersDeleted += $folder.FullName
+				Write-Host "Deleted: $($folder.FullName)" -ForegroundColor Green
+			}
+			else {
+				Write-Host "Skipped: $($folder.FullName)" -ForegroundColor Yellow
+				$foldersSkipped += $folder.FullName
 			}
 		}
 	}
+}
 
-	# Final summary with count
-	if ($foldersDeleted.Count -gt 0) {
-		Write-Host "`nSuccessfully deleted $($foldersDeleted.Count) confirmed empty folder(s) from '$Path'." -ForegroundColor Green
-	}
-	else {
-		Write-Host "`nNo folders were deleted." -ForegroundColor Yellow
-	}
+if ($Preview) {
+	$summaryLine = "$ScriptName`: $($foldersDeleted.Count) empty folder(s) would be deleted from '$Path'."
+	Write-Host ""
+	Write-Host $summaryLine -ForegroundColor Cyan
+} elseif ($foldersDeleted.Count -gt 0) {
+	$summaryLine = "$ScriptName`: Successfully deleted $($foldersDeleted.Count) empty folder(s) from '$Path'."
+	Write-Host ""
+	Write-Host $summaryLine -ForegroundColor Green
+} else {
+	$summaryLine = "$ScriptName`: No folders were deleted from '$Path'."
+	Write-Host $summaryLine -ForegroundColor Yellow
+}
 
-	# Save results to text file if requested
-	if ($SaveResults) {
-		$FileOutputLines = @()
+# Save results to text file if requested
+if ($SaveResults) {
+	$FileOutputLines = @()
 
+	if ($Preview) {
+		if ($foldersDeleted.Count -gt 0) {
+			$FileOutputLines += "Folders that would be deleted:"
+			foreach ($f in $foldersDeleted) {
+				$FileOutputLines += "  $f"
+			}
+			$FileOutputLines += ""
+		}
+	} else {
 		if ($foldersDeleted.Count -gt 0) {
 			$FileOutputLines += "Deleted folders:"
 			foreach ($f in $foldersDeleted) {
 				$FileOutputLines += "  $f"
 			}
+			$FileOutputLines += ""
 		}
 
 		if ($foldersSkipped.Count -gt 0) {
-			if ($FileOutputLines.Count -gt 0) { $FileOutputLines += "" }
 			$FileOutputLines += "Skipped folders:"
 			foreach ($f in $foldersSkipped) {
 				$FileOutputLines += "  $f"
 			}
-		}
-
-		$summaryLine = "Successfully deleted $($foldersDeleted.Count) confirmed empty folder(s) from '$Path'."
-		if ($FileOutputLines.Count -gt 0) { $FileOutputLines += "" }
-		$FileOutputLines += $summaryLine
-
-		while ($FileOutputLines[-1] -eq '') {
-			$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
-		}
-
-		try {
-			$outputString = ($FileOutputLines -join "`n")
-			[System.IO.File]::WriteAllText($SaveResults, $outputString)
-			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
-		}
-		catch {
-			Write-Host ""
-			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			$FileOutputLines += ""
 		}
 	}
+
+	$FileOutputLines += $summaryLine
+
+	while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	}
+
+	try {
+		$outputString = ($FileOutputLines -join "`n") + "`n"
+		[System.IO.File]::AppendAllText($SaveResults, $outputString)
+		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
 }
-
-# Prompt the user for the directory to process
-$deleteEmptyFolders = Read-Host "`nEnter the full path to the folder where empty folders should be deleted"
-
-# Call the function
-Remove-EmptyFolder -Path $deleteEmptyFolders -DeleteAll:$DeleteAll
 
 exit 0
 

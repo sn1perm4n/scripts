@@ -87,15 +87,17 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.Fu
 		($content -match '(?im)^\s*#\s*Requires\s+-RunAsAdministrator\b')
 
 	# ProgramData analysis
-	if ($content -match 'C:\\ProgramData') {
+	$programDataLines = ($content -split "`n") | Where-Object { $_ -match 'ProgramData' }
+	$programDataContent = $programDataLines -join "`n"
 
-		if ($content -match $AclOps) {
+	if ($programDataContent) {
+		if ($programDataContent -match $AclOps) {
 			$flags += 'ProgramData ACL modification'
 		}
-		elseif ($content -match $WriteOps) {
+		elseif ($programDataContent -match $WriteOps) {
 			$flags += 'ProgramData write operation'
 		}
-		elseif ($content -match $ReadOps) {
+		elseif ($programDataContent -match $ReadOps) {
 			$flags += 'ProgramData read-only access'
 		}
 		else {

@@ -51,12 +51,11 @@ if (-not (Test-Path $ScriptPath -PathType Container)) {
 
 # Command classifications
 $ReadOps = 'Get-Content|Test-Path|Get-Item|Get-ChildItem|Select-String'
-$WriteOps = 'New-Item|Set-Content|Add-Content|Out-File|Remove-Item|Copy-Item|Move-Item'
+$WriteOps = 'New-Item|Set-Content|Add-Content|Out-File|Remove-Item|Copy-Item|Move-Item|Set-ItemProperty|Remove-ItemProperty|New-ItemProperty'
 $AclOps = 'Set-Acl|Get-Acl|icacls'
+$RegistryWriteOps = 'Set-ItemProperty|New-Item|Remove-Item|New-ItemProperty|Remove-ItemProperty'
 
 $StrongAdminIndicators = @(
-	'HKLM:',
-	'HKCR:',
 	'New-Service',
 	'Set-Service',
 	'Start-Service',
@@ -104,6 +103,17 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.Fu
 		}
 	}
 
+	# Registry hive analysis (HKLM/HKCR write requires admin; read does not)
+	foreach ($hive in @('HKLM:', 'HKCR:')) {
+		if ($content -match [regex]::Escape($hive)) {
+			if ($content -match $RegistryWriteOps) {
+				$flags += "Admin indicator: $hive write operation"
+			} else {
+				$flags += "$hive read-only access"
+			}
+		}
+	}
+
 	# Strong admin indicators
 	foreach ($indicator in $StrongAdminIndicators) {
 		if ($content -match $indicator) {
@@ -137,7 +147,8 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.Fu
 # Summary counts
 $totalScripts = $Results.Count
 $likelyNeedsAdmin = ($Results | Where-Object { $_.NeedsAdmin -eq 'Likely' }).Count
-$summaryLine = "$totalScripts script(s) checked, $likelyNeedsAdmin likely need(s) admin rights."
+$actionableCount = ($Results | Where-Object { $_.NeedsAdmin -eq 'Likely' -and $_.AlreadyContainsAdminRights -eq 'No' }).Count
+$summaryLine = "$totalScripts script(s) checked, $likelyNeedsAdmin likely need(s) admin rights, $actionableCount missing admin check."
 
 # Display results
 Write-Host ""
@@ -147,7 +158,7 @@ if ($Table) {
 	$Results | Sort-Object NeedsAdmin, Script |
 		Format-Table Script, NeedsAdmin, AlreadyContainsAdminRights, Findings -Wrap
 
-	if ($likelyNeedsAdmin -gt 0) {
+	if ($actionableCount -gt 0) {
 		Write-Host $summaryLine -ForegroundColor Yellow
 	}
 	else {
@@ -177,7 +188,7 @@ else {
 		Write-Host ""
 	}
 
-	if ($likelyNeedsAdmin -gt 0) {
+	if ($actionableCount -gt 0) {
 		Write-Host $summaryLine -ForegroundColor Yellow
 	}
 	else {

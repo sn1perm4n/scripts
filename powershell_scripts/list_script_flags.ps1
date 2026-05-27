@@ -68,7 +68,7 @@ if ($SaveResults) {
 # Prompt for path if not specified
 if (-not $Path) {
 	Write-Host ""
-	$Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
+	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
 	Write-Host ""
 }
 

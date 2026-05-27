@@ -41,7 +41,7 @@ if ($SaveResults) {
 }
 
 # Prompt user for folder path
-$ScriptPath = Read-Host "`nEnter the full path to a folder"
+$ScriptPath = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
 
 if (-not (Test-Path $ScriptPath -PathType Container)) {
 	Write-Host ""
@@ -79,12 +79,13 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | ForEach-Object {
 	$content = Get-Content $_.FullName -Raw
 	$flags = @()
 
-	# Detect inline admin-rights check block
+	# Detect inline admin-rights check block or #Requires -RunAsAdministrator
 	$hasInlineAdminCheck =
-		$content -match 'WindowsPrincipal' -and
+		($content -match 'WindowsPrincipal' -and
 		$content -match 'WindowsIdentity\]::GetCurrent' -and
 		$content -match 'IsInRole' -and
-		$content -match 'WindowsBuiltInRole\]::Administrator'
+		$content -match 'WindowsBuiltInRole\]::Administrator') -or
+		($content -match '(?im)^\s*#\s*Requires\s+-RunAsAdministrator\b')
 
 	# ProgramData analysis
 	if ($content -match 'C:\\ProgramData') {

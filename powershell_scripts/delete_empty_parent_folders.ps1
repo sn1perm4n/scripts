@@ -15,6 +15,7 @@ param (
 	[switch]$Help
 )
 
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {

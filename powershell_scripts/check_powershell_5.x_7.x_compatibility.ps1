@@ -78,7 +78,7 @@ catch {
 Write-Host ""  # blank line before prompt
 
 # Prompt the user for the file or folder path
-$Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
+$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
 
 Write-Host ""  # blank line after prompt
 

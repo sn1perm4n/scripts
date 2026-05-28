@@ -5,6 +5,7 @@
 #     -Align: Align flag descriptions into two columns when used with -Description (console output only)
 #     -Count: Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description: Include flag descriptions from the # Optional flags comment block
+#     -Filenames: Print only script names with no flag details or blank lines between entries
 #     -FlagFilter <NAME>: Filter output to only scripts containing the specified flag
 #     -Path <PATH>: Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse: Search subdirectories recursively
@@ -17,6 +18,7 @@ param (
 	[switch]$Align,
 	[switch]$Count,
 	[switch]$Description,
+	[switch]$Filenames,
 	[string]$FlagFilter,
 	[string]$Path,
 	[switch]$Recurse,
@@ -25,15 +27,15 @@ param (
 	[switch]$Help
 )
 
-# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Flag <NAME>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Align               Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count               Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description         Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
+	Write-Host "  -Filenames           Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
 	Write-Host "  -FlagFilter <NAME>   Filter output to only scripts containing the specified flag" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
@@ -49,6 +51,17 @@ if ($Description -and $Unique) {
 	Write-Host ""
 	Write-Warning "-Description is not supported with -Unique. Descriptions may vary per script and would be misleading in deduplicated output. Run without -Unique to see descriptions per script."
 	exit 1
+}
+
+if ($Filenames -and $Unique) {
+	Write-Host ""
+	Write-Warning "-Filenames is not supported with -Unique."
+	exit 1
+}
+
+if ($Filenames -and $Description) {
+	Write-Host ""
+	Write-Warning "-Filenames suppresses flag details, so -Description has no effect."
 }
 
 if ($Align -and -not $Description) {
@@ -69,7 +82,7 @@ if ($SaveResults) {
 # Prompt for path if not specified
 if (-not $Path) {
 	Write-Host ""
-	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
+	$Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
 	Write-Host ""
 }
 
@@ -193,47 +206,53 @@ foreach ($script in $scripts) {
 	}
 
 	if (-not $Unique) {
-		if ($scripts.Count -gt 1 -or $FlagFilter) {
+		if ($Filenames) {
 			Write-Host $script.Name -ForegroundColor Cyan
 			if ($SaveResults) { $CsvOutputLines += $script.Name }
-		}
-
-		$flagsToShow = if ($FlagFilter) {
-			$flagNormalized = $FlagFilter.TrimStart('-')
-			$parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
-		} else {
-			$parsedFlags
-		}
-
-		$padWidth = 0
-		if ($Align -and $Description) {
-			foreach ($f in $flagsToShow) {
-				if ($f.Length -gt $padWidth) { $padWidth = $f.Length }
-			}
-		}
-
-		foreach ($f in $flagsToShow) {
-			$baseName = ($f -split ' ')[0]
-			$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
-
-			if ($Description -and $desc) {
-				if ($Align) {
-					$padded = $f.PadRight($padWidth)
-					Write-Host "  $padded  $desc"
-				} else {
-					Write-Host "  $f`: $desc"
-				}
-				if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
-			} else {
-				Write-Host "  $f"
-				if ($SaveResults) { $CsvOutputLines += $f }
-			}
 			$totalFlags++
-		}
+		} else {
+			if ($scripts.Count -gt 1 -or $FlagFilter) {
+				Write-Host $script.Name -ForegroundColor Cyan
+				if ($SaveResults) { $CsvOutputLines += $script.Name }
+			}
 
-		if (($scripts.Count -gt 1 -or $FlagFilter) -and $script -ne $scripts[-1]) {
-			Write-Host ""
-			if ($SaveResults) { $CsvOutputLines += "" }
+			$flagsToShow = if ($FlagFilter) {
+				$flagNormalized = $FlagFilter.TrimStart('-')
+				$parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
+			} else {
+				$parsedFlags
+			}
+
+			$padWidth = 0
+			if ($Align -and $Description) {
+				foreach ($f in $flagsToShow) {
+					if ($f.Length -gt $padWidth) { $padWidth = $f.Length }
+				}
+			}
+
+			foreach ($f in $flagsToShow) {
+				$baseName = ($f -split ' ')[0]
+				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
+
+				if ($Description -and $desc) {
+					if ($Align) {
+						$padded = $f.PadRight($padWidth)
+						Write-Host "  $padded  $desc"
+					} else {
+						Write-Host "  $f`: $desc"
+					}
+					if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
+				} else {
+					Write-Host "  $f"
+					if ($SaveResults) { $CsvOutputLines += $f }
+				}
+				$totalFlags++
+			}
+
+			if (($scripts.Count -gt 1 -or $FlagFilter) -and $script -ne $scripts[-1]) {
+				Write-Host ""
+				if ($SaveResults) { $CsvOutputLines += "" }
+			}
 		}
 	} else {
 		foreach ($f in $parsedFlags) {
@@ -262,7 +281,9 @@ if ($Unique) {
 	}
 }
 
-$summaryLine = if ($Unique) {
+$summaryLine = if ($Filenames) {
+	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags script(s) matched."
+} elseif ($Unique) {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags unique flag(s) found."
 } else {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."

@@ -27,6 +27,7 @@ param (
 	[switch]$Help
 )
 
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
@@ -289,6 +290,7 @@ $summaryLine = if ($Filenames) {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
 }
 
+if ($Filenames) { Write-Host "" }
 if ($Unique) { Write-Host "" }
 Write-Host $summaryLine -ForegroundColor Green
 

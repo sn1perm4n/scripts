@@ -2,7 +2,7 @@
 # This script deletes all folders with the exception of the most recent in a specific folder:
 # $env:LOCALAPPDATA\AdvinstAnalytics\67167f270d96e6db370a449a (resolves to C:\Users\<username>\AppData\Local\AdvinstAnalytics\67167f270d96e6db370a449a)
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Specify the directory to process (the name of this directory may be different on your computer)

@@ -2,7 +2,7 @@
 # This script deletes the contents of a specific folder:
 # $env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir (resolves to C:\Users\<username>\AppData\Local\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir)
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Specify the directory to process

@@ -4,7 +4,7 @@
 
 #Requires -RunAsAdministrator
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Specify the directory to process

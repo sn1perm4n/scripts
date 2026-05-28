@@ -2,7 +2,7 @@
 # This script deletes the contents of a specific folder:
 # $env:APPDATA\Signal\update-cache (resolves to C:\Users\<username>\AppData\Roaming\Signal\update-cache)
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Specify the directory to process

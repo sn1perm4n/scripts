@@ -2,7 +2,7 @@
 # This script searches a specific folder for subfolders that start with the characters "app-" and keeps the one with the highest number:
 # $env:LOCALAPPDATA\Discord (resolves to C:\Users\<username>\AppData\Local\Discord)
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Specify the target directory

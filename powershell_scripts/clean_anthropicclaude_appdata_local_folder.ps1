@@ -5,7 +5,7 @@
 # Specify the target directory
 $appdataLocalAnthropicClaudeFolder = "$env:LOCALAPPDATA\AnthropicClaude"
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 Write-Host "`nChecking '$appdataLocalAnthropicClaudeFolder'..." -ForegroundColor Cyan

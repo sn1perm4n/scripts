@@ -2,7 +2,7 @@
 # This script deletes all *.backup files aside from the most recent one in a specific folder:
 # $env:APPDATA\mRemoteNG (resolves to C:\Users\<username>\AppData\Roaming\mRemoteNG)
 
-# Get the script name for summary output
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Specify the directory to process

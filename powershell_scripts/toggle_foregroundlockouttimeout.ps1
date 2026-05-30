@@ -40,7 +40,7 @@ $defaultValue = 0x30d40
 # If neither flag is passed, fall through to interactive menu
 if (-not $Disable -and -not $Default) {
 	Write-Host "`n1. Disable ForegroundLockTimeout (set to 0)"
-	Write-Host "2. Restore ForegroundLockTimeout to default (0x30d40 / 200000ms)"
+	Write-Host "2. Restore ForegroundLockTimeout to default (set to 0x30d40 / 200000ms)"
 	Write-Host "`nPress 1 or 2 to continue..." -ForegroundColor Cyan
 
 	while ($true) {

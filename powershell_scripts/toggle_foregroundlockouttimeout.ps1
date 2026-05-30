@@ -3,7 +3,7 @@
 
 # NOTE: A reboot is required after changing this value for it to take effect
 
-# NOTE2: This fix is particularly relevant when running AutoHotkey with elevated privileges (via UIA/Run as administrator). The integrity level mismatch between an admin-elevated AHK process and medium-integrity windows (such as File Explorer network share worker threads) can cause Windows to enforce ForegroundLockTimeout aggressively, preventing newly opened windows from receiving focus. Setting ForegroundLockTimeout to 0 resolves this.
+# NOTE2: This fix is particularly relevant when running AutoHotkey with elevated privileges (via UIA/Run as administrator). The integrity level mismatch between an admin-elevated AHK process and medium-integrity windows (such as File Explorer network share worker threads) can cause Windows to enforce ForegroundLockTimeout aggressively, preventing newly opened windows from receiving focus. Setting ForegroundLockTimeout to 0 resolves this. This issue appears to primarily affect Windows 10.
 
 # NOTE3: Windows Update may reset ForegroundLockTimeout back to the default value. If the issue reappears after a Windows update, re-run this script and reboot.
 

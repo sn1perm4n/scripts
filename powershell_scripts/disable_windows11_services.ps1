@@ -9,6 +9,9 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 Write-Host "`nChecking service status..." -ForegroundColor Cyan
 
 $totalProcessed = 0
@@ -101,7 +104,7 @@ foreach ($entry in $services) {
 }
 
 # Summary
-$summaryLine = "$totalProcessed service(s) processed: $totalChanged changed, $totalAlreadyDisabled already disabled."
+$summaryLine = "$ScriptName`: $totalProcessed service(s) processed: $totalChanged changed, $totalAlreadyDisabled already disabled."
 Write-Host "`n$summaryLine" -ForegroundColor $(if ($totalChanged -gt 0) { 'Green' } else { 'Yellow' })
 
 exit 0

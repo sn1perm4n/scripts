@@ -4,10 +4,13 @@
 
 # NOTE: SFTP credentials are hardcoded in the script. Update HostName, UserName, Password, and SshHostKeyFingerprint before use.
 
-# NOTE2: The WinSCP session log is saved alongside the Synology backup file as WinSCP.log when -Sftp is not used as a flag (SFTP is the core purpose of this script)
+# NOTE2: When using -Interactive, HostName and UserName are prompted at runtime and Password is prompted securely. SshHostKeyFingerprint must still be hardcoded in the script.
+
+# NOTE3: The WinSCP session log is saved alongside the Synology backup file as WinSCP.log
 
 # Optional flags:
 #     -Backup <PATH>: Override the default local backup source folder (%USERPROFILE%\Desktop)
+#     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values
 #     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
 #     -Preview: Show what would happen without actually uploading or deleting anything
 #     -SaveResults <PATH>: Save console output to a text file
@@ -16,6 +19,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[string]$Backup,
+	[switch]$Interactive,
 	[switch]$NoConsoleOutput,
 	[switch]$Preview,
 	[string]$SaveResults,
@@ -26,15 +30,29 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup <PATH>       Override the default local backup source folder (%USERPROFILE%\Desktop)" -ForegroundColor Cyan
+	Write-Host "  -Interactive         Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save console output to a text file" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
+}
+
+# Warn on unsupported flag combinations
+if ($Interactive -and $Preview) {
+	Write-Host ""
+	Write-Warning "-Interactive and -Preview cannot be used together. -Preview is a credential-free dry run; use one or the other."
+	exit 1
+}
+
+if ($Interactive -and $NoConsoleOutput) {
+	Write-Host ""
+	Write-Warning "-Interactive cannot be used with -NoConsoleOutput as credential prompts require console interaction."
+	exit 1
 }
 
 # Warn if -NoConsoleOutput is used without -SaveResults
@@ -71,6 +89,17 @@ $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"
 $sftpFingerprint = "ssh-ed25519 256 44:29:e2:b6:ff:45:55:a8:f9:15:36:4a:40:8b:1a:86"
+
+# Prompt for credentials if -Interactive is specified
+if ($Interactive) {
+	Write-Host ""
+	$sftpHost = Read-Host "Enter SFTP hostname"
+	$sftpUser = Read-Host "Enter SFTP username"
+	$sftpSecurePassword = Read-Host "Enter SFTP password" -AsSecureString
+	$sftpPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto(
+		[System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($sftpSecurePassword)
+	)
+}
 
 $OutputLines = @()
 

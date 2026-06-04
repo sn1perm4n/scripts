@@ -105,8 +105,7 @@ foreach ($entry in $services) {
 
 # Summary
 $summaryLine = "$ScriptName`: $totalProcessed service(s) processed: $totalChanged changed, $totalAlreadyDisabled already disabled."
-Write-Host "`n$summaryLine" -ForegroundColor $(if ($totalChanged -gt 0) { 'Green' }
-else { 'Yellow' })
+Write-Host "`n$summaryLine" -ForegroundColor $(if ($totalChanged -gt 0) { 'Green' } else { 'Yellow' })
 
 exit 0
 

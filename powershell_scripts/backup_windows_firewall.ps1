@@ -90,7 +90,8 @@ if ($Backup) {
 }
 
 # Set backup destination
-$backupPath = if ($Backup) { $Backup } else { "$env:USERPROFILE\Desktop" }
+$backupPath = if ($Backup) { $Backup }
+else { "$env:USERPROFILE\Desktop" }
 $backupFilename = "Windows_Firewall_Backup_$(Get-Date -Format 'MM-dd-yyyy').wfw"
 $fullBackupFilePath = Join-Path -Path $backupPath -ChildPath $backupFilename
 $logPath = Join-Path -Path $backupPath -ChildPath "WinSCP.log"
@@ -221,11 +222,13 @@ else {
 		"$ScriptName`: Backup and SFTP upload completed successfully."
 	} elseif ($backupSuccess) {
 		"$ScriptName`: Backup completed successfully."
-	} else {
+	}
+else {
 		"$ScriptName`: Backup failed."
 	}
 
-	$summaryColor = if ($backupSuccess) { 'Green' } else { 'Red' }
+	$summaryColor = if ($backupSuccess) { 'Green' }
+else { 'Red' }
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor $summaryColor }
 	$OutputLines += $summaryLine
 }

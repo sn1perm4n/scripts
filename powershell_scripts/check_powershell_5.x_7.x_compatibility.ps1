@@ -203,7 +203,8 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 		Write-Host "Analyzing script: $($script.FullName)" -ForegroundColor Cyan
 
 		foreach ($line in $scriptOutput) {
-			$color = if ($hasIssues) { 'Yellow' } else { 'Green' }
+			$color = if ($hasIssues) { 'Yellow' }
+else { 'Green' }
 			Write-Host $line -ForegroundColor $color
 		}
 

@@ -44,8 +44,10 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 	# Summary
 	$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
 	$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
-	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
-	$fileWord = if ($files.Count -eq 1) { "file" } else { "files" }
+	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" }
+else { "$totalFreedMB MB" }
+	$fileWord = if ($files.Count -eq 1) { "file" }
+else { "files" }
 	Write-Host "`n$ScriptName`: $($files.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 }
 else {

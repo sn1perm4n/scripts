@@ -80,7 +80,8 @@ try {
 
 	$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
 	$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
-	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
+	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" }
+else { "$totalFreedMB MB" }
 
 	if ($Preview) {
 		$summaryLine = "$ScriptName`: Preview complete. $freedDisplay would be freed."

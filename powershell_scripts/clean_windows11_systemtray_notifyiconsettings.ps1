@@ -107,7 +107,8 @@ foreach ($key in $subkeys) {
 	if (-not $exePath) { continue }
 
 	$isPromoted = $key.GetValue("IsPromoted")
-	$shownInTaskbar = if ($isPromoted -eq 1) { "Yes" } elseif ($isPromoted -eq 0) { "No" } else { "Unknown" }
+	$shownInTaskbar = if ($isPromoted -eq 1) { "Yes" } elseif ($isPromoted -eq 0) { "No" }
+else { "Unknown" }
 
 	# Retrieve LastWriteTime via RegQueryInfoKey Windows API
 	$lastWriteTime = $null
@@ -213,7 +214,8 @@ $totalFlaggedCount = ($duplicateGroups | ForEach-Object { $_.Count - 1 } | Measu
 if ($PSBoundParameters.ContainsKey('Backup') -and -not $Preview) {
 	$backupPath = if ($Backup -ne '') {
 		$Backup
-	} else {
+	}
+else {
 		"$env:USERPROFILE\Desktop\NotifyIconSettings_backup_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').reg"
 	}
 	try {
@@ -231,7 +233,8 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 
 	if ($versioned) {
 		$keeper = $versioned | Sort-Object Version -Descending | Select-Object -First 1
-	} else {
+	}
+else {
 		$keeper = $group.Group | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 	}
 
@@ -246,9 +249,12 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 
 	foreach ($entry in $group.Group | Sort-Object ExecutablePath) {
 		$isKeeper = ($entry.KeyName -eq $keeper.KeyName)
-		$tag = if ($isKeeper) { "[KEEP]" } else { "[REMOVE]" }
-		$color = if ($isKeeper) { "Green" } else { "Red" }
-		$ver = if ($entry.Version) { " (v$($entry.Version))" } else { "" }
+		$tag = if ($isKeeper) { "[KEEP]" }
+else { "[REMOVE]" }
+		$color = if ($isKeeper) { "Green" }
+else { "Red" }
+		$ver = if ($entry.Version) { " (v$($entry.Version))" }
+else { "" }
 
 		Write-Host "  $tag $($entry.KeyName)$ver" -ForegroundColor $color
 		Write-Host "       ExecutablePath  : $($entry.ExecutablePath)"
@@ -266,7 +272,8 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 				Write-Host "  Would delete: $($entry.KeyName)" -ForegroundColor Yellow
 				if ($SaveResults) { $FileOutputLines += "  Would delete: $($entry.KeyName)" }
 				$deletedCount++
-			} else {
+			}
+else {
 				if (-not $DeleteAll) {
 					$response = Read-Host "`n  Delete '$($entry.KeyName)'? (Y/N)"
 					if ($response -notmatch '^[Yy]$') {
@@ -296,7 +303,8 @@ Write-Host ""
 if ($Preview) {
 	$summaryLine = "$ScriptName`: Preview complete. $deletedCount of $totalFlaggedCount key(s) would be deleted."
 	Write-Host $summaryLine -ForegroundColor Cyan
-} else {
+}
+else {
 	$summaryLine = "$ScriptName`: $deletedCount of $totalFlaggedCount key(s) deleted."
 	Write-Host $summaryLine -ForegroundColor Green
 }

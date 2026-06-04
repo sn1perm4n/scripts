@@ -59,7 +59,8 @@ $files = if ($item.PSIsContainer) {
 	Get-ChildItem -Path $InputPath -Filter *.ps1 -File -Recurse:$Recurse
 }
 else {
-	if ($item.Extension -eq '.ps1') { @($item) } else { @() }
+	if ($item.Extension -eq '.ps1') { @($item) }
+else { @() }
 }
 
 if (-not $files -or $files.Count -eq 0) {

@@ -66,7 +66,8 @@ $files = if ($items.PSIsContainer) {
 	Get-ChildItem -Path $Path -File -Recurse:$Recurse | Where-Object { $_.Extension -in '.ps1', '.reg' }
 }
 else {
-	if ($items.Extension -in '.ps1', '.reg') { @($items) } else { @() }
+	if ($items.Extension -in '.ps1', '.reg') { @($items) }
+else { @() }
 }
 
 # Quick check for no .ps1 or .reg files

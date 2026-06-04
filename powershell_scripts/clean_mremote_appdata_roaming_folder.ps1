@@ -42,8 +42,10 @@ if (Test-Path -Path $appdataRoamingMremoteng) {
 		# Summary
 		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
 		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
-		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
-		$fileWord = if ($deletedCount -eq 1) { "file" } else { "files" }
+		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" }
+else { "$totalFreedMB MB" }
+		$fileWord = if ($deletedCount -eq 1) { "file" }
+else { "files" }
 		Write-Host "`n$ScriptName`: $deletedCount $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {

@@ -79,7 +79,8 @@ try {
 	}
 
 	$escapedText = [regex]::Escape($searchText)
-	$pattern = if ($Exact) { "^\s*$escapedText\s*$" } else { $escapedText }
+	$pattern = if ($Exact) { "^\s*$escapedText\s*$" }
+else { $escapedText }
 
 	$selectStringParams = @{
 		Pattern = $pattern

@@ -54,8 +54,10 @@ if (Test-Path -Path $parentFolder) {
 		# Summary
 		$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
 		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
-		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
-		$folderWord = if ($deletedCount -eq 1) { "folder" } else { "folders" }
+		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" }
+else { "$totalFreedMB MB" }
+		$folderWord = if ($deletedCount -eq 1) { "folder" }
+else { "folders" }
 		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {

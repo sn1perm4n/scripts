@@ -96,10 +96,12 @@ if (-not (Test-Path $Path)) {
 # Collect scripts
 if ((Get-Item $Path).PSIsContainer) {
 	$scripts = Get-ChildItem -Path $Path -Recurse:$Recurse -Filter *.ps1
-} else {
+}
+else {
 	if ($Path -like "*.ps1") {
 		$scripts = @(Get-Item $Path)
-	} else {
+	}
+else {
 		Write-Host ""
 		Write-Error "The specified file is not a PowerShell script (.ps1)."
 		exit 1
@@ -201,7 +203,8 @@ foreach ($script in $scripts) {
 		$baseName = ($f -split ' ')[0]
 		if ($flagCounts.ContainsKey($baseName)) {
 			$flagCounts[$baseName]++
-		} else {
+		}
+else {
 			$flagCounts[$baseName] = 1
 		}
 	}
@@ -211,7 +214,8 @@ foreach ($script in $scripts) {
 			Write-Host $script.Name -ForegroundColor Cyan
 			if ($SaveResults) { $CsvOutputLines += $script.Name }
 			$totalFlags++
-		} else {
+		}
+else {
 			if ($scripts.Count -gt 1 -or $FlagFilter) {
 				Write-Host $script.Name -ForegroundColor Cyan
 				if ($SaveResults) { $CsvOutputLines += $script.Name }
@@ -220,7 +224,8 @@ foreach ($script in $scripts) {
 			$flagsToShow = if ($FlagFilter) {
 				$flagNormalized = $FlagFilter.TrimStart('-')
 				$parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
-			} else {
+			}
+else {
 				$parsedFlags
 			}
 
@@ -233,17 +238,20 @@ foreach ($script in $scripts) {
 
 			foreach ($f in $flagsToShow) {
 				$baseName = ($f -split ' ')[0]
-				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
+				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] }
+else { "" }
 
 				if ($Description -and $desc) {
 					if ($Align) {
 						$padded = $f.PadRight($padWidth)
 						Write-Host "  $padded  $desc"
-					} else {
+					}
+else {
 						Write-Host "  $f`: $desc"
 					}
 					if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
-				} else {
+				}
+else {
 					Write-Host "  $f"
 					if ($SaveResults) { $CsvOutputLines += $f }
 				}
@@ -255,7 +263,8 @@ foreach ($script in $scripts) {
 				if ($SaveResults) { $CsvOutputLines += "" }
 			}
 		}
-	} else {
+	}
+else {
 		foreach ($f in $parsedFlags) {
 			$baseName = ($f -split ' ')[0]
 			if (-not $allFlags.ContainsKey($baseName)) {
@@ -269,12 +278,14 @@ foreach ($script in $scripts) {
 if ($Unique) {
 	$sorted = $allFlags.Keys | Sort-Object
 	foreach ($key in $sorted) {
-		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" } else { "" }
+		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" }
+else { "" }
 		Write-Host "  $($allFlags[$key])$countSuffix"
 		if ($SaveResults) {
 			if ($Count) {
 				$CsvOutputLines += "$($allFlags[$key]),$($flagCounts[$key])"
-			} else {
+			}
+else {
 				$CsvOutputLines += $allFlags[$key]
 			}
 		}
@@ -286,7 +297,8 @@ $summaryLine = if ($Filenames) {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags script(s) matched."
 } elseif ($Unique) {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags unique flag(s) found."
-} else {
+}
+else {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
 }
 

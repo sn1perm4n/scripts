@@ -46,7 +46,8 @@ if (-not $Enable -and -not $Disable) {
 }
 
 $enabling = $Enable -eq $true
-$value = if ($enabling) { 0 } else { 1 }
+$value = if ($enabling) { 0 }
+else { 1 }
 
 Write-Host "`nChecking dark mode status..." -ForegroundColor Cyan
 

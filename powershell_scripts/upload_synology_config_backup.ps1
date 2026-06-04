@@ -284,11 +284,13 @@ else {
 
 	$summaryLine = if ($uploadSuccess) {
 		"$ScriptName`: Synology config backup uploaded and cleanup completed successfully."
-	} else {
+	}
+else {
 		"$ScriptName`: Synology config backup upload failed."
 	}
 
-	$summaryColor = if ($uploadSuccess) { 'Green' } else { 'Red' }
+	$summaryColor = if ($uploadSuccess) { 'Green' }
+else { 'Red' }
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor $summaryColor }
 	$OutputLines += $summaryLine
 }

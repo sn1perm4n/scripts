@@ -125,7 +125,8 @@ if ($Preview) {
 	$summaryLine = "$ScriptName`: Successfully deleted $($deletedFolders.Count) empty folder(s) from '$Path'."
 	Write-Host ""
 	Write-Host $summaryLine -ForegroundColor Green
-} else {
+}
+else {
 	$summaryLine = "$ScriptName`: No folders were deleted from '$Path'."
 	Write-Host $summaryLine -ForegroundColor Yellow
 }
@@ -142,7 +143,8 @@ if ($SaveResults) {
 			}
 			$FileOutputLines += ""
 		}
-	} else {
+	}
+else {
 		if ($deletedFolders.Count -gt 0) {
 			$FileOutputLines += "Deleted folders:"
 			foreach ($f in $deletedFolders) {

@@ -61,8 +61,10 @@ foreach ($dir in $directories) {
 if ($directoriesProcessed -gt 0) {
 	$totalFreedMB = [math]::Round($totalBytesFreed / 1MB, 2)
 	$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
-	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" } else { "$totalFreedMB MB" }
-	$dirWord = if ($directoriesProcessed -eq 1) { "directory" } else { "directories" }
+	$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" }
+else { "$totalFreedMB MB" }
+	$dirWord = if ($directoriesProcessed -eq 1) { "directory" }
+else { "directories" }
 	Write-Host "`n$ScriptName`: Cleanup complete. $freedDisplay freed across $directoriesProcessed $dirWord." -ForegroundColor Green
 }
 else {

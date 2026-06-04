@@ -45,7 +45,8 @@ foreach ($line in $lines) {
 			$relevantUpgrades += [PSCustomObject]@{
 				Name = $name
 				Id = $id
-				AvailableVersion = if ($parts.Count -ge 4) { $parts[3] } else { "Unknown" }
+				AvailableVersion = if ($parts.Count -ge 4) { $parts[3] }
+else { "Unknown" }
 			}
 		}
 	}

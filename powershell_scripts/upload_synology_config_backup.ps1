@@ -4,16 +4,19 @@
 
 # NOTE: SFTP credentials are hardcoded in the script. Update HostName, UserName, Password, and SshHostKeyFingerprint before use.
 
-# NOTE2: When using -Interactive, HostName and UserName are prompted at runtime and Password is prompted securely. SshHostKeyFingerprint must still be hardcoded in the script.
+# NOTE2: When using -Interactive, HostName and UserName are prompted at runtime and Password is prompted securely. SshHostKeyFingerprint must still be hardcoded in the script — replace the placeholder value with your server's fingerprint.
 
 # NOTE3: The WinSCP session log is saved alongside the Synology backup file as WinSCP.log
 
+# NOTE4: WinSCP's .NET assembly is incompatible with PowerShell 7.x due to missing .NET Framework APIs. This script automatically re-launches itself under PowerShell 5.1 when run from PowerShell 7.x. If WinSCP releases a .NET 6+ compatible assembly in a future version, the re-launch block below can be removed. Use -TestCompatibility to check if the current WinSCP version works natively under PowerShell 7.x.
+
 # Optional flags:
-#     -Backup <PATH>: Override the default local backup source folder (%USERPROFILE%\Desktop)
+#     -Backup <PATH>: Path to the local folder containing the Synology backup file (required)
 #     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values
 #     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
 #     -Preview: Show what would happen without actually uploading or deleting anything
 #     -SaveResults <PATH>: Save console output to a text file
+#     -TestCompatibility: Test whether WinSCP works natively under the current PowerShell version
 #     -Help / -?: Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -23,23 +26,66 @@ param (
 	[switch]$NoConsoleOutput,
 	[switch]$Preview,
 	[string]$SaveResults,
+	[switch]$TestCompatibility,
 	[switch]$Help
 )
+
+# Re-launch under PowerShell 5.1 if running under PowerShell 7.x (WinSCP .NET assembly incompatibility)
+if ($PSVersionTable.PSVersion.Major -ge 7 -and -not $TestCompatibility) {
+	$argList = @('-NonInteractive', '-NoProfile', '-File', $PSCommandPath)
+	foreach ($key in $MyInvocation.BoundParameters.Keys) {
+		$val = $MyInvocation.BoundParameters[$key]
+		if ($val -is [switch]) { $argList += "-$key" }
+		else { $argList += "-$key", $val }
+	}
+	powershell.exe @argList
+	exit $LASTEXITCODE
+}
 
 # Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName -Backup <PATH> [-Interactive] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Backup <PATH>       Override the default local backup source folder (%USERPROFILE%\Desktop)" -ForegroundColor Cyan
-	Write-Host "  -Interactive         Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -Preview             Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save console output to a text file" -ForegroundColor Cyan
-	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
+	Write-Host "  -Backup <PATH>        Path to the local folder containing the Synology backup file (required)" -ForegroundColor Cyan
+	Write-Host "  -Interactive          Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput      Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Preview              Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>   Save console output to a text file" -ForegroundColor Cyan
+	Write-Host "  -TestCompatibility    Test whether WinSCP works natively under the current PowerShell version" -ForegroundColor Cyan
+	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
+}
+
+# Handle -TestCompatibility
+if ($TestCompatibility) {
+	$winScpDll = "C:\Program Files (x86)\WinSCP\WinSCPnet.dll"
+	Write-Host "`nTesting WinSCP compatibility under PowerShell $($PSVersionTable.PSVersion)..." -ForegroundColor Cyan
+	if (-not (Test-Path $winScpDll)) {
+		Write-Warning "WinSCP is not installed or WinSCPnet.dll was not found at: $winScpDll"
+		exit 1
+	}
+	try {
+		Add-Type -Path $winScpDll
+		$testOptions = New-Object WinSCP.SessionOptions
+		$null = $testOptions
+		Write-Host "WinSCP is compatible with PowerShell $($PSVersionTable.PSVersion). The PS 5.1 re-launch block in this script can be removed." -ForegroundColor Green
+		exit 0
+	}
+	catch {
+		Write-Host "WinSCP is NOT compatible with PowerShell $($PSVersionTable.PSVersion): $($_.Exception.Message)" -ForegroundColor Yellow
+		Write-Host "The PS 5.1 re-launch block should remain in place." -ForegroundColor Yellow
+		exit 1
+	}
+}
+
+# Require -Backup
+if (-not $Backup) {
+	Write-Host ""
+	Write-Error "-Backup <PATH> is required. Please specify the path to the local folder containing the Synology backup file."
+	exit 1
 }
 
 # Warn on unsupported flag combinations
@@ -70,17 +116,15 @@ if ($SaveResults) {
 	}
 }
 
-# Validate -Backup path if specified
-if ($Backup) {
-	if (-not (Test-Path $Backup)) {
-		Write-Host ""
-		Write-Error "The directory for -Backup does not exist: '$Backup'"
-		exit 1
-	}
+# Validate -Backup path
+if (-not (Test-Path $Backup)) {
+	Write-Host ""
+	Write-Error "The directory for -Backup does not exist: '$Backup'"
+	exit 1
 }
 
 # Set local backup source folder
-$localFolder = if ($Backup) { $Backup } else { "$env:USERPROFILE\Desktop" }
+$localFolder = $Backup
 $logPath = Join-Path -Path $localFolder -ChildPath "WinSCP.log"
 
 # SFTP settings (update before use)
@@ -88,7 +132,7 @@ $remoteFolder = "/mnt/path/to/remote/Synology Config Backup"
 $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"
-$sftpFingerprint = "ssh-ed25519 256 44:29:e2:b6:ff:45:55:a8:f9:15:36:4a:40:8b:1a:86"
+$sftpFingerprint = "ssh-ed25519 256 YOUR_FINGERPRINT_HERE"
 
 # Prompt for credentials if -Interactive is specified
 if ($Interactive) {

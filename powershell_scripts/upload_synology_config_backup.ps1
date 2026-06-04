@@ -151,7 +151,10 @@ $OutputLines = @()
 $localFile = Get-ChildItem -Path $localFolder -Filter "Synology_*" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
 if (-not $localFile) {
-	if (-not $NoConsoleOutput) { Write-Error "No file found matching Synology_* in '$localFolder'" }
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Error "No file found matching Synology_* in '$localFolder'"
+	}
 	$OutputLines += "Error: No file found matching Synology_* in '$localFolder'"
 	if ($SaveResults) {
 		$outputString = ($OutputLines -join "`n") + "`n"

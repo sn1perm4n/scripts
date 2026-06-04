@@ -271,8 +271,8 @@ if ($Failures -and $AllResults.Count -eq 0) {
 }
 
 # Keep window open
-if ($Failures -and -not $CompactOutput -and -not $Summary -and -not $SaveResults) {
-	Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
+if ($Failures -and $AllResults.Count -gt 0 -and -not $Summary -and -not $SaveResults) {
+	Write-Host "Press any key to exit..." -ForegroundColor Cyan
 }
 else {
 	Write-Host "`nPress any key to exit..." -ForegroundColor Cyan

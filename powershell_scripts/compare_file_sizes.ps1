@@ -125,8 +125,7 @@ else {
 	# Compare files in 1st against 2nd
 	foreach ($file1st in $files1st) {
 		$relPath = $file1st.FullName.Substring($Path1st.Length).TrimStart('\')
-		$displayName = if ($Filenames) { $file1st.Name }
-else { $relPath }
+		$displayName = if ($Filenames) { $file1st.Name } else { $relPath }
 
 		if ($lookup2nd.ContainsKey($relPath)) {
 			$file2nd = $lookup2nd[$relPath]

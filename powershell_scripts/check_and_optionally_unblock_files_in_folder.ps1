@@ -100,8 +100,7 @@ if ($blockedFiles.Count -eq 0) {
 # Display all blocked file paths
 Write-Host "`nBlocked files:" -ForegroundColor Yellow
 $blockedFiles | Sort-Object Name | ForEach-Object {
-	$displayName = if ($Filenames) { $_.Name }
-else { $_.FullName }
+	$displayName = if ($Filenames) { $_.Name } else { $_.FullName }
 	Write-Host "  $displayName" -ForegroundColor Yellow
 	if ($SaveResults) {
 		$FileOutputLines += $displayName
@@ -168,8 +167,7 @@ if ($response -match '^[Yy]$') {
 			}
 
 			Unblock-File -Path $file.FullName -ErrorAction Stop
-			$displayName = if ($Filenames) { $file.Name }
-else { $file.FullName }
+			$displayName = if ($Filenames) { $file.Name } else { $file.FullName }
 			Write-Host "Unblocked: $displayName" -ForegroundColor Green
 			if ($SaveResults) {
 				$FileOutputLines += "Unblocked: $displayName"

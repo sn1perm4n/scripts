@@ -1,4 +1,4 @@
-; This script creates the keyboard shortcut CTRL + = (CTRL EQUAL) to duplicate the functionality of CTRL + NUMPAD+ on an extended keyboard
+﻿; This script creates the keyboard shortcut CTRL + = (CTRL EQUAL) to duplicate the functionality of CTRL + NUMPAD+ on an extended keyboard
 ; This allows a Tenkeyless (TKL) keyboard to use the shortcut and requires AutoHotkey v2 (not compatible with v1)
 
 #Requires AutoHotkey v2

@@ -1,4 +1,4 @@
-#Requires AutoHotkey v2
+﻿#Requires AutoHotkey v2
 ; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
 
 ; ==========================

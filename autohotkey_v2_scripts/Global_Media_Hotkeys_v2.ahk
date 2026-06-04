@@ -1,4 +1,4 @@
-; This script provides global media control shortcuts for keyboards without dedicated media keys:
+﻿; This script provides global media control shortcuts for keyboards without dedicated media keys:
 ; Shift + F1        → Next track
 ; Shift + F2        → Previous track
 ; Shift + F3        → Stop playback

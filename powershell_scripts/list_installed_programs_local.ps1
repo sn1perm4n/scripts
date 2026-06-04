@@ -43,8 +43,7 @@ if ($Help) {
 
 # Default columns if not specified
 $defaultColumns = @("Name", "Vendor", "Version")
-$selectedColumns = if ($Columns) { $Columns }
-else { $defaultColumns }
+$selectedColumns = if ($Columns) { $Columns } else { $defaultColumns }
 
 # Valid Win32_Product properties for validation
 $validColumns = @(

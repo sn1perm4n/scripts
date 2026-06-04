@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script copies my Thunderbird profile from my PC to my NAS
 

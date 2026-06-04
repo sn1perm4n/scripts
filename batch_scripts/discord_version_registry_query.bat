@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 REM Queries the Discord version number in the Windows Registry. Discord fails to update its version number when the program updates, which causes programs such as WinGet to report the out-of-date version
 

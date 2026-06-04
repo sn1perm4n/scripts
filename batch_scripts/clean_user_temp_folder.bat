@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script deletes and re-creates the temp folder, can configure to run during logon.
 

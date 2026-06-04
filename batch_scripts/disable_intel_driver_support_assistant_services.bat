@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script disables the "Intel Driver and Support Assistant" services (must be run as Administrator, which requires creating a shortcut to the .bat file and enabling "Run as administrator" in Shorcut tab -> Advanced)
 

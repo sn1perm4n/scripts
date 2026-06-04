@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script disables unnecessary devices I don't use (and deletes an invisible monitor) in Device Manager. Some devices get re-enabled (or reappear) every time the Nvidia driver is updated.
 @REM Use the following command to find the devices in question (use the InstanceId in pnputil):

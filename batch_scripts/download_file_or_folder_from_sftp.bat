@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 REM This script downloads a file (or optionally a folder) from SFTP via WinSCP to a directory.
 

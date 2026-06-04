@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 REM This script uploads a file (or optionally a folder) to SFTP via WinSCP from a directory.
 

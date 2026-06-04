@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script disables the Remote Registry service. The commented lines only work in a domain environment.
 

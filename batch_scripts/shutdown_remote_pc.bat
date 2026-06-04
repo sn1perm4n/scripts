@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script remotely shuts down a PC (replace PC with your hostname)
 

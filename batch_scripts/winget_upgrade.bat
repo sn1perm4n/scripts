@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script updates the winget source database and then runs the upgrade command so potential updates can be seen (must be run as Administrator)
 @REM Individual packages can be upgraded via their ID, i.e.: "winget upgrade Microsoft.VCRedist.2013.x86"

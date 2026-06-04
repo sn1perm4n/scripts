@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script disables hibernation, freeing up drive space on C:\
 

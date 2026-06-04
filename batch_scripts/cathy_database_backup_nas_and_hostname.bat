@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script copies my Cathy databases and .bak files to my NAS and another computer on my network (SFTP functionality and placeholder password commented out)
 

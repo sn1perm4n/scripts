@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 
 @REM This script closes F.lux
 

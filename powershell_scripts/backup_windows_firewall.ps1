@@ -227,8 +227,7 @@ else {
 		"$ScriptName`: Backup failed."
 	}
 
-	$summaryColor = if ($backupSuccess) { 'Green' }
-else { 'Red' }
+	$summaryColor = if ($backupSuccess) { 'Green' } else { 'Red' }
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor $summaryColor }
 	$OutputLines += $summaryLine
 }

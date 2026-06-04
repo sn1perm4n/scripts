@@ -140,12 +140,9 @@ else {
 
 	$Results += [PSCustomObject]@{
 		Script = $_.Name
-		NeedsAdmin = if ($needsAdmin) { 'Likely' }
-else { 'No' }
-		AlreadyContainsAdminRights = if ($hasInlineAdminCheck) { 'Yes' }
-else { 'No' }
-		Findings = if ($flags) { $flags -join '; ' }
-else { 'None detected' }
+		NeedsAdmin = if ($needsAdmin) { 'Likely' } else { 'No' }
+		AlreadyContainsAdminRights = if ($hasInlineAdminCheck) { 'Yes' } else { 'No' }
+		Findings = if ($flags) { $flags -join '; ' } else { 'None detected' }
 		FindingsArray = $flags
 	}
 }
@@ -175,8 +172,7 @@ else {
 	# Per-script output mode
 	$sorted = $Results | Sort-Object NeedsAdmin, Script
 	foreach ($result in $sorted) {
-		$color = if ($result.NeedsAdmin -eq 'Likely' -and $result.AlreadyContainsAdminRights -eq 'No') { 'Yellow' }
-else { 'Green' }
+		$color = if ($result.NeedsAdmin -eq 'Likely' -and $result.AlreadyContainsAdminRights -eq 'No') { 'Yellow' } else { 'Green' }
 
 		Write-Host $result.Script -ForegroundColor $color
 		Write-Host "  Needs Admin:    $($result.NeedsAdmin)" -ForegroundColor $color

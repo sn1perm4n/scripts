@@ -4,9 +4,9 @@
 
 # NOTE: SFTP credentials are hardcoded in the script. Update HostName, UserName, Password, and SshHostKeyFingerprint before use.
 
-# NOTE2: When using -Interactive, HostName and UserName are prompted at runtime and Password is prompted securely. SshHostKeyFingerprint must still be hardcoded in the script — replace the placeholder value with your server's fingerprint.
+# NOTE2: When using -Interactive, HostName and UserName are prompted at runtime and Password is prompted securely. SshHostKeyFingerprint must still be hardcoded in the script.
 
-# NOTE3: The WinSCP session log is saved alongside the Synology backup file as WinSCP.log
+# NOTE3: The WinSCP session log is saved alongside the Synology backup file as WinSCP.log (use -NoLog to suppress it)
 
 # NOTE4: WinSCP's .NET assembly is incompatible with PowerShell 7.x due to missing .NET Framework APIs. This script automatically re-launches itself under PowerShell 5.1 when run from PowerShell 7.x. If WinSCP releases a .NET 6+ compatible assembly in a future version, the re-launch block below can be removed. Use -TestCompatibility to check if the current WinSCP version works natively under PowerShell 7.x.
 
@@ -14,6 +14,7 @@
 #     -Backup <PATH>: Path to the local folder containing the Synology backup file (required)
 #     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values
 #     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
+#     -NoLog: Suppress the WinSCP session log file
 #     -Preview: Show what would happen without actually uploading or deleting anything
 #     -SaveResults <PATH>: Save console output to a text file
 #     -TestCompatibility: Test whether WinSCP works natively under the current PowerShell version
@@ -24,6 +25,7 @@ param (
 	[string]$Backup,
 	[switch]$Interactive,
 	[switch]$NoConsoleOutput,
+	[switch]$NoLog,
 	[switch]$Preview,
 	[string]$SaveResults,
 	[switch]$TestCompatibility,
@@ -46,11 +48,12 @@ if ($PSVersionTable.PSVersion.Major -ge 7 -and -not $TestCompatibility) {
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName -Backup <PATH> [-Interactive] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName -Backup <PATH> [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup <PATH>        Path to the local folder containing the Synology backup file (required)" -ForegroundColor Cyan
 	Write-Host "  -Interactive          Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput      Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoLog                Suppress the WinSCP session log file" -ForegroundColor Cyan
 	Write-Host "  -Preview              Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>   Save console output to a text file" -ForegroundColor Cyan
 	Write-Host "  -TestCompatibility    Test whether WinSCP works natively under the current PowerShell version" -ForegroundColor Cyan
@@ -132,7 +135,7 @@ $remoteFolder = "/mnt/path/to/remote/Synology Config Backup"
 $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"
-$sftpFingerprint = "ssh-ed25519 256 YOUR_FINGERPRINT_HERE"
+$sftpFingerprint = "ssh-ed25519 256 44:29:e2:b6:ff:45:55:a8:f9:15:36:4a:40:8b:1a:86"
 
 # Prompt for credentials if -Interactive is specified
 if ($Interactive) {
@@ -151,10 +154,7 @@ $OutputLines = @()
 $localFile = Get-ChildItem -Path $localFolder -Filter "Synology_*" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
 if (-not $localFile) {
-	if (-not $NoConsoleOutput) {
-		Write-Host ""
-		Write-Error "No file found matching Synology_* in '$localFolder'"
-	}
+	if (-not $NoConsoleOutput) { Write-Error "No file found matching Synology_* in '$localFolder'" }
 	$OutputLines += "Error: No file found matching Synology_* in '$localFolder'"
 	if ($SaveResults) {
 		$outputString = ($OutputLines -join "`n") + "`n"
@@ -229,7 +229,7 @@ else {
 	$session = New-Object WinSCP.Session
 	$uploadSuccess = $false
 	try {
-		$session.SessionLogPath = $logPath
+		if (-not $NoLog) { $session.SessionLogPath = $logPath }
 		$session.Open($sessionOptions)
 
 		# Delete all old Synology_* files from remote
@@ -284,8 +284,7 @@ else {
 
 	$summaryLine = if ($uploadSuccess) {
 		"$ScriptName`: Synology config backup uploaded and cleanup completed successfully."
-	}
-	else {
+	} else {
 		"$ScriptName`: Synology config backup upload failed."
 	}
 

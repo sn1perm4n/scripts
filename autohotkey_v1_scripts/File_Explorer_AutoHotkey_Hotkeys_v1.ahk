@@ -131,6 +131,12 @@ Return
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c::
+	; If the Desktop is the active window, copy the Desktop path directly
+	if WinActive("ahk_class WorkerW") or WinActive("ahk_class Progman")
+	{
+		Clipboard := A_Desktop
+		Return
+	}
 	Send ^l  ; focus address bar
 	Sleep, 50  ; 50 ms pause to ensure File Explorer address bar path is copied reliably
 	Send ^c  ; copy

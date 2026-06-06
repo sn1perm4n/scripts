@@ -175,6 +175,11 @@ GetTrayIconRECT(hwnd) {
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c:: {
+	; If the Desktop is the active window, copy the Desktop path directly
+	if WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman") {
+		A_Clipboard := A_Desktop
+		return
+	}
 	local ClipSaved := ClipboardAll()
 	A_Clipboard := ""
 	Send("^l")

@@ -158,7 +158,10 @@ if (-not $localFile) {
 	if (-not $NoConsoleOutput) { Write-Error "No file found matching Synology_* in '$localFolder'" }
 	$OutputLines += "Error: No file found matching Synology_* in '$localFolder'"
 	if ($SaveResults) {
-		$outputString = ($OutputLines -join "`n") + "`n"
+		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
+			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+		}
+		$outputString = ($OutputLines -join "`n")
 		try { [System.IO.File]::AppendAllText($SaveResults, $outputString) } catch { $null = $_ }
 	}
 	exit 1
@@ -302,7 +305,10 @@ else {
 # Save results
 if ($SaveResults) {
 	try {
-		$outputString = ($OutputLines -join "`n") + "`n"
+		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
+			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+		}
+		$outputString = ($OutputLines -join "`n")
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
 	}

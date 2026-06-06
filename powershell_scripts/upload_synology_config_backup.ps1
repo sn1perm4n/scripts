@@ -209,6 +209,11 @@ else {
 	}
 
 	Add-Type -Path $winScpDll
+	
+	if ($NoLog) {
+		if (-not $NoConsoleOutput) { Write-Host "`nWinSCP session logging is disabled." -ForegroundColor Yellow }
+		$OutputLines += "WinSCP session logging is disabled."
+	}
 
 	$sessionOptions = New-Object WinSCP.SessionOptions -Property @{
 		Protocol = [WinSCP.Protocol]::Sftp

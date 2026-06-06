@@ -11,7 +11,7 @@
 # NOTE4: WinSCP's .NET assembly is incompatible with PowerShell 7.x due to missing .NET Framework APIs. This script automatically re-launches itself under PowerShell 5.1 when run from PowerShell 7.x. If WinSCP releases a .NET 6+ compatible assembly in a future version, the re-launch block below can be removed. Use -TestCompatibility to check if the current WinSCP version works natively under PowerShell 7.x.
 
 # Optional flags:
-#     -Backup <PATH>: Path to the local folder containing the Synology backup file (required)
+#     -Backup <PATH>: Path to the local or network folder containing the Synology backup file (required)
 #     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values
 #     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
 #     -NoLog: Suppress the WinSCP session log file
@@ -50,7 +50,7 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName -Backup <PATH> [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Backup <PATH>        Path to the local folder containing the Synology backup file (required)" -ForegroundColor Cyan
+	Write-Host "  -Backup <PATH>        Path to the local or network folder containing the Synology backup file (required)" -ForegroundColor Cyan
 	Write-Host "  -Interactive          Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput      Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -NoLog                Suppress the WinSCP session log file" -ForegroundColor Cyan

@@ -1,6 +1,7 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script uploads a Synology config backup file from a NAS to a remote server via SFTP using WinSCP, then deletes all old Synology config backup files from the remote server and the NAS
 # Use Invoke-PS2EXE -InputFile "PATH\TO\Script.ps1" -OutputFile "PATH\TO\Script.exe" to turn this script into a .exe to hide the password
+# If flags are required: Invoke-PS2EXE -inputFile "C:\MyScript.ps1" -outputFile "C:\MyScript.exe" -args "-YourParam1 Value1 -YourFlag2"
 
 # NOTE: SFTP credentials are hardcoded in the script. Update HostName, UserName, Password, and SshHostKeyFingerprint before use.
 

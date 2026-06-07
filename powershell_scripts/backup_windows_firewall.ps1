@@ -9,6 +9,8 @@
 
 # NOTE3: The WinSCP session log is saved alongside the .wfw backup file as WinSCP.log when -Sftp is used (use -NoLog to suppress it)
 
+# NOTE4: WinSCP's .NET assembly is incompatible with PowerShell 7.x due to missing .NET Framework APIs. This script automatically re-launches itself under PowerShell 5.1 when run from PowerShell 7.x. If WinSCP releases a .NET 6+ compatible assembly in a future version, the re-launch block below can be removed. Use -TestCompatibility to check if the current WinSCP version works natively under PowerShell 7.x.
+
 # Optional flags:
 #     -Backup <PATH>: Override the default backup destination (%USERPROFILE%\Desktop)
 #     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values (requires -Sftp)
@@ -17,6 +19,7 @@
 #     -Preview: Show what would happen without actually creating the backup or uploading
 #     -SaveResults <PATH>: Save console output to a text file
 #     -Sftp: Upload the backup to a remote server via SFTP using WinSCP after creating it
+#     -TestCompatibility: Test whether WinSCP works natively under the current PowerShell version
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -30,25 +33,61 @@ param (
 	[switch]$Preview,
 	[string]$SaveResults,
 	[switch]$Sftp,
+	[switch]$TestCompatibility,
 	[switch]$Help
 )
+
+# Re-launch under PowerShell 5.1 if running under PowerShell 7.x (WinSCP .NET assembly incompatibility)
+if ($PSVersionTable.PSVersion.Major -ge 7 -and -not $TestCompatibility) {
+	$argList = @('-NonInteractive', '-NoProfile', '-File', $PSCommandPath)
+	foreach ($key in $MyInvocation.BoundParameters.Keys) {
+		$val = $MyInvocation.BoundParameters[$key]
+		if ($val -is [switch]) { $argList += "-$key" }
+		else { $argList += "-$key", $val }
+	}
+	powershell.exe @argList
+	exit $LASTEXITCODE
+}
 
 # Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-Sftp] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-Sftp] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Backup <PATH>       Override the default backup destination (%USERPROFILE%\Desktop)" -ForegroundColor Cyan
-	Write-Host "  -Interactive         Prompt for SFTP credentials at runtime instead of using hardcoded values (requires -Sftp)" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -NoLog               Suppress the WinSCP session log file (only relevant with -Sftp)" -ForegroundColor Cyan
-	Write-Host "  -Preview             Show what would happen without actually creating the backup or uploading" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save console output to a text file" -ForegroundColor Cyan
-	Write-Host "  -Sftp                Upload the backup to a remote server via SFTP using WinSCP after creating it" -ForegroundColor Cyan
-	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
+	Write-Host "  -Backup <PATH>        Override the default backup destination (%USERPROFILE%\Desktop)" -ForegroundColor Cyan
+	Write-Host "  -Interactive          Prompt for SFTP credentials at runtime instead of using hardcoded values (requires -Sftp)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput      Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoLog                Suppress the WinSCP session log file (only relevant with -Sftp)" -ForegroundColor Cyan
+	Write-Host "  -Preview              Show what would happen without actually creating the backup or uploading" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>   Save console output to a text file" -ForegroundColor Cyan
+	Write-Host "  -Sftp                 Upload the backup to a remote server via SFTP using WinSCP after creating it" -ForegroundColor Cyan
+	Write-Host "  -TestCompatibility    Test whether WinSCP works natively under the current PowerShell version" -ForegroundColor Cyan
+	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
+}
+
+# Handle -TestCompatibility
+if ($TestCompatibility) {
+	$winScpDll = "C:\Program Files (x86)\WinSCP\WinSCPnet.dll"
+	Write-Host "`nTesting WinSCP compatibility under PowerShell $($PSVersionTable.PSVersion)..." -ForegroundColor Cyan
+	if (-not (Test-Path $winScpDll)) {
+		Write-Warning "WinSCP is not installed or WinSCPnet.dll was not found at: $winScpDll"
+		exit 1
+	}
+	try {
+		Add-Type -Path $winScpDll
+		$testOptions = New-Object WinSCP.SessionOptions
+		$null = $testOptions
+		Write-Host "WinSCP is compatible with PowerShell $($PSVersionTable.PSVersion). The PS 5.1 re-launch block in this script can be removed." -ForegroundColor Green
+		exit 0
+	}
+	catch {
+		Write-Host "WinSCP is NOT compatible with PowerShell $($PSVersionTable.PSVersion): $($_.Exception.Message)" -ForegroundColor Yellow
+		Write-Host "The PS 5.1 re-launch block should remain in place." -ForegroundColor Yellow
+		exit 1
+	}
 }
 
 # Warn on unsupported flag combinations
@@ -107,11 +146,11 @@ $fullBackupFilePath = Join-Path -Path $backupPath -ChildPath $backupFilename
 $logPath = Join-Path -Path $backupPath -ChildPath "WinSCP.log"
 
 # SFTP settings (update before using -Sftp)
-$remotePath = "/mnt/path/to/remote/Windows Firewall Backup/$backupFilename"
+$remotePath = "/mnt/path/to/remote/$backupFilename"
 $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"
-$sftpFingerprint = "ssh-ed25519 256 44:29:e2:b6:ff:45:55:a8:f9:15:36:4a:40:8b:1a:86"
+$sftpFingerprint = "ssh-ed25519 256 YOUR_FINGERPRINT_HERE"
 
 # Prompt for credentials if -Interactive is specified
 if ($Interactive) {
@@ -172,6 +211,7 @@ else {
 	}
 
 	# Upload via SFTP if -Sftp is specified and backup succeeded
+	$uploadSuccess = $false
 	if ($Sftp -and $backupSuccess) {
 		$winScpDll = "C:\Program Files (x86)\WinSCP\WinSCPnet.dll"
 		if (-not (Test-Path $winScpDll)) {
@@ -224,6 +264,7 @@ else {
 				$transferResult.Check()
 				if (-not $NoConsoleOutput) { Write-Host "Upload succeeded: $($transferResult.Transfers[0].FileName)" -ForegroundColor Green }
 				$OutputLines += "Upload succeeded: $($transferResult.Transfers[0].FileName)"
+				$uploadSuccess = $true
 			}
 			catch {
 				if (-not $NoConsoleOutput) { Write-Warning "SFTP upload failed: $($_.Exception.Message)" }
@@ -235,8 +276,11 @@ else {
 		}
 	}
 
-	$summaryLine = if ($Sftp -and $backupSuccess) {
+	$summaryLine = if ($Sftp -and $backupSuccess -and $uploadSuccess) {
 		"$ScriptName`: Backup and SFTP upload completed successfully."
+	}
+	elseif ($Sftp -and $backupSuccess -and -not $uploadSuccess) {
+		"$ScriptName`: Backup completed successfully but SFTP upload failed."
 	}
 	elseif ($backupSuccess) {
 		"$ScriptName`: Backup completed successfully."
@@ -245,7 +289,7 @@ else {
 		"$ScriptName`: Backup failed."
 	}
 
-	$summaryColor = if ($backupSuccess) { 'Green' } else { 'Red' }
+	$summaryColor = if ($backupSuccess -and (-not $Sftp -or $uploadSuccess)) { 'Green' } else { 'Red' }
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor $summaryColor }
 	$OutputLines += $summaryLine
 }

@@ -146,7 +146,7 @@ $fullBackupFilePath = Join-Path -Path $backupPath -ChildPath $backupFilename
 $logPath = Join-Path -Path $backupPath -ChildPath "WinSCP.log"
 
 # SFTP settings (update before using -Sftp)
-$remotePath = "/mnt/path/to/remote/$backupFilename"
+$remotePath = "/mnt/path/to/remote/Windows Firewall/$backupFilename"
 $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"

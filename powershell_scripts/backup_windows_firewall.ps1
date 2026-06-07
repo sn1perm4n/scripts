@@ -5,12 +5,13 @@
 
 # NOTE2: When using -Interactive, HostName and UserName are prompted at runtime and Password is prompted securely. SshHostKeyFingerprint must still be hardcoded in the script.
 
-# NOTE3: The WinSCP session log is saved alongside the .wfw backup file as WinSCP.log when -Sftp is used
+# NOTE3: The WinSCP session log is saved alongside the .wfw backup file as WinSCP.log when -Sftp is used (use -NoLog to suppress it)
 
 # Optional flags:
 #     -Backup <PATH>: Override the default backup destination (%USERPROFILE%\Desktop)
 #     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values (requires -Sftp)
 #     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
+#     -NoLog: Suppress the WinSCP session log file (only relevant with -Sftp)
 #     -Preview: Show what would happen without actually creating the backup or uploading
 #     -SaveResults <PATH>: Save console output to a text file
 #     -Sftp: Upload the backup to a remote server via SFTP using WinSCP after creating it
@@ -23,6 +24,7 @@ param (
 	[string]$Backup,
 	[switch]$Interactive,
 	[switch]$NoConsoleOutput,
+	[switch]$NoLog,
 	[switch]$Preview,
 	[string]$SaveResults,
 	[switch]$Sftp,
@@ -33,11 +35,12 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Sftp] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-Sftp] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup <PATH>       Override the default backup destination (%USERPROFILE%\Desktop)" -ForegroundColor Cyan
 	Write-Host "  -Interactive         Prompt for SFTP credentials at runtime instead of using hardcoded values (requires -Sftp)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoLog               Suppress the WinSCP session log file (only relevant with -Sftp)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would happen without actually creating the backup or uploading" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save console output to a text file" -ForegroundColor Cyan
 	Write-Host "  -Sftp                Upload the backup to a remote server via SFTP using WinSCP after creating it" -ForegroundColor Cyan
@@ -63,6 +66,11 @@ if ($Interactive -and $NoConsoleOutput) {
 	Write-Host ""
 	Write-Warning "-Interactive cannot be used with -NoConsoleOutput as credential prompts require console interaction."
 	exit 1
+}
+
+if ($NoLog -and -not $Sftp) {
+	Write-Host ""
+	Write-Warning "-NoLog is only relevant when -Sftp is specified."
 }
 
 # Warn if -NoConsoleOutput is used without -SaveResults
@@ -97,7 +105,7 @@ $fullBackupFilePath = Join-Path -Path $backupPath -ChildPath $backupFilename
 $logPath = Join-Path -Path $backupPath -ChildPath "WinSCP.log"
 
 # SFTP settings (update before using -Sftp)
-$remotePath = "/mnt/path/to/remote/$backupFilename"
+$remotePath = "/mnt/path/to/remote/Windows Firewall Backup/$backupFilename"
 $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"
@@ -126,8 +134,10 @@ if ($Preview) {
 	if ($Sftp) {
 		if (-not $NoConsoleOutput) { Write-Host "Would upload to SFTP: $remotePath" -ForegroundColor Cyan }
 		$OutputLines += "Would upload to SFTP: $remotePath"
-		if (-not $NoConsoleOutput) { Write-Host "Would save WinSCP session log to: $logPath" -ForegroundColor Cyan }
-		$OutputLines += "Would save WinSCP session log to: $logPath"
+		if (-not $NoLog) {
+			if (-not $NoConsoleOutput) { Write-Host "Would save WinSCP session log to: $logPath" -ForegroundColor Cyan }
+			$OutputLines += "Would save WinSCP session log to: $logPath"
+		}
 	}
 	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Preview complete." -ForegroundColor Cyan }
 	$OutputLines += "$ScriptName`: Preview complete."
@@ -171,6 +181,11 @@ else {
 		else {
 			Add-Type -Path $winScpDll
 
+			if ($NoLog) {
+				if (-not $NoConsoleOutput) { Write-Host "`nWinSCP session logging is disabled." -ForegroundColor Yellow }
+				$OutputLines += "WinSCP session logging is disabled."
+			}
+
 			$sessionOptions = New-Object WinSCP.SessionOptions -Property @{
 				Protocol = [WinSCP.Protocol]::Sftp
 				HostName = $sftpHost
@@ -190,7 +205,7 @@ else {
 			$session = New-Object WinSCP.Session
 			$transferResult = $null
 			try {
-				$session.SessionLogPath = $logPath
+				if (-not $NoLog) { $session.SessionLogPath = $logPath }
 				$session.Open($sessionOptions)
 
 				$remoteDir = [System.IO.Path]::GetDirectoryName($remotePath) -replace '\\', '/'
@@ -220,10 +235,11 @@ else {
 
 	$summaryLine = if ($Sftp -and $backupSuccess) {
 		"$ScriptName`: Backup and SFTP upload completed successfully."
-	} elseif ($backupSuccess) {
+	}
+	elseif ($backupSuccess) {
 		"$ScriptName`: Backup completed successfully."
 	}
-else {
+	else {
 		"$ScriptName`: Backup failed."
 	}
 
@@ -235,7 +251,10 @@ else {
 # Save results
 if ($SaveResults) {
 	try {
-		$outputString = ($OutputLines -join "`n") + "`n"
+		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
+			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+		}
+		$outputString = ($OutputLines -join "`n")
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
 	}

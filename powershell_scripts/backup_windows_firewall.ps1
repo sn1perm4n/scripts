@@ -1,5 +1,7 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script backs up the Windows Firewall configuration to a .wfw file. By default the backup is saved to %USERPROFILE%\Desktop. Use -Backup <PATH> to override the destination. Use -Sftp to also upload the backup to a remote server via SFTP using WinSCP.
+# Use Invoke-PS2EXE -InputFile "PATH\TO\Script.ps1" -OutputFile "PATH\TO\Script.exe" to turn this script into a .exe to hide the password
+# If flags are required: Invoke-PS2EXE -inputFile "C:\MyScript.ps1" -outputFile "C:\MyScript.exe" -args "-YourParam1 Value1 -YourFlag2"
 
 # NOTE: SFTP credentials are hardcoded in the script. Update HostName, UserName, Password, and SshHostKeyFingerprint before using -Sftp
 

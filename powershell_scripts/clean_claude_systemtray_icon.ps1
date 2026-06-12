@@ -3,7 +3,7 @@
 
 # NOTE: This script is intended for Windows 11 only — the NotifyIconSettings registry path does not exist on Windows 10
 
-# NOTE2: Claude updates frequently and each update registers a new system tray icon entry. This script cleans up stale entries (where the executable no longer exists on disk) and promotes the active entry.
+# NOTE2: Claude updates frequently and each update registers a new system tray icon entry. This script identifies the newest version by extracting the version number from the app-x.x.x folder in the executable path, deletes all older entries, and promotes the active entry.
 
 # NOTE3: If Claude is not visible in the System Tray after running this script, re-open Claude and manually configure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
 
@@ -52,12 +52,20 @@ foreach ($key in $subkeys) {
 	if ($exePath -notmatch '(?i)claude') { continue }
 
 	$isPromoted = $key.GetValue("IsPromoted")
+
+	# Extract version from app-x.x.x folder segment in the path
+	$version = $null
+	if ($exePath -match '(?i)app-(\d+\.\d+[\.\d]*)') {
+		try { $version = [version]$Matches[1] } catch { $null = $_ }
+	}
+
 	$existsOnDisk = Test-Path $exePath
 
 	$claudeEntries += [PSCustomObject]@{
 		KeyName = $key.PSChildName
 		ExecutablePath = $exePath
 		IsPromoted = $isPromoted
+		Version = $version
 		ExistsOnDisk = $existsOnDisk
 	}
 }
@@ -71,37 +79,36 @@ Write-Host "`nFound $($claudeEntries.Count) Claude entry/entries in NotifyIconSe
 foreach ($entry in $claudeEntries) {
 	$diskStatus = if ($entry.ExistsOnDisk) { "exists on disk" } else { "NOT found on disk" }
 	$promotedStatus = if ($entry.IsPromoted -eq 1) { "Yes" } elseif ($entry.IsPromoted -eq 0) { "No" } else { "Unknown" }
+	$versionDisplay = if ($entry.Version) { $entry.Version.ToString() } else { "unknown" }
 	Write-Host "  $($entry.KeyName)" -ForegroundColor Cyan
 	Write-Host "       ExecutablePath  : $($entry.ExecutablePath)"
+	Write-Host "       Version         : $versionDisplay"
 	Write-Host "       ExistsOnDisk    : $diskStatus"
 	Write-Host "       IsPromoted      : $promotedStatus"
 }
 
-# Separate into active (exists on disk) and stale (does not exist on disk)
-$activeEntries = $claudeEntries | Where-Object { $_.ExistsOnDisk }
-$staleEntries = $claudeEntries | Where-Object { -not $_.ExistsOnDisk }
+# Determine keeper — highest versioned entry; fall back to disk existence if no versions found
+$versionedEntries = $claudeEntries | Where-Object { $null -ne $_.Version }
 
-if ($staleEntries.Count -eq 0 -and $activeEntries.Count -eq 1 -and $activeEntries[0].IsPromoted -eq 1) {
+$activeEntry = if ($versionedEntries) {
+	$versionedEntries | Sort-Object Version -Descending | Select-Object -First 1
+}
+else {
+	$claudeEntries | Where-Object { $_.ExistsOnDisk } | Select-Object -First 1
+}
+
+if (-not $activeEntry) {
+	Write-Host ""
+	Write-Warning "Could not determine which Claude entry to keep. No changes made."
+	exit 1
+}
+
+$staleEntries = $claudeEntries | Where-Object { $_.KeyName -ne $activeEntry.KeyName }
+
+if ($staleEntries.Count -eq 0 -and $activeEntry.IsPromoted -eq 1) {
 	Write-Host "`n$ScriptName`: Claude system tray entry is already clean and promoted. No changes needed." -ForegroundColor Green
 	exit 0
 }
-
-if ($activeEntries.Count -eq 0) {
-	Write-Host ""
-	Write-Warning "No active Claude executable found on disk. Claude may not be installed or the path has changed. No changes made."
-	exit 1
-}
-
-if ($activeEntries.Count -gt 1) {
-	Write-Host ""
-	Write-Warning "Multiple active Claude executables found on disk. Manual cleanup may be required."
-	foreach ($entry in $activeEntries) {
-		Write-Host "  $($entry.KeyName): $($entry.ExecutablePath)" -ForegroundColor Yellow
-	}
-	exit 1
-}
-
-$activeEntry = $activeEntries[0]
 
 Write-Host ""
 

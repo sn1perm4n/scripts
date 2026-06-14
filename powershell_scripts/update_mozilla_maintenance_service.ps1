@@ -17,17 +17,17 @@ else { $null }
 
 if (-not $installerPath) {
 	Write-Host ""
-	Write-Error "Firefox maintenance service installer not found. Is Firefox installed?"
+	Write-Error "Mozilla Maintenance Service installer not found. Is Firefox installed?"
 	exit 1
 }
 
 Write-Host "`nFound installer at: $installerPath" -ForegroundColor Cyan
-Write-Host "Running Firefox Maintenance Service installer..." -ForegroundColor Cyan
+Write-Host "Running Mozilla Maintenance Service installer..." -ForegroundColor Cyan
 
 try {
 	$process = Start-Process -FilePath $installerPath -Wait -PassThru -ErrorAction Stop
 	if ($process.ExitCode -eq 0) {
-		Write-Host "`n$ScriptName`: Firefox Maintenance Service installed successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Mozilla Maintenance Service installed successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host "`n$ScriptName`: Installer exited with code $($process.ExitCode)." -ForegroundColor Yellow

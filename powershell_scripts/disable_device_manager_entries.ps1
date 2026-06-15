@@ -3,7 +3,7 @@
 
 # IMPORTANT: It is unfortunately NOT possible to query the device status first so only enabled devices are processed. As a result, error-handling also can't be added. The only solution is to individually query the devices every time the script runs (which is in no way harmful).
 
-# NOTE: Under NO CIRCUMSTANCES should you delete every invisible device in Device Manager (unless you know EXACTLY what you're doing).
+# NOTE: Under NO CIRCUMSTANCES should you delete every invisible device in Device Manager (unless you know EXACTLY what you're doing)
 
 # Use the following command to dump output to a file for easy searching:
 # Get-PnpDevice | Out-File -FilePath "C:\Users\<username>\Desktop\get-pnpdevices_output.txt"

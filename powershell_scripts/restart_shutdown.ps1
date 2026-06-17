@@ -1,7 +1,7 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script restarts or shuts down the local machine or one or more remote machines. If no hostname is specified, the local machine is targeted.
 
-# NOTE: Remote operations require PowerShell remoting or WMI access to be enabled on the target machine. Run Enable-PSRemoting on the target or ensure WMI is accessible.
+# NOTE: Remote operations require PowerShell remoting or WMI access to be enabled on the target machine. Run Enable-PSRemoting on the target or ensure WMI is accessible. Both hostnames and IP addresses are accepted.
 
 # NOTE2: -Abort cancels a pending restart or shutdown previously triggered on the target(s). It is not used alongside -Restart or -Shutdown.
 
@@ -9,11 +9,11 @@
 
 # Optional flags:
 #     -Abort: Cancel a pending restart or shutdown on the target(s)
-#     -Credential: Prompt for credentials to use for remote operations
+#     -Credential: Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
 #     -Delay <N>: Seconds before the operation executes (default: 0)
 #     -Force: Force close running applications without prompting
 #     -HostFile <PATH>: Path to a text file containing one hostname per line
-#     -Hostname <NAME>: Target hostname or comma-separated list of hostnames
+#     -Hostname <NAME> / -IP <ADDRESS>: Target hostname, IP address, or comma-separated list
 #     -Parallel: Process all hosts simultaneously instead of sequentially
 #     -Restart: Restart the target(s)
 #     -SaveResults <PATH>: Save results to a text file
@@ -27,6 +27,7 @@ param (
 	[int]$Delay = 0,
 	[switch]$Force,
 	[string]$HostFile,
+	[Alias("IP")]
 	[string]$Hostname,
 	[switch]$Parallel,
 	[switch]$Restart,
@@ -42,11 +43,11 @@ if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Credential] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Parallel] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Abort               Cancel a pending restart or shutdown on the target(s)" -ForegroundColor Cyan
-	Write-Host "  -Credential          Prompt for credentials to use for remote operations" -ForegroundColor Cyan
+	Write-Host "  -Credential          Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog." -ForegroundColor Cyan
 	Write-Host "  -Delay <N>           Seconds before the operation executes (default: 0)" -ForegroundColor Cyan
 	Write-Host "  -Force               Force close running applications without prompting" -ForegroundColor Cyan
 	Write-Host "  -HostFile <PATH>     Path to a text file containing one hostname per line" -ForegroundColor Cyan
-	Write-Host "  -Hostname <NAME>     Target hostname or comma-separated list of hostnames" -ForegroundColor Cyan
+	Write-Host "  -Hostname / -IP      Target hostname, IP address, or comma-separated list" -ForegroundColor Cyan
 	Write-Host "  -Parallel            Process all hosts simultaneously instead of sequentially" -ForegroundColor Cyan
 	Write-Host "  -Restart             Restart the target(s)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file" -ForegroundColor Cyan

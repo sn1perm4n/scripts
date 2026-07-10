@@ -6,7 +6,7 @@
 #     -Count: Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description: Include flag descriptions from the # Optional flags comment block
 #     -Filenames: Print only script names with no flag details or blank lines between entries
-#     -FlagFilter <-NAME,-NAME,...>: Filter output to only scripts containing all specified flags (comma-separated)
+#     -FlagFilter <NAME>: Filter output to only scripts containing all specified flags (i.e. -FlagFilter "-SaveResults","-NoConsoleOutput")
 #     -Path <PATH>: Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a .csv file (appends if file exists)

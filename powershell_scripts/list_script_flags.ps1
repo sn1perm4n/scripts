@@ -6,7 +6,7 @@
 #     -Count: Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description: Include flag descriptions from the # Optional flags comment block
 #     -Filenames: Print only script names with no flag details or blank lines between entries
-#     -FlagFilter <NAME>: Filter output to only scripts containing the specified flag
+#     -FlagFilter <-NAME,-NAME,...>: Filter output to only scripts containing all specified flags (comma-separated)
 #     -Path <PATH>: Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse: Search subdirectories recursively
 #     -SaveResults <PATH>: Save results to a .csv file (appends if file exists)
@@ -19,7 +19,7 @@ param (
 	[switch]$Count,
 	[switch]$Description,
 	[switch]$Filenames,
-	[string]$FlagFilter,
+	[string[]]$FlagFilter,
 	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
@@ -31,13 +31,13 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME,...>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Align               Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count               Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description         Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
-	Write-Host "  -FlagFilter <NAME>   Filter output to only scripts containing the specified flag" -ForegroundColor Cyan
+	Write-Host "  -FlagFilter <NAME,...>  Filter output to only scripts containing all specified flags (comma-separated)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
@@ -83,7 +83,7 @@ if ($SaveResults) {
 # Prompt for path if not specified
 if (-not $Path) {
 	Write-Host ""
-	$Path = Read-Host "Enter the full path to a PowerShell script (.ps1) or folder"
+	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
 	Write-Host ""
 }
 
@@ -101,7 +101,7 @@ else {
 	if ($Path -like "*.ps1") {
 		$scripts = @(Get-Item $Path)
 	}
-else {
+	else {
 		Write-Host ""
 		Write-Error "The specified file is not a PowerShell script (.ps1)."
 		exit 1
@@ -169,11 +169,17 @@ foreach ($script in $scripts) {
 
 	if ($parsedFlags.Count -eq 0) { continue }
 
-	# If -Flag is specified, skip scripts that don't contain the flag
+	# If -FlagFilter is specified, skip scripts that don't contain ALL specified flags
 	if ($FlagFilter) {
-		$flagNormalized = $FlagFilter.TrimStart('-')
-		$hasFlag = $parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
-		if (-not $hasFlag) { continue }
+		$allMatch = $true
+		foreach ($filter in $FlagFilter) {
+			$flagNormalized = $filter.TrimStart('-')
+			if (-not ($parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" })) {
+				$allMatch = $false
+				break
+			}
+		}
+		if (-not $allMatch) { continue }
 	}
 
 	# Build description lookup from # Optional flags comment block if -Description specified
@@ -191,7 +197,8 @@ foreach ($script in $scripts) {
 					if ($line -match ':\s+(.+)$') {
 						$descriptionMap[$flagKey] = $Matches[1].Trim()
 					}
-				} elseif ($line -notmatch '^\s*#') {
+				}
+				elseif ($line -notmatch '^\s*#') {
 					break
 				}
 			}
@@ -204,7 +211,7 @@ foreach ($script in $scripts) {
 		if ($flagCounts.ContainsKey($baseName)) {
 			$flagCounts[$baseName]++
 		}
-else {
+		else {
 			$flagCounts[$baseName] = 1
 		}
 	}
@@ -215,17 +222,19 @@ else {
 			if ($SaveResults) { $CsvOutputLines += $script.Name }
 			$totalFlags++
 		}
-else {
+		else {
 			if ($scripts.Count -gt 1 -or $FlagFilter) {
 				Write-Host $script.Name -ForegroundColor Cyan
 				if ($SaveResults) { $CsvOutputLines += $script.Name }
 			}
 
 			$flagsToShow = if ($FlagFilter) {
-				$flagNormalized = $FlagFilter.TrimStart('-')
-				$parsedFlags | Where-Object { ($_ -split ' ')[0] -eq "-$flagNormalized" }
+				$parsedFlags | Where-Object {
+					$baseName = ($_ -split ' ')[0]
+					$FlagFilter | Where-Object { $baseName -eq "-$($_.TrimStart('-'))" }
+				}
 			}
-else {
+			else {
 				$parsedFlags
 			}
 
@@ -238,20 +247,19 @@ else {
 
 			foreach ($f in $flagsToShow) {
 				$baseName = ($f -split ' ')[0]
-				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] }
-else { "" }
+				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
 
 				if ($Description -and $desc) {
 					if ($Align) {
 						$padded = $f.PadRight($padWidth)
 						Write-Host "  $padded  $desc"
 					}
-else {
+					else {
 						Write-Host "  $f`: $desc"
 					}
 					if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
 				}
-else {
+				else {
 					Write-Host "  $f"
 					if ($SaveResults) { $CsvOutputLines += $f }
 				}
@@ -264,7 +272,7 @@ else {
 			}
 		}
 	}
-else {
+	else {
 		foreach ($f in $parsedFlags) {
 			$baseName = ($f -split ' ')[0]
 			if (-not $allFlags.ContainsKey($baseName)) {
@@ -278,14 +286,13 @@ else {
 if ($Unique) {
 	$sorted = $allFlags.Keys | Sort-Object
 	foreach ($key in $sorted) {
-		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" }
-else { "" }
+		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" } else { "" }
 		Write-Host "  $($allFlags[$key])$countSuffix"
 		if ($SaveResults) {
 			if ($Count) {
 				$CsvOutputLines += "$($allFlags[$key]),$($flagCounts[$key])"
 			}
-else {
+			else {
 				$CsvOutputLines += $allFlags[$key]
 			}
 		}
@@ -295,7 +302,8 @@ else {
 
 $summaryLine = if ($Filenames) {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags script(s) matched."
-} elseif ($Unique) {
+}
+elseif ($Unique) {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags unique flag(s) found."
 }
 else {
@@ -315,7 +323,8 @@ if ($SaveResults) {
 		$outputString = ($CsvOutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
-	} catch {
+	}
+	catch {
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

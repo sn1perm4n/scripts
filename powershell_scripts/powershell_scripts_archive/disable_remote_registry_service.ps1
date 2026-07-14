@@ -3,6 +3,9 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 $serviceName = "RemoteRegistry"
 
 Write-Host "`nChecking RemoteRegistry service status..." -ForegroundColor Cyan
@@ -49,10 +52,10 @@ else {
 }
 
 if ($serviceChanged) {
-	Write-Host "`nRemoteRegistry service successfully disabled and stopped." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: RemoteRegistry service successfully disabled and stopped." -ForegroundColor Green
 }
 else {
-	Write-Host "`nRemoteRegistry service was already disabled and stopped. No changes made." -ForegroundColor Yellow
+	Write-Host "`n$ScriptName`: RemoteRegistry service was already disabled and stopped. No changes made." -ForegroundColor Yellow
 }
 
 exit 0

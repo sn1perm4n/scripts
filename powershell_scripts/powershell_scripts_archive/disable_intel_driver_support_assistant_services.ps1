@@ -3,8 +3,12 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 $dsaService = "DSAService"
 $dsaUpdateService = "DSAUpdateService"
+$changesMade = $false
 
 Write-Host "`nChecking Intel Driver and Support Assistant service(s) status..." -ForegroundColor Cyan
 
@@ -22,6 +26,7 @@ else {
 		try {
 			Set-Service -Name $dsaService -StartupType Disabled -ErrorAction Stop
 			Write-Host "`nService '$dsaService' startup type successfully set to Disabled." -ForegroundColor Green
+			$changesMade = $true
 		}
 		catch {
 			Write-Host ""
@@ -37,6 +42,7 @@ else {
 		try {
 			Stop-Service -Name $dsaService -Force -ErrorAction Stop
 			Write-Host "Service '$dsaService' stopped successfully." -ForegroundColor Green
+			$changesMade = $true
 		}
 		catch {
 			Write-Host ""
@@ -59,6 +65,7 @@ else {
 		try {
 			Set-Service -Name $dsaUpdateService -StartupType Disabled -ErrorAction Stop
 			Write-Host "`nService '$dsaUpdateService' startup type successfully set to Disabled." -ForegroundColor Green
+			$changesMade = $true
 		}
 		catch {
 			Write-Host ""
@@ -74,12 +81,20 @@ else {
 		try {
 			Stop-Service -Name $dsaUpdateService -Force -ErrorAction Stop
 			Write-Host "Service '$dsaUpdateService' stopped successfully." -ForegroundColor Green
+			$changesMade = $true
 		}
 		catch {
 			Write-Host ""
 			Write-Warning "Could not stop service '$dsaUpdateService': $($_.Exception.Message)"
 		}
 	}
+}
+
+if ($changesMade) {
+	Write-Host "`n$ScriptName`: Intel DSA services successfully disabled and stopped." -ForegroundColor Green
+}
+else {
+	Write-Host "`n$ScriptName`: Intel DSA services were already disabled and stopped. No changes made." -ForegroundColor Yellow
 }
 
 exit 0

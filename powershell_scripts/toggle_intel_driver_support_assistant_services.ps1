@@ -48,7 +48,7 @@ if (-not $Enable -and -not $Disable) {
 $enabling = $Enable -eq $true
 $dsaService = "DSAService"
 $dsaUpdateService = "DSAUpdateService"
-$changesMAde = $false
+$changesMade = $false
 
 Write-Host "`nChecking Intel DSA service(s) status..." -ForegroundColor Cyan
 
@@ -198,18 +198,18 @@ else {
 
 if ($enabling) {
 	if ($changesMade) {
-		Write-Host "`nIntel DSA services have been successfully enabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Intel DSA services successfully enabled." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nIntel DSA services were already enabled. No changes made." -ForegroundColor Yellow
+		Write-Host "`n$ScriptName`: Intel DSA services were already enabled. No changes made." -ForegroundColor Yellow
 	}
 }
 else {
 	if ($changesMade) {
-		Write-Host "`nIntel DSA services have been successfully disabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Intel DSA services successfully disabled." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nIntel DSA services were already disabled. No changes made." -ForegroundColor Yellow
+		Write-Host "`n$ScriptName`: Intel DSA services were already disabled. No changes made." -ForegroundColor Yellow
 	}
 }
 

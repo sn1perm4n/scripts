@@ -124,18 +124,18 @@ else {
 
 if ($enabling) {
 	if ($serviceChanged) {
-		Write-Host "`nRemoteRegistry service successfully enabled and started." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: RemoteRegistry service successfully enabled and started." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nRemoteRegistry service was already enabled and running. No changes made." -ForegroundColor Yellow
+		Write-Host "`n$ScriptName`: RemoteRegistry service was already enabled and running. No changes made." -ForegroundColor Yellow
 	}
 }
 else {
 	if ($serviceChanged) {
-		Write-Host "`nRemoteRegistry service successfully disabled and stopped." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: RemoteRegistry service successfully disabled and stopped." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nRemoteRegistry service was already disabled and stopped. No changes made." -ForegroundColor Yellow
+		Write-Host "`n$ScriptName`: RemoteRegistry service was already disabled and stopped. No changes made." -ForegroundColor Yellow
 	}
 }
 

@@ -3,6 +3,9 @@
 
 $registryPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 Write-Host "`nChecking hidden files and folders visibility status..." -ForegroundColor Cyan
 
 try {
@@ -11,7 +14,8 @@ try {
 	$showSuperHidden = $props.ShowSuperHidden
 
 	if ($hidden -eq 1 -and $showSuperHidden -eq 1) {
-		Write-Host "`nHidden files and folders are already visible." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Hidden files and folders are already visible."
 		exit 0
 	}
 
@@ -22,11 +26,11 @@ try {
 	$shell = New-Object -ComObject Shell.Application
 	$shell.Windows() | ForEach-Object { $_.Refresh() }
 
-	Write-Host "`nHidden files and folders successfully made visible." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Hidden files and folders made visible successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "Failed to show hidden files and folders: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Failed to show hidden files and folders: $($_.Exception.Message)"
 	exit 1
 }
 

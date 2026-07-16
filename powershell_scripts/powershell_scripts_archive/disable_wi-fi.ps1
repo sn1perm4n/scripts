@@ -4,22 +4,26 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 try {
 	Write-Host "`nChecking Wi-Fi status..." -ForegroundColor Cyan
 
 	$adapter = Get-NetAdapter -Name "Wi-Fi" -ErrorAction Stop
 
 	if ($adapter.Status -eq 'Disabled') {
-		Write-Host "`nWi-Fi is already disabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Wi-Fi is already disabled."
 		exit 0
 	}
 
 	Disable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-	Write-Host "`nWi-Fi disabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Wi-Fi disabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "An error occurred while disabling Wi-Fi: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: An error occurred while disabling Wi-Fi: $($_.Exception.Message)"
 	exit 1
 }
 

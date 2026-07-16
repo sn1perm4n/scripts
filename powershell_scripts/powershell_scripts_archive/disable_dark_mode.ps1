@@ -3,6 +3,9 @@
 
 $regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 Write-Host "`nChecking dark mode status..." -ForegroundColor Cyan
 
 try {
@@ -15,17 +18,18 @@ try {
 	$systemLight = $props.SystemUsesLightTheme
 
 	if ($appsLight -eq 1 -and $systemLight -eq 1) {
-		Write-Host "`nDark mode is already disabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Dark mode is already disabled."
 		exit 0
 	}
 
 	Set-ItemProperty -Path $regPath -Name "AppsUseLightTheme" -Type DWord -Value 1 -Force -ErrorAction Stop
 	Set-ItemProperty -Path $regPath -Name "SystemUsesLightTheme" -Type DWord -Value 1 -Force -ErrorAction Stop
-	Write-Host "`nDark mode successfully disabled." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Dark mode disabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "Failed to disable dark mode: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Failed to disable dark mode: $($_.Exception.Message)"
 	exit 1
 }
 

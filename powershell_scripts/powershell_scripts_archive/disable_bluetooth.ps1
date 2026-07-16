@@ -3,29 +3,34 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 try {
 	# Check current Bluetooth status
 	Write-Host "`nChecking Bluetooth status..." -ForegroundColor Cyan
 	$devices = Get-PnpDevice -Class Bluetooth -ErrorAction Stop
 
 	if (-not $devices) {
-		Write-Host "`nNo Bluetooth devices found." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "No Bluetooth devices found."
 		exit 0
 	}
 
 	$enabledDevices = $devices | Where-Object { $_.Status -eq 'OK' }
 
 	if (-not $enabledDevices) {
-		Write-Host "`nBluetooth already disabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Bluetooth already disabled."
 		exit 0
 	}
 
 	$enabledDevices | Disable-PnpDevice -Confirm:$false -ErrorAction Stop
-	Write-Host "`nBluetooth disabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Bluetooth disabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "An error occurred while disabling Bluetooth: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: An error occurred while disabling Bluetooth: $($_.Exception.Message)"
 	exit 1
 }
 

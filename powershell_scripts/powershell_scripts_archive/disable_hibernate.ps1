@@ -34,7 +34,8 @@ try {
 		}
 		else {
 			Write-Host ""
-			Write-Warning "Hibernation disable verification failed."
+			Write-Error "$ScriptName`: Hibernation disable verification failed."
+			exit 1
 		}
 	}
 }

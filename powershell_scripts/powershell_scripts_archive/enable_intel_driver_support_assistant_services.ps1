@@ -15,28 +15,31 @@ Write-Host "`nChecking Intel Driver and Support Assistant service(s) status..." 
 # Process DSAService
 $svc = Get-Service -Name $dsaService -ErrorAction SilentlyContinue
 if (-not $svc) {
-	Write-Host "`nService '$dsaService' not found." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "Service '$dsaService' not found."
 }
 else {
 	# Enable DSAService
 	if ($svc.StartType -eq 'Automatic') {
-		Write-Host "`nService '$dsaService' is already set to Automatic." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$dsaService' is already set to Automatic."
 	}
 	else {
 		try {
 			Set-Service -Name $dsaService -StartupType Automatic -ErrorAction Stop
-			Write-Host "`nService '$dsaService' startup type successfully set to Automatic." -ForegroundColor Green
+			Write-Host "`nService '$dsaService' startup type set to Automatic successfully." -ForegroundColor Green
 			$changesMade = $true
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not enable service '$dsaService': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not enable service '$dsaService': $($_.Exception.Message)"
 		}
 	}
 
 	# Start DSAService
 	if ($svc.Status -eq 'Running') {
-		Write-Host "Service '$dsaService' is already running." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$dsaService' is already running."
 	}
 	else {
 		try {
@@ -46,7 +49,7 @@ else {
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not start service '$dsaService': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not start service '$dsaService': $($_.Exception.Message)"
 		}
 	}
 }
@@ -54,28 +57,31 @@ else {
 # Process DSAUpdateService
 $svc = Get-Service -Name $dsaUpdateService -ErrorAction SilentlyContinue
 if (-not $svc) {
-	Write-Host "`nService '$dsaUpdateService' not found." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "Service '$dsaUpdateService' not found."
 }
 else {
 	# Enable DSAUpdateService
 	if ($svc.StartType -eq 'Automatic') {
-		Write-Host "`nService '$dsaUpdateService' is already set to Automatic." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$dsaUpdateService' is already set to Automatic."
 	}
 	else {
 		try {
 			Set-Service -Name $dsaUpdateService -StartupType Automatic -ErrorAction Stop
-			Write-Host "`nService '$dsaUpdateService' startup type successfully set to Automatic." -ForegroundColor Green
+			Write-Host "`nService '$dsaUpdateService' startup type set to Automatic successfully." -ForegroundColor Green
 			$changesMade = $true
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not enable service '$dsaUpdateService': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not enable service '$dsaUpdateService': $($_.Exception.Message)"
 		}
 	}
 
 	# Start DSAUpdateService
 	if ($svc.Status -eq 'Running') {
-		Write-Host "Service '$dsaUpdateService' is already running." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$dsaUpdateService' is already running."
 	}
 	else {
 		try {
@@ -85,16 +91,17 @@ else {
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not start service '$dsaUpdateService': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not start service '$dsaUpdateService': $($_.Exception.Message)"
 		}
 	}
 }
 
 if ($changesMade) {
-	Write-Host "`n$ScriptName`: Intel DSA services successfully enabled and started." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Intel DSA services enabled and started successfully." -ForegroundColor Green
 }
 else {
-	Write-Host "`n$ScriptName`: Intel DSA services were already enabled and running. No changes made." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "$ScriptName`: Intel DSA services were already enabled and running. No changes made."
 }
 
 exit 0

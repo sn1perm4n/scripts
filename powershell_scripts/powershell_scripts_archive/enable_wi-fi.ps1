@@ -4,22 +4,26 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 try {
 	Write-Host "`nChecking Wi-Fi status..." -ForegroundColor Cyan
 
 	$adapter = Get-NetAdapter -Name "Wi-Fi" -ErrorAction Stop
 
 	if ($adapter.Status -eq 'Up') {
-		Write-Host "`nWi-Fi is already enabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Wi-Fi is already enabled."
 		exit 0
 	}
 
 	Enable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-	Write-Host "`nWi-Fi enabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Wi-Fi enabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "An error occurred while enabling Wi-Fi: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: An error occurred while enabling Wi-Fi: $($_.Exception.Message)"
 	exit 1
 }
 

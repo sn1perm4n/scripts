@@ -7,10 +7,13 @@
 $registryPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Discord"
 $propertyName = "DisplayVersion"
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 # Check if the registry path exists
 if (-not (Test-Path $registryPath)) {
 	Write-Host ""
-	Write-Error "The specified Registry path does not exist: '$registryPath'"
+	Write-Error "$ScriptName`: The specified Registry path does not exist: '$registryPath'"
 	exit 1
 }
 
@@ -21,7 +24,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Error "Could not retrieve the current value: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Could not retrieve the current value: $($_.Exception.Message)"
 	exit 1
 }
 
@@ -31,11 +34,11 @@ $newValue = Read-Host -Prompt "`nEnter the new value for '$propertyName'"
 # Change the Registry value
 try {
 	Set-ItemProperty -Path $registryPath -Name $propertyName -Value $newValue -Force -ErrorAction Stop
-	Write-Host "`nRegistry value '$propertyName' successfully updated to '$newValue'." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Registry value '$propertyName' updated successfully to '$newValue'." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "Could not update the Registry value: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Could not update the Registry value: $($_.Exception.Message)"
 	exit 1
 }
 

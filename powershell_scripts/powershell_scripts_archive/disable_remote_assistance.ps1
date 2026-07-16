@@ -7,6 +7,9 @@ $raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
 $registryChanged = $false
 $firewallChanged = $false
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 Write-Host "`nChecking Remote Assistance status..." -ForegroundColor Cyan
 
 try {
@@ -14,7 +17,8 @@ try {
 	$currentValue = Get-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -ErrorAction Stop | Select-Object -ExpandProperty fAllowToGetHelp
 
 	if ($currentValue -eq 0) {
-		Write-Host "`nRemote Assistance is already disabled in the registry." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Remote Assistance is already disabled in the registry."
 	}
 	else {
 		Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 0 -Type DWord -ErrorAction Stop
@@ -24,7 +28,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Error "Failed to check or modify Remote Assistance registry setting: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Failed to check or modify Remote Assistance registry setting: $($_.Exception.Message)"
 	exit 1
 }
 
@@ -41,23 +45,26 @@ try {
 			$firewallChanged = $true
 		}
 		else {
-			Write-Host "`nRemote Assistance firewall rules are already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Remote Assistance firewall rules are already disabled."
 		}
 	}
 	else {
-		Write-Host "`nNo Remote Assistance firewall rules found." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "No Remote Assistance firewall rules found."
 	}
 }
 catch {
 	Write-Host ""
-	Write-Warning "Firewall rule modification failed: $($_.Exception.Message)"
+	Write-Warning "$ScriptName`: Firewall rule modification failed: $($_.Exception.Message)"
 }
 
 if ($registryChanged -or $firewallChanged) {
-	Write-Host "`nRemote Assistance has been successfully disabled." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: Remote Assistance disabled successfully." -ForegroundColor Green
 }
 else {
-	Write-Host "`nRemote Assistance was already disabled. No changes made." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "$ScriptName`: Remote Assistance was already disabled. No changes made."
 }
 
 exit 0

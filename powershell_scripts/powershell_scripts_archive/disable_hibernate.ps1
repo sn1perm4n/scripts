@@ -9,13 +9,17 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 try {
 	# Check current Hibernation status
 	Write-Host "`nChecking Hibernation status..." -ForegroundColor Cyan
 	$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
 
 	if (-not $hibernationEnabled) {
-		Write-Host "`nHibernation is already disabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Hibernation is already disabled."
 	}
 	else {
 		# Disable Hibernation
@@ -26,16 +30,17 @@ try {
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
 
 		if (-not $hibernationEnabled) {
-			Write-Host "`nHibernation successfully disabled." -ForegroundColor Green
+			Write-Host "`n$ScriptName`: Hibernation disabled successfully." -ForegroundColor Green
 		}
 		else {
-			Write-Host "`nHibernation disable verification failed." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Hibernation disable verification failed."
 		}
 	}
 }
 catch {
 	Write-Host ""
-	Write-Error "An error occurred while managing Hibernation: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: An error occurred while managing Hibernation: $($_.Exception.Message)"
 	exit 1
 }
 

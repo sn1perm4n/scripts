@@ -8,6 +8,7 @@
 ; Ctrl + =           Auto-resize Details View columns
 ; Ctrl + Shift + C   Copy current folder path
 ; Ctrl + Shift + X   Copy selected file path(s)
+; Ctrl + Shift + Z   Copy selected filename(s) only (no path)
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
@@ -101,6 +102,7 @@ TooltipGui.Add("Text",,
 	"Ctrl + =           Auto-resize Details View columns`n"
 	"Ctrl + Shift + C   Copy current folder path`n"
 	"Ctrl + Shift + X   Copy selected file path(s)`n"
+	"Ctrl + Shift + Z   Copy selected filename(s) only (no path)`n"
 	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
 	"Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)`n"
 	"Ctrl + Alt + V     Open selected file(s) in VSCode`n"
@@ -226,6 +228,34 @@ GetTrayIconRECT(hwnd) {
 	A_Clipboard := joined
 }
 
+; Ctrl + Shift + Z → Copy selected filename(s) only (no path)
+^+z:: {
+	local ClipSaved := ClipboardAll()
+	A_Clipboard := ""
+	Send("^c")
+	if (!ClipWait(2)) {
+		A_Clipboard := ClipSaved
+		MsgBox("No file selected in File Explorer/Desktop.")
+		Return
+	}
+	local paths := A_Clipboard
+	if (paths = "") {
+		A_Clipboard := ClipSaved
+		MsgBox("No file selected in File Explorer/Desktop.")
+		Return
+	}
+	local files := StrSplit(paths, "`n")
+	local joined := ""
+	for file in files {
+		file := Trim(file, " `t`r`n")
+		if (file != "") {
+			SplitPath(file, &filename)
+			joined .= filename "`n"
+		}
+	}
+	A_Clipboard := RTrim(joined, "`n")
+}
+
 ; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
 ; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
 ^!t:: {
@@ -349,6 +379,7 @@ ShowHotkeys() {
 		"Ctrl + =`t`tAuto-resize Details View columns`n"
 		"Ctrl + Shift + C`tCopy current folder path`n"
 		"Ctrl + Shift + X`tCopy selected file path(s)`n"
+		"Ctrl + Shift + Z`tCopy selected filename(s) only (no path)`n"
 		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n"
 		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)`n"
 		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n`n"

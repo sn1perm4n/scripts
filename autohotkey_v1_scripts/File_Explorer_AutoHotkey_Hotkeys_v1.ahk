@@ -8,6 +8,7 @@
 ; Ctrl + =           Auto-resize Details View columns
 ; Ctrl + Shift + C   Copy current folder path (50 ms pause for reliability)
 ; Ctrl + Shift + X   Copy selected file path(s)
+; Ctrl + Shift + Z   Copy selected filename(s) only (no path)
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
@@ -157,6 +158,32 @@ Return
 	Clipboard := Clipboard  ; forces AHK to normalize Explorer clipboard file paths
 Return
 
+; Ctrl + Shift + Z → Copy selected filename(s) only (no path)
+^+z::
+	ClipSaved := ClipboardAll
+	Clipboard := ""
+	Send ^c
+	ClipWait, 0.5
+	If Clipboard =
+	{
+		Clipboard := ClipSaved
+		MsgBox, No file selected in File Explorer/Desktop.
+		Return
+	}
+	files := StrSplit(Clipboard, "`n")
+	joined := ""
+	For i, file in files
+	{
+		file := Trim(file, " `t`r`n")
+		if (file != "")
+		{
+			SplitPath, file, filename
+			joined .= filename "`n"
+		}
+	}
+	Clipboard := RTrim(joined, "`n")
+Return
+
 ; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
 ; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
 ^!t::
@@ -279,6 +306,7 @@ File Explorer Hotkeys v1
 Ctrl + =`t`tAuto-resize Details View columns
 Ctrl + Shift + C`tCopy current folder path
 Ctrl + Shift + X`tCopy selected file path(s)
+Ctrl + Shift + Z`tCopy selected filename(s) only (no path)
 Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop
 Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)
 Ctrl + Alt + V`tOpen selected file(s) in VSCode

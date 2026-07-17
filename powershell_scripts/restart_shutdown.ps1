@@ -23,6 +23,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Abort,
+	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUsePSCredentialType', '', Justification = 'Switch flag that triggers a secure Get-Credential prompt internally; not a raw credential parameter.')]
 	[switch]$Credential,
 	[int]$Delay = 0,
 	[switch]$Force,
@@ -149,7 +150,7 @@ else { "Abort" }
 Write-Host ""
 
 $processHost = {
-	param($targetHost, $op, $forceOp, $delayOp, $credOp, $isLocalOp)
+	param($targetHost, $op, $forceOp, $delayOp, [System.Management.Automation.PSCredential]$credOp, $isLocalOp)
 
 	$result = [PSCustomObject]@{
 		Host = $targetHost

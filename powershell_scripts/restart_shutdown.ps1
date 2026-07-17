@@ -9,11 +9,11 @@
 
 # Optional flags:
 #     -Abort: Cancel a pending restart or shutdown on the target(s)
-#     -Credential: Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
 #     -Delay <N>: Seconds before the operation executes (default: 0)
 #     -Force: Force close running applications without prompting
 #     -HostFile <PATH>: Path to a text file containing one hostname per line
 #     -Hostname <NAME> / -IP <ADDRESS>: Target hostname, IP address, or comma-separated list
+#     -Interactive: Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
 #     -Parallel: Process all hosts simultaneously instead of sequentially
 #     -Restart: Restart the target(s)
 #     -SaveResults <PATH>: Save results to a text file
@@ -23,13 +23,12 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Abort,
-	[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUsePSCredentialType', '', Justification = 'Switch flag that triggers a secure Get-Credential prompt internally; not a raw credential parameter.')]
-	[switch]$Credential,
 	[int]$Delay = 0,
 	[switch]$Force,
 	[string]$HostFile,
 	[Alias("IP")]
 	[string]$Hostname,
+	[switch]$Interactive,
 	[switch]$Parallel,
 	[switch]$Restart,
 	[string]$SaveResults,
@@ -41,14 +40,14 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Credential] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Parallel] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-Parallel] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Abort               Cancel a pending restart or shutdown on the target(s)" -ForegroundColor Cyan
-	Write-Host "  -Credential          Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog." -ForegroundColor Cyan
 	Write-Host "  -Delay <N>           Seconds before the operation executes (default: 0)" -ForegroundColor Cyan
 	Write-Host "  -Force               Force close running applications without prompting" -ForegroundColor Cyan
 	Write-Host "  -HostFile <PATH>     Path to a text file containing one hostname per line" -ForegroundColor Cyan
 	Write-Host "  -Hostname / -IP      Target hostname, IP address, or comma-separated list" -ForegroundColor Cyan
+	Write-Host "  -Interactive         Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog." -ForegroundColor Cyan
 	Write-Host "  -Parallel            Process all hosts simultaneously instead of sequentially" -ForegroundColor Cyan
 	Write-Host "  -Restart             Restart the target(s)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file" -ForegroundColor Cyan
@@ -128,9 +127,9 @@ if ($Parallel -and $hosts.Count -eq 1) {
 	Write-Warning "-Parallel has no effect when targeting a single host."
 }
 
-# Prompt for credentials if -Credential is specified and targeting remote machines
+# Prompt for credentials if -Interactive is specified and targeting remote machines
 $cred = $null
-if ($Credential -and -not $isLocal) {
+if ($Interactive -and -not $isLocal) {
 	$cred = Get-Credential -Message "Enter credentials for remote operation"
 	if (-not $cred) {
 		Write-Host ""

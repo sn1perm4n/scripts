@@ -245,14 +245,19 @@ GetTrayIconRECT(hwnd) {
 		Return
 	}
 	local files := StrSplit(paths, "`n")
-	local joined := ""
+	local filenames := []
 	for file in files {
 		file := Trim(file, " `t`r`n")
 		if (file != "") {
 			SplitPath(file, &filename)
-			joined .= filename "`n"
+			filenames.Push(filename)
 		}
 	}
+	; Sort filenames case-insensitively
+	filenames := filenames.Sort((a, b) => StrCompare(a, b, False))
+	local joined := ""
+	for filename in filenames
+		joined .= filename "`n"
 	A_Clipboard := RTrim(joined, "`n")
 }
 

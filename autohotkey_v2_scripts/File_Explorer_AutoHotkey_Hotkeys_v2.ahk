@@ -245,20 +245,18 @@ GetTrayIconRECT(hwnd) {
 		Return
 	}
 	local files := StrSplit(paths, "`n")
-	local filenames := []
+	local joined := ""
 	for file in files {
 		file := Trim(file, " `t`r`n")
 		if (file != "") {
 			SplitPath(file, &filename)
-			filenames.Push(filename)
+			joined .= filename "`n"
 		}
 	}
-	; Sort filenames case-insensitively
-	filenames := filenames.Sort((a, b) => StrCompare(a, b, False))
-	local joined := ""
-	for filename in filenames
-		joined .= filename "`n"
-	A_Clipboard := RTrim(joined, "`n")
+	joined := RTrim(joined, "`n")
+	; Sort filenames case-insensitively (default Sort behavior)
+	joined := Sort(joined)
+	A_Clipboard := joined
 }
 
 ; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop

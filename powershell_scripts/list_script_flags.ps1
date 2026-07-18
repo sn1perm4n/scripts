@@ -2,16 +2,16 @@
 # This script scans PowerShell scripts and lists all flags defined in their param blocks
 
 # Optional flags:
-#     -Align: Align flag descriptions into two columns when used with -Description (console output only)
-#     -Count: Show the number of scripts each flag appears in (only meaningful with -Unique)
-#     -Description: Include flag descriptions from the # Optional flags comment block
-#     -Filenames: Print only script names with no flag details or blank lines between entries
+#     -Align:                 Align flag descriptions into two columns when used with -Description (console output only)
+#     -Count:                 Show the number of scripts each flag appears in (only meaningful with -Unique)
+#     -Description:           Include flag descriptions from the # Optional flags comment block
+#     -Filenames:             Print only script names with no flag details or blank lines between entries
 #     -FlagFilter <NAME,...>: Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter "-SaveResults,-NoConsoleOutput")
-#     -Path <PATH>: Path to a PowerShell script (.ps1) or folder (prompts if not specified)
-#     -Recurse: Search subdirectories recursively
-#     -SaveResults <PATH>: Save results to a .csv file (appends if file exists)
-#     -Unique: Show only unique deduplicated flag names in an alphabetized list
-#     -Help / -?: Display this help message
+#     -Path <PATH>:           Path to a PowerShell script (.ps1) or folder (prompts if not specified)
+#     -Recurse:               Search subdirectories recursively
+#     -SaveResults <PATH>:    Save results to a .csv file (appends if file exists)
+#     -Unique:                Show only unique deduplicated flag names in an alphabetized list
+#     -Help / -?:             Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -33,16 +33,16 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME,...>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Align               Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
-	Write-Host "  -Count               Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
-	Write-Host "  -Description         Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
-	Write-Host "  -Filenames           Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
+	Write-Host "  -Align                  Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
+	Write-Host "  -Count                  Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
+	Write-Host "  -Description            Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
+	Write-Host "  -Filenames              Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
 	Write-Host "  -FlagFilter <NAME,...>  Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter `"-SaveResults,-NoConsoleOutput`")" -ForegroundColor Cyan
-	Write-Host "  -Path <PATH>         Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
-	Write-Host "  -Recurse             Search subdirectories recursively" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
-	Write-Host "  -Unique              Show only unique deduplicated flag names in an alphabetized list" -ForegroundColor Cyan
-	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
+	Write-Host "  -Path <PATH>            Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Recurse                Search subdirectories recursively" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>     Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
+	Write-Host "  -Unique                 Show only unique deduplicated flag names in an alphabetized list" -ForegroundColor Cyan
+	Write-Host "  -Help                   Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }

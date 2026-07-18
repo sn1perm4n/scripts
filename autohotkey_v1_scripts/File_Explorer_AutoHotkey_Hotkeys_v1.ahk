@@ -33,7 +33,7 @@
 ;
 ; 3. Triggers tab:
 ;       Begin the task: At log on
-;       Specific user: your username (or "Any user")
+;       Select "Any user"
 ;       Ensure "Enabled" is checked
 ;
 ; 4. Actions tab:
@@ -171,16 +171,21 @@ Return
 		Return
 	}
 	files := StrSplit(Clipboard, "`n")
-	joined := ""
+	filenames := []
 	For i, file in files
 	{
 		file := Trim(file, " `t`r`n")
 		if (file != "")
 		{
 			SplitPath, file, filename
-			joined .= filename "`n"
+			filenames.Push(filename)
 		}
 	}
+	; Sort filenames case-insensitively
+	Sort, filenames  ; AHK v1 Sort command handles case-insensitive sorting by default
+	joined := ""
+	For i, filename in filenames
+		joined .= filename "`n"
 	Clipboard := RTrim(joined, "`n")
 Return
 

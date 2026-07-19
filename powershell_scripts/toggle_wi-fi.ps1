@@ -56,28 +56,30 @@ try {
 
 	if ($enabling) {
 		if ($adapter.Status -eq 'Up' -or $adapter.Status -eq 'Disconnected') {
-			Write-Host "`nWi-Fi is already enabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Wi-Fi is already enabled."
 			exit 0
 		}
 		Enable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-		Write-Host "`nWi-Fi enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Wi-Fi enabled successfully." -ForegroundColor Green
 	}
 	else {
 		if ($adapter.Status -eq 'Disabled') {
-			Write-Host "`nWi-Fi is already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Wi-Fi is already disabled."
 			exit 0
 		}
 		Disable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-		Write-Host "`nWi-Fi disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Wi-Fi disabled successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($enabling) {
-		Write-Error "An error occurred while enabling Wi-Fi: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: An error occurred while enabling Wi-Fi: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "An error occurred while disabling Wi-Fi: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: An error occurred while disabling Wi-Fi: $($_.Exception.Message)"
 	}
 	exit 1
 }

@@ -56,28 +56,30 @@ Write-Host "`nChecking right-click menu style..." -ForegroundColor Cyan
 try {
 	if ($usingWindows10Style) {
 		if (Test-Path $regPath) {
-			Write-Host "`nWindows 10 style right-click menu is already active." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Windows 10 style right-click menu is already active."
 			exit 0
 		}
 		New-Item -Path $regPath -Value "" -Force | Out-Null
-		Write-Host "`nSwitched to Windows 10 style right-click menu successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Switched to Windows 10 style right-click menu successfully." -ForegroundColor Green
 	}
 	else {
 		if (-not (Test-Path $regParent)) {
-			Write-Host "`nWindows 11 style right-click menu is already active." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Windows 11 style right-click menu is already active."
 			exit 0
 		}
 		Remove-Item -Path $regParent -Recurse -Force -ErrorAction Stop
-		Write-Host "`nSwitched to Windows 11 style right-click menu successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Switched to Windows 11 style right-click menu successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($usingWindows10Style) {
-		Write-Error "Failed to switch to Windows 10 style right-click menu: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to switch to Windows 10 style right-click menu: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "Failed to switch to Windows 11 style right-click menu: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to switch to Windows 11 style right-click menu: $($_.Exception.Message)"
 	}
 	exit 1
 }
@@ -87,11 +89,11 @@ try {
 	Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
 	Start-Sleep -Seconds 2
 	Start-Process explorer
-	Write-Host "`nFile Explorer restarted successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: File Explorer restarted successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""
-	Write-Error "Failed to restart File Explorer: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Failed to restart File Explorer: $($_.Exception.Message)"
 	exit 1
 }
 

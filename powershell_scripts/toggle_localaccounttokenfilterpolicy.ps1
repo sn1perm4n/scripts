@@ -61,28 +61,30 @@ try {
 
 	if ($enabling) {
 		if ($currentValue -eq 1) {
-			Write-Host "`nLocalAccountTokenFilterPolicy is already enabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "LocalAccountTokenFilterPolicy is already enabled."
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 1 -Force -ErrorAction Stop
-		Write-Host "`nLocalAccountTokenFilterPolicy successfully enabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: LocalAccountTokenFilterPolicy enabled successfully." -ForegroundColor Green
 	}
 	else {
 		if ($currentValue -eq 0 -or $null -eq $currentValue) {
-			Write-Host "`nLocalAccountTokenFilterPolicy is already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "LocalAccountTokenFilterPolicy is already disabled."
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 0 -Force -ErrorAction Stop
-		Write-Host "`nLocalAccountTokenFilterPolicy successfully disabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: LocalAccountTokenFilterPolicy disabled successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($enabling) {
-		Write-Error "Failed to enable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to enable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "Failed to disable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to disable LocalAccountTokenFilterPolicy: $($_.Exception.Message)"
 	}
 	exit 1
 }

@@ -60,42 +60,48 @@ try {
 
 	if ($enabling) {
 		if ($hibernationEnabled) {
-			Write-Host "`nHibernation is already enabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Hibernation is already enabled."
 			exit 0
 		}
 		Write-Host "`nEnabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate on
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
 		if ($hibernationEnabled) {
-			Write-Host "`nHibernation successfully enabled." -ForegroundColor Green
+			Write-Host "`n$ScriptName`: Hibernation enabled successfully." -ForegroundColor Green
 		}
 		else {
-			Write-Host "`nHibernation enable verification failed." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Error "$ScriptName`: Hibernation enable verification failed."
+			exit 1
 		}
 	}
 	else {
 		if (-not $hibernationEnabled) {
-			Write-Host "`nHibernation is already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Hibernation is already disabled."
 			exit 0
 		}
 		Write-Host "`nDisabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate off
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
 		if (-not $hibernationEnabled) {
-			Write-Host "`nHibernation successfully disabled." -ForegroundColor Green
+			Write-Host "`n$ScriptName`: Hibernation disabled successfully." -ForegroundColor Green
 		}
 		else {
-			Write-Host "`nHibernation disable verification failed." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Error "$ScriptName`: Hibernation disable verification failed."
+			exit 1
 		}
 	}
 }
 catch {
 	Write-Host ""
 	if ($enabling) {
-		Write-Error "An error occurred while enabling Hibernation: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: An error occurred while enabling Hibernation: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "An error occurred while disabling Hibernation: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: An error occurred while disabling Hibernation: $($_.Exception.Message)"
 	}
 	exit 1
 }

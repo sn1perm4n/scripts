@@ -55,7 +55,8 @@ try {
 
 	if ($showing) {
 		if ($hidden -eq 1 -and $showSuperHidden -eq 1) {
-			Write-Host "`nHidden files and folders are already visible." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Hidden files and folders are already visible."
 			exit 0
 		}
 		Set-ItemProperty -Path $registryPath -Name Hidden -Type DWord -Value 1 -Force -ErrorAction Stop
@@ -63,11 +64,12 @@ try {
 		# Refresh File Explorer to apply changes immediately
 		$shell = New-Object -ComObject Shell.Application
 		$shell.Windows() | ForEach-Object { $_.Refresh() }
-		Write-Host "`nHidden files and folders successfully made visible." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Hidden files and folders made visible successfully." -ForegroundColor Green
 	}
 	else {
 		if ($hidden -eq 0 -and $showSuperHidden -eq 0) {
-			Write-Host "`nHidden files and folders are already hidden." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Hidden files and folders are already hidden."
 			exit 0
 		}
 		Set-ItemProperty -Path $registryPath -Name Hidden -Type DWord -Value 0 -Force -ErrorAction Stop
@@ -75,16 +77,16 @@ try {
 		# Refresh File Explorer to apply changes immediately
 		$shell = New-Object -ComObject Shell.Application
 		$shell.Windows() | ForEach-Object { $_.Refresh() }
-		Write-Host "`nHidden files and folders successfully hidden." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Hidden files and folders hidden successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($showing) {
-		Write-Error "Failed to show hidden files and folders: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to show hidden files and folders: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "Failed to hide hidden files and folders: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to hide hidden files and folders: $($_.Exception.Message)"
 	}
 	exit 1
 }

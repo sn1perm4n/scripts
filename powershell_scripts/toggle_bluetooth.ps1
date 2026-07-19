@@ -52,36 +52,39 @@ try {
 	$devices = Get-PnpDevice -Class Bluetooth -ErrorAction Stop
 
 	if (-not $devices) {
-		Write-Host "`nNo Bluetooth devices found." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "No Bluetooth devices found."
 		exit 0
 	}
 
 	if ($enabling) {
 		$targetDevices = $devices | Where-Object { $_.Status -eq 'Error' }
 		if (-not $targetDevices) {
-			Write-Host "`nBluetooth is already enabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Bluetooth is already enabled."
 			exit 0
 		}
 		$targetDevices | Enable-PnpDevice -Confirm:$false -ErrorAction Stop
-		Write-Host "`nBluetooth enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Bluetooth enabled successfully." -ForegroundColor Green
 	}
 	else {
 		$targetDevices = $devices | Where-Object { $_.Status -eq 'OK' }
 		if (-not $targetDevices) {
-			Write-Host "`nBluetooth is already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Bluetooth is already disabled."
 			exit 0
 		}
 		$targetDevices | Disable-PnpDevice -Confirm:$false -ErrorAction Stop
-		Write-Host "`nBluetooth disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Bluetooth disabled successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($enabling) {
-		Write-Error "An error occurred while enabling Bluetooth: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: An error occurred while enabling Bluetooth: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "An error occurred while disabling Bluetooth: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: An error occurred while disabling Bluetooth: $($_.Exception.Message)"
 	}
 	exit 1
 }

@@ -75,7 +75,7 @@ $alreadyCount = 0
 foreach ($adapter in $adapters) {
 	if ($Enable) {
 		if ($adapter.Status -eq 'OK') {
-			Write-Host "Already enabled: $($adapter.FriendlyName)" -ForegroundColor Yellow
+			Write-Warning "Already enabled: $($adapter.FriendlyName)"
 			$alreadyCount++
 		}
 		else {
@@ -86,13 +86,13 @@ foreach ($adapter in $adapters) {
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not enable $($adapter.FriendlyName): $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not enable $($adapter.FriendlyName): $($_.Exception.Message)"
 			}
 		}
 	}
 	else {
 		if ($adapter.Status -eq 'Error' -or $adapter.Status -eq 'Unknown') {
-			Write-Host "Already disabled: $($adapter.FriendlyName)" -ForegroundColor Yellow
+			Write-Warning "Already disabled: $($adapter.FriendlyName)"
 			$alreadyCount++
 		}
 		else {
@@ -103,7 +103,7 @@ foreach ($adapter in $adapters) {
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not disable $($adapter.FriendlyName): $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not disable $($adapter.FriendlyName): $($_.Exception.Message)"
 			}
 		}
 	}
@@ -111,7 +111,13 @@ foreach ($adapter in $adapters) {
 
 $action = if ($Enable) { "enabled" } else { "disabled" }
 $summaryLine = "$ScriptName`: $changedCount adapter(s) $action, $alreadyCount already $action."
-Write-Host "`n$summaryLine" -ForegroundColor $(if ($changedCount -gt 0) { 'Green' } else { 'Yellow' })
+if ($changedCount -gt 0) {
+	Write-Host "`n$summaryLine" -ForegroundColor Green
+}
+else {
+	Write-Host ""
+	Write-Warning $summaryLine
+}
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

@@ -57,7 +57,8 @@ try {
 
 	if ($enabling) {
 		if ($currentValue -eq 1) {
-			Write-Host "`nRemote Assistance is already enabled in the registry." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Remote Assistance is already enabled in the registry."
 		}
 		else {
 			Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 1 -Type DWord -ErrorAction Stop
@@ -67,7 +68,8 @@ try {
 	}
 	else {
 		if ($currentValue -eq 0) {
-			Write-Host "`nRemote Assistance is already disabled in the registry." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Remote Assistance is already disabled in the registry."
 		}
 		else {
 			Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 0 -Type DWord -ErrorAction Stop
@@ -78,7 +80,7 @@ try {
 }
 catch {
 	Write-Host ""
-	Write-Error "Failed to check or modify Remote Assistance registry setting: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: Failed to check or modify Remote Assistance registry setting: $($_.Exception.Message)"
 	exit 1
 }
 
@@ -93,7 +95,8 @@ try {
 				$firewallChanged = $true
 			}
 			else {
-				Write-Host "`nRemote Assistance firewall rules are already enabled." -ForegroundColor Yellow
+				Write-Host ""
+				Write-Warning "Remote Assistance firewall rules are already enabled."
 			}
 		}
 		else {
@@ -104,33 +107,37 @@ try {
 				$firewallChanged = $true
 			}
 			else {
-				Write-Host "`nRemote Assistance firewall rules are already disabled." -ForegroundColor Yellow
+				Write-Host ""
+				Write-Warning "Remote Assistance firewall rules are already disabled."
 			}
 		}
 	}
 	else {
-		Write-Host "`nNo Remote Assistance firewall rules found." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "No Remote Assistance firewall rules found."
 	}
 }
 catch {
 	Write-Host ""
-	Write-Warning "Firewall rule modification failed: $($_.Exception.Message)"
+	Write-Warning "$ScriptName`: Firewall rule modification failed: $($_.Exception.Message)"
 }
 
 if ($enabling) {
 	if ($registryChanged -or $firewallChanged) {
-		Write-Host "`nRemote Assistance has been successfully enabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Remote Assistance enabled successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nRemote Assistance was already enabled. No changes made." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "$ScriptName`: Remote Assistance was already enabled. No changes made."
 	}
 }
 else {
 	if ($registryChanged -or $firewallChanged) {
-		Write-Host "`nRemote Assistance has been successfully disabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Remote Assistance disabled successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nRemote Assistance was already disabled. No changes made." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "$ScriptName`: Remote Assistance was already disabled. No changes made."
 	}
 }
 

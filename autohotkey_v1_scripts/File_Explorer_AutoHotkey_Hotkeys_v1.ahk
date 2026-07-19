@@ -171,22 +171,20 @@ Return
 		Return
 	}
 	files := StrSplit(Clipboard, "`n")
-	filenames := []
+	joined := ""
 	For i, file in files
 	{
 		file := Trim(file, " `t`r`n")
 		if (file != "")
 		{
 			SplitPath, file, filename
-			filenames.Push(filename)
+			joined .= filename "`n"
 		}
 	}
-	; Sort filenames case-insensitively
-	Sort, filenames  ; AHK v1 Sort command handles case-insensitive sorting by default
-	joined := ""
-	For i, filename in filenames
-		joined .= filename "`n"
-	Clipboard := RTrim(joined, "`n")
+	joined := RTrim(joined, "`n")
+	; Sort filenames case-insensitively (default Sort behavior)
+	Sort, joined
+	Clipboard := joined
 Return
 
 ; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop

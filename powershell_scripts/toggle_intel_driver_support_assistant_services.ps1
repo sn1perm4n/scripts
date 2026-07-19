@@ -55,28 +55,31 @@ Write-Host "`nChecking Intel DSA service(s) status..." -ForegroundColor Cyan
 # Process DSAService
 $svc = Get-Service -Name $dsaService -ErrorAction SilentlyContinue
 if (-not $svc) {
-	Write-Host "`nService '$dsaService' not found." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "Service '$dsaService' not found."
 }
 else {
 	if ($enabling) {
 		# Enable DSAService
 		if ($svc.StartType -eq 'Automatic') {
-			Write-Host "`nService '$dsaService' is already enabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaService' is already enabled."
 		}
 		else {
 			try {
 				Set-Service -Name $dsaService -StartupType Automatic -ErrorAction Stop
-				Write-Host "`nService '$dsaService' startup type successfully set to Automatic." -ForegroundColor Green
+				Write-Host "`nService '$dsaService' startup type set to Automatic successfully." -ForegroundColor Green
 				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not enable service '$dsaService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not enable service '$dsaService': $($_.Exception.Message)"
 			}
 		}
 		# Start DSAService
 		if ($svc.Status -eq 'Running') {
-			Write-Host "Service '$dsaService' is already running." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaService' is already running."
 		}
 		else {
 			try {
@@ -86,29 +89,31 @@ else {
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not start service '$dsaService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not start service '$dsaService': $($_.Exception.Message)"
 			}
 		}
 	}
 	else {
 		# Disable DSAService
 		if ($svc.StartType -eq 'Disabled') {
-			Write-Host "`nService '$dsaService' is already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaService' is already disabled."
 		}
 		else {
 			try {
 				Set-Service -Name $dsaService -StartupType Disabled -ErrorAction Stop
-				Write-Host "`nService '$dsaService' startup type successfully set to Disabled." -ForegroundColor Green
+				Write-Host "`nService '$dsaService' startup type set to Disabled successfully." -ForegroundColor Green
 				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not disable service '$dsaService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not disable service '$dsaService': $($_.Exception.Message)"
 			}
 		}
 		# Stop DSAService
 		if ($svc.Status -eq 'Stopped') {
-			Write-Host "Service '$dsaService' is already stopped." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaService' is already stopped."
 		}
 		else {
 			try {
@@ -118,7 +123,7 @@ else {
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not stop service '$dsaService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not stop service '$dsaService': $($_.Exception.Message)"
 			}
 		}
 	}
@@ -127,28 +132,31 @@ else {
 # Process DSAUpdateService
 $svc = Get-Service -Name $dsaUpdateService -ErrorAction SilentlyContinue
 if (-not $svc) {
-	Write-Host "`nService '$dsaUpdateService' not found." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "Service '$dsaUpdateService' not found."
 }
 else {
 	if ($enabling) {
 		# Enable DSAUpdateService
 		if ($svc.StartType -eq 'Automatic') {
-			Write-Host "`nService '$dsaUpdateService' is already enabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaUpdateService' is already enabled."
 		}
 		else {
 			try {
 				Set-Service -Name $dsaUpdateService -StartupType Automatic -ErrorAction Stop
-				Write-Host "`nService '$dsaUpdateService' startup type successfully set to Automatic." -ForegroundColor Green
+				Write-Host "`nService '$dsaUpdateService' startup type set to Automatic successfully." -ForegroundColor Green
 				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not enable service '$dsaUpdateService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not enable service '$dsaUpdateService': $($_.Exception.Message)"
 			}
 		}
 		# Start DSAUpdateService
 		if ($svc.Status -eq 'Running') {
-			Write-Host "Service '$dsaUpdateService' is already running." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaUpdateService' is already running."
 		}
 		else {
 			try {
@@ -158,29 +166,31 @@ else {
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not start service '$dsaUpdateService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not start service '$dsaUpdateService': $($_.Exception.Message)"
 			}
 		}
 	}
 	else {
 		# Disable DSAUpdateService
 		if ($svc.StartType -eq 'Disabled') {
-			Write-Host "`nService '$dsaUpdateService' is already disabled." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaUpdateService' is already disabled."
 		}
 		else {
 			try {
 				Set-Service -Name $dsaUpdateService -StartupType Disabled -ErrorAction Stop
-				Write-Host "`nService '$dsaUpdateService' startup type successfully set to Disabled." -ForegroundColor Green
+				Write-Host "`nService '$dsaUpdateService' startup type set to Disabled successfully." -ForegroundColor Green
 				$changesMade = $true
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not disable service '$dsaUpdateService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not disable service '$dsaUpdateService': $($_.Exception.Message)"
 			}
 		}
 		# Stop DSAUpdateService
 		if ($svc.Status -eq 'Stopped') {
-			Write-Host "Service '$dsaUpdateService' is already stopped." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "Service '$dsaUpdateService' is already stopped."
 		}
 		else {
 			try {
@@ -190,7 +200,7 @@ else {
 			}
 			catch {
 				Write-Host ""
-				Write-Warning "Could not stop service '$dsaUpdateService': $($_.Exception.Message)"
+				Write-Warning "$ScriptName`: Could not stop service '$dsaUpdateService': $($_.Exception.Message)"
 			}
 		}
 	}
@@ -198,18 +208,20 @@ else {
 
 if ($enabling) {
 	if ($changesMade) {
-		Write-Host "`n$ScriptName`: Intel DSA services successfully enabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Intel DSA services enabled successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: Intel DSA services were already enabled. No changes made." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "$ScriptName`: Intel DSA services were already enabled. No changes made."
 	}
 }
 else {
 	if ($changesMade) {
-		Write-Host "`n$ScriptName`: Intel DSA services successfully disabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Intel DSA services disabled successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: Intel DSA services were already disabled. No changes made." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "$ScriptName`: Intel DSA services were already disabled. No changes made."
 	}
 }
 

@@ -53,29 +53,32 @@ Write-Host "`nChecking RemoteRegistry service status..." -ForegroundColor Cyan
 
 $svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
 if (-not $svc) {
-	Write-Host "`nService '$serviceName' not found." -ForegroundColor Yellow
+	Write-Host ""
+	Write-Warning "Service '$serviceName' not found."
 	exit 0
 }
 
 if ($enabling) {
 	# Enable the service (Windows default is Manual)
 	if ($svc.StartType -eq 'Manual') {
-		Write-Host "`nService '$serviceName' is already enabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$serviceName' is already enabled."
 	}
 	else {
 		try {
 			Set-Service -Name $serviceName -StartupType Manual -ErrorAction Stop
-			Write-Host "`nService '$serviceName' startup type successfully set to Manual." -ForegroundColor Green
+			Write-Host "`nService '$serviceName' startup type set to Manual successfully." -ForegroundColor Green
 			$serviceChanged = $true
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not enable service '$serviceName': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not enable service '$serviceName': $($_.Exception.Message)"
 		}
 	}
 	# Start the service
 	if ($svc.Status -eq 'Running') {
-		Write-Host "Service '$serviceName' is already running." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$serviceName' is already running."
 	}
 	else {
 		try {
@@ -85,29 +88,31 @@ if ($enabling) {
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not start service '$serviceName': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not start service '$serviceName': $($_.Exception.Message)"
 		}
 	}
 }
 else {
 	# Disable the service
 	if ($svc.StartType -eq 'Disabled') {
-		Write-Host "`nService '$serviceName' is already disabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$serviceName' is already disabled."
 	}
 	else {
 		try {
 			Set-Service -Name $serviceName -StartupType Disabled -ErrorAction Stop
-			Write-Host "`nService '$serviceName' startup type successfully set to Disabled." -ForegroundColor Green
+			Write-Host "`nService '$serviceName' startup type set to Disabled successfully." -ForegroundColor Green
 			$serviceChanged = $true
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not disable service '$serviceName': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not disable service '$serviceName': $($_.Exception.Message)"
 		}
 	}
 	# Stop the service if it's currently running
 	if ($svc.Status -eq 'Stopped') {
-		Write-Host "Service '$serviceName' is already stopped." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Service '$serviceName' is already stopped."
 	}
 	else {
 		try {
@@ -117,25 +122,27 @@ else {
 		}
 		catch {
 			Write-Host ""
-			Write-Warning "Could not stop service '$serviceName': $($_.Exception.Message)"
+			Write-Warning "$ScriptName`: Could not stop service '$serviceName': $($_.Exception.Message)"
 		}
 	}
 }
 
 if ($enabling) {
 	if ($serviceChanged) {
-		Write-Host "`n$ScriptName`: RemoteRegistry service successfully enabled and started." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: RemoteRegistry service enabled and started successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: RemoteRegistry service was already enabled and running. No changes made." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "$ScriptName`: RemoteRegistry service was already enabled and running. No changes made."
 	}
 }
 else {
 	if ($serviceChanged) {
-		Write-Host "`n$ScriptName`: RemoteRegistry service successfully disabled and stopped." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: RemoteRegistry service disabled and stopped successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: RemoteRegistry service was already disabled and stopped. No changes made." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "$ScriptName`: RemoteRegistry service was already disabled and stopped. No changes made."
 	}
 }
 

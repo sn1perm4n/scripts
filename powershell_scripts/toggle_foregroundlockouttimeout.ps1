@@ -66,28 +66,30 @@ try {
 
 	if ($disabling) {
 		if ($currentValue -eq 0) {
-			Write-Host "`nForegroundLockTimeout is already set to 0." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "ForegroundLockTimeout is already set to 0."
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name $regName -Type DWord -Value 0 -Force -ErrorAction Stop
-		Write-Host "`nForegroundLockTimeout successfully set to 0. Please reboot for the change to take effect." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: ForegroundLockTimeout set to 0 successfully. Please reboot for the change to take effect." -ForegroundColor Green
 	}
 	else {
 		if ($currentValue -eq $defaultValue) {
-			Write-Host "`nForegroundLockTimeout is already set to the default value (0x30d40 / 200000ms)." -ForegroundColor Yellow
+			Write-Host ""
+			Write-Warning "ForegroundLockTimeout is already set to the default value (0x30d40 / 200000ms)."
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name $regName -Type DWord -Value $defaultValue -Force -ErrorAction Stop
-		Write-Host "`nForegroundLockTimeout successfully restored to default (0x30d40 / 200000ms). Please reboot for the change to take effect." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: ForegroundLockTimeout restored to default (0x30d40 / 200000ms) successfully. Please reboot for the change to take effect." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($disabling) {
-		Write-Error "Failed to set ForegroundLockTimeout to 0: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to set ForegroundLockTimeout to 0: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "Failed to restore ForegroundLockTimeout to default: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to restore ForegroundLockTimeout to default: $($_.Exception.Message)"
 	}
 	exit 1
 }

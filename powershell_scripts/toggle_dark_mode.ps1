@@ -61,11 +61,13 @@ try {
 	$systemLight = $props.SystemUsesLightTheme
 
 	if ($enabling -and $appsLight -eq 0 -and $systemLight -eq 0) {
-		Write-Host "`nDark mode is already enabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Dark mode is already enabled."
 		exit 0
 	}
 	if (-not $enabling -and $appsLight -eq 1 -and $systemLight -eq 1) {
-		Write-Host "`nDark mode is already disabled." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Dark mode is already disabled."
 		exit 0
 	}
 
@@ -73,19 +75,19 @@ try {
 	Set-ItemProperty -Path $regPath -Name "SystemUsesLightTheme" -Type DWord -Value $value -Force -ErrorAction Stop
 
 	if ($enabling) {
-		Write-Host "`nDark mode successfully enabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Dark mode enabled successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`nDark mode successfully disabled." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: Dark mode disabled successfully." -ForegroundColor Green
 	}
 }
 catch {
 	Write-Host ""
 	if ($enabling) {
-		Write-Error "Failed to enable dark mode: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to enable dark mode: $($_.Exception.Message)"
 	}
 	else {
-		Write-Error "Failed to disable dark mode: $($_.Exception.Message)"
+		Write-Error "$ScriptName`: Failed to disable dark mode: $($_.Exception.Message)"
 	}
 	exit 1
 }

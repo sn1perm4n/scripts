@@ -12,6 +12,8 @@
 # Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
+$hadWarnings = $false
+
 # Update source database
 Write-Host "`nUpdating winget source database..." -ForegroundColor Cyan
 try {
@@ -23,6 +25,7 @@ try {
 catch {
 	Write-Host ""
 	Write-Warning "Failed to update winget source database: $($_.Exception.Message)"
+	$hadWarnings = $true
 }
 
 # Show programs that need updating
@@ -36,10 +39,18 @@ try {
 catch {
 	Write-Host ""
 	Write-Warning "Failed to retrieve upgrade list: $($_.Exception.Message)"
+	$hadWarnings = $true
 }
 
-Write-Host "`n$ScriptName`: Completed successfully." -ForegroundColor Green
-exit 0
+if ($hadWarnings) {
+	Write-Host ""
+	Write-Warning "$ScriptName`: Completed with warnings."
+	exit 1
+}
+else {
+	Write-Host "`n$ScriptName`: Completed successfully." -ForegroundColor Green
+	exit 0
+}
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

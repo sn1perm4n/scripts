@@ -119,6 +119,9 @@ try {
 
 	# Capture all upgradeable packages, filtering pinned apps for logging purposes
 	$allUpgrades = winget upgrade --accept-source-agreements --disable-interactivity
+	if ($LASTEXITCODE -ne 0) {
+		throw "winget exited with code $LASTEXITCODE while checking for upgrades."
+	}
 	$upgradeable = $allUpgrades | Where-Object {
 		$appId = ($_ -split '\s{2,}')[1]
 		-not $pinnedApps.Contains($appId)
@@ -131,6 +134,9 @@ try {
 	if ($UpgradeAll -and $upgradeable) {
 		if (-not $NoConsoleOutput) { Write-Host "`nUpgrading all available packages..." -ForegroundColor Cyan }
 		winget upgrade --all --accept-source-agreements --accept-package-agreements --disable-interactivity
+		if ($LASTEXITCODE -ne 0) {
+			throw "winget exited with code $LASTEXITCODE while upgrading packages."
+		}
 		if (-not $NoConsoleOutput) { Write-Host "`nUpgrade operation completed." -ForegroundColor Green }
 	}
 

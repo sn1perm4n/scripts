@@ -12,6 +12,8 @@
 # Optional flags:
 #     -InstallIfMissing: Install winget if it is not found on the system
 #     -LogToDesktop: Save results to a file named winget_<COMPUTERNAME>.txt on the desktop
+#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
+#     -NoLog: Delete winget's own diagnostic log file(s) created during this run (winget has no native flag to suppress log creation, so this deletes them afterward instead)
 #     -SaveResults <PATH>: Append results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -UpgradeAll: Upgrade all available packages after displaying the upgrade list
 #     -Help / -?: Display this help message
@@ -22,6 +24,8 @@
 param (
 	[switch]$InstallIfMissing,
 	[switch]$LogToDesktop,
+	[switch]$NoConsoleOutput,
+	[switch]$NoLog,
 	[string]$SaveResults,
 	[switch]$UpgradeAll,
 	[switch]$Help
@@ -32,10 +36,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-InstallIfMissing] [-LogToDesktop] [-SaveResults <PATH>] [-UpgradeAll] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-InstallIfMissing] [-LogToDesktop] [-NoConsoleOutput] [-NoLog] [-SaveResults <PATH>] [-UpgradeAll] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -InstallIfMissing    Install winget if it is not found on the system" -ForegroundColor Cyan
 	Write-Host "  -LogToDesktop        Save results to a file named winget_<COMPUTERNAME>.txt on the desktop" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoLog               Delete winget's own diagnostic log file(s) created during this run" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Append results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -UpgradeAll          Upgrade all available packages after displaying the upgrade list" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -53,35 +59,49 @@ if ($SaveResults) {
 	}
 }
 
+# -NoConsoleOutput requires -SaveResults
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
+}
+
 # Optional log file path for -LogToDesktop
 if ($LogToDesktop) {
 	$desktopPath = [Environment]::GetFolderPath("Desktop")
 	$logFile = Join-Path $desktopPath "winget_$($env:COMPUTERNAME).txt"
 }
 
+# Snapshot winget's own diagnostic log directory before running so -NoLog can identify and
+# remove only the log file(s) created during this run, without touching any pre-existing logs
+if ($NoLog) {
+	$wingetLogDir = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir"
+	$preExistingLogs = if (Test-Path $wingetLogDir) { (Get-ChildItem -Path $wingetLogDir -File -ErrorAction SilentlyContinue).Name } else { @() }
+}
+
 try {
 	# Ensure winget is installed
-	Write-Host "`nChecking for winget..." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nChecking for winget..." -ForegroundColor Cyan }
 	if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 		if ($InstallIfMissing) {
-			Write-Host "winget not found. Attempting installation..." -ForegroundColor Cyan
+			if (-not $NoConsoleOutput) { Write-Host "winget not found. Attempting installation..." -ForegroundColor Cyan }
 			Add-AppxPackage -RegisterByFamilyName "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
 			Start-Sleep -Seconds 3
 			if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 				throw "winget installation failed."
 			}
-			Write-Host "winget installed successfully." -ForegroundColor Green
+			if (-not $NoConsoleOutput) { Write-Host "winget installed successfully." -ForegroundColor Green }
 		}
 		else {
 			throw "winget is not installed. Use -InstallIfMissing to install it."
 		}
 	}
 	else {
-		Write-Host "winget is already installed." -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "winget is already installed." -ForegroundColor Green }
 	}
 
 	# Priming step for first-run initialization
-	Write-Host "`nPriming winget (first-run initialization)..." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nPriming winget (first-run initialization)..." -ForegroundColor Cyan }
 	winget source update
 	winget upgrade --accept-source-agreements --disable-interactivity >$null 2>&1
 
@@ -95,23 +115,23 @@ try {
 	}
 
 	# Pre-check upgrades using winget native table
-	Write-Host "`nChecking for available upgrades..." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nChecking for available upgrades..." -ForegroundColor Cyan }
 
 	# Capture all upgradeable packages, filtering pinned apps for logging purposes
-	$allUpgrades = winget upgrade --accept-source-agreements --disable-interactivity | Tee-Object -Variable rawOutput
+	$allUpgrades = winget upgrade --accept-source-agreements --disable-interactivity
 	$upgradeable = $allUpgrades | Where-Object {
 		$appId = ($_ -split '\s{2,}')[1]
 		-not $pinnedApps.Contains($appId)
 	}
 
 	# Display native table to console
-	$allUpgrades
+	if (-not $NoConsoleOutput) { $allUpgrades }
 
 	# Upgrade all if requested
 	if ($UpgradeAll -and $upgradeable) {
-		Write-Host "`nUpgrading all available packages..." -ForegroundColor Cyan
+		if (-not $NoConsoleOutput) { Write-Host "`nUpgrading all available packages..." -ForegroundColor Cyan }
 		winget upgrade --all --accept-source-agreements --accept-package-agreements --disable-interactivity
-		Write-Host "`nUpgrade operation completed." -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`nUpgrade operation completed." -ForegroundColor Green }
 	}
 
 	# Save to desktop log if requested
@@ -126,7 +146,7 @@ try {
 			)
 		}
 		$logLines | Out-File -FilePath $logFile -Encoding UTF8
-		Write-Host "`nwinget log saved to $logFile." -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`nwinget log saved to $logFile." -ForegroundColor Green }
 	}
 
 	# Append to -SaveResults file if requested
@@ -147,7 +167,7 @@ try {
 		try {
 			$appendString = ($appendLines -join "`n")
 			[System.IO.File]::AppendAllText($SaveResults, $appendString)
-			Write-Host "`nResults appended to text file: $SaveResults" -ForegroundColor Green
+			if (-not $NoConsoleOutput) { Write-Host "`nResults appended to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
 			Write-Host ""
@@ -155,13 +175,21 @@ try {
 		}
 	}
 
-	Write-Host "`nCompleted successfully." -ForegroundColor Green
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Completed successfully." -ForegroundColor Green }
 	exit 0
 }
 catch {
 	Write-Host ""
-	Write-Error "An error occurred: $($_.Exception.Message)"
+	Write-Error "$ScriptName`: An error occurred: $($_.Exception.Message)"
 	exit 1
+}
+finally {
+	if ($NoLog -and (Test-Path $wingetLogDir)) {
+		$newLogs = Get-ChildItem -Path $wingetLogDir -File -ErrorAction SilentlyContinue | Where-Object { $preExistingLogs -notcontains $_.Name }
+		if ($newLogs) {
+			$newLogs | Remove-Item -Force -ErrorAction SilentlyContinue
+		}
+	}
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

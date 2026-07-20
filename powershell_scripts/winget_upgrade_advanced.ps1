@@ -12,7 +12,7 @@
 # Optional flags:
 #     -InstallIfMissing: Install winget if it is not found on the system
 #     -LogToDesktop: Save results to a file named winget_<COMPUTERNAME>.txt on the desktop
-#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
+#     -NoConsoleOutput: Suppress console output (requires -SaveResults); errors are redirected into the results file instead of being lost
 #     -NoLog: Delete winget's own diagnostic log file(s) created during this run (winget has no native flag to suppress log creation, so this deletes them afterward instead)
 #     -SaveResults <PATH>: Append results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -UpgradeAll: Upgrade all available packages after displaying the upgrade list
@@ -40,7 +40,7 @@ if ($Help) {
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -InstallIfMissing    Install winget if it is not found on the system" -ForegroundColor Cyan
 	Write-Host "  -LogToDesktop        Save results to a file named winget_<COMPUTERNAME>.txt on the desktop" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults); errors go to the results file instead" -ForegroundColor Cyan
 	Write-Host "  -NoLog               Delete winget's own diagnostic log file(s) created during this run" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Append results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -UpgradeAll          Upgrade all available packages after displaying the upgrade list" -ForegroundColor Cyan
@@ -170,6 +170,9 @@ try {
 			if (-not $NoConsoleOutput) { Write-Host "`nResults appended to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
+			# This warning covers a failure to write to -SaveResults itself, so there's no
+			# file left to redirect it into - it always prints to console, even with
+			# -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 			Write-Host ""
 			Write-Warning "Could not append results to '$SaveResults': $($_.Exception.Message)"
 		}
@@ -179,8 +182,22 @@ try {
 	exit 0
 }
 catch {
-	Write-Host ""
-	Write-Error "$ScriptName`: An error occurred: $($_.Exception.Message)"
+	$errorMessage = "$ScriptName`: An error occurred: $($_.Exception.Message)"
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			# The results file itself couldn't be written to, so there's nowhere else to
+			# record this - fall back to console as a last resort rather than losing it entirely
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 finally {

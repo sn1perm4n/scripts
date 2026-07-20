@@ -9,10 +9,16 @@
 
 #Requires -RunAsAdministrator
 
+# Get the script name for usage/help output
+$ScriptName = Split-Path $PSCommandPath -Leaf
+
 # Update source database
 Write-Host "`nUpdating winget source database..." -ForegroundColor Cyan
 try {
-	winget source update
+	winget source update --accept-source-agreements --disable-interactivity
+	if ($LASTEXITCODE -ne 0) {
+		throw "winget exited with code $LASTEXITCODE."
+	}
 }
 catch {
 	Write-Host ""
@@ -22,13 +28,17 @@ catch {
 # Show programs that need updating
 Write-Host "`nChecking for available upgrades..." -ForegroundColor Cyan
 try {
-	winget upgrade
+	winget upgrade --accept-source-agreements --disable-interactivity
+	if ($LASTEXITCODE -ne 0) {
+		throw "winget exited with code $LASTEXITCODE."
+	}
 }
 catch {
 	Write-Host ""
 	Write-Warning "Failed to retrieve upgrade list: $($_.Exception.Message)"
 }
 
+Write-Host "`n$ScriptName`: Completed successfully." -ForegroundColor Green
 exit 0
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

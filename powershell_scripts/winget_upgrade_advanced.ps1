@@ -102,7 +102,7 @@ try {
 
 	# Priming step for first-run initialization
 	if (-not $NoConsoleOutput) { Write-Host "`nPriming winget (first-run initialization)..." -ForegroundColor Cyan }
-	winget source update
+	winget source update --disable-interactivity
 	winget upgrade --accept-source-agreements --disable-interactivity >$null 2>&1
 
 	# Collect pinned apps

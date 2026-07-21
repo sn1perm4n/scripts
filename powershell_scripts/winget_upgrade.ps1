@@ -17,7 +17,7 @@ $hadWarnings = $false
 # Update source database
 Write-Host "`nUpdating winget source database..." -ForegroundColor Cyan
 try {
-	winget source update --accept-source-agreements --disable-interactivity
+	winget source update --disable-interactivity
 	if ($LASTEXITCODE -ne 0) {
 		throw "winget exited with code $LASTEXITCODE."
 	}

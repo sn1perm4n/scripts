@@ -2,6 +2,8 @@
 # This script checks a directory of PowerShell scripts to determine which ones likely require administrator rights, which already include an admin check, and which are missing #Requires -RunAsAdministrator
 
 # Optional flags:
+#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
+#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
 #     -Recurse: Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Table: Display results as a formatted table instead of per-script output
@@ -9,6 +11,8 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
+	[switch]$NoConsoleOutput,
+	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Table,
@@ -20,8 +24,10 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Recurse] [-SaveResults <PATH>] [-Table] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Table] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Table               Display results as a formatted table instead of per-script output" -ForegroundColor Cyan
@@ -40,12 +46,34 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for folder path
-$ScriptPath = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
+}
+
+# Prompt user for folder path if not specified
+if (-not $Path) {
+	$Path = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
+}
+$ScriptPath = $Path
 
 if (-not (Test-Path $ScriptPath -PathType Container)) {
-	Write-Host ""
-	Write-Error "The directory '$ScriptPath' does not exist."
+	$errorMessage = "The directory '$ScriptPath' does not exist."
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
@@ -111,7 +139,7 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.Fu
 			if ($content -match $RegistryWriteOps) {
 				$flags += "Admin indicator: $hive write operation"
 			}
-else {
+			else {
 				$flags += "$hive read-only access"
 			}
 		}
@@ -151,51 +179,55 @@ else {
 $totalScripts = $Results.Count
 $likelyNeedsAdmin = ($Results | Where-Object { $_.NeedsAdmin -eq 'Likely' }).Count
 $actionableCount = ($Results | Where-Object { $_.NeedsAdmin -eq 'Likely' -and $_.AlreadyContainsAdminRights -eq 'No' }).Count
-$summaryLine = "$totalScripts script(s) checked, $likelyNeedsAdmin likely need(s) admin rights, $actionableCount missing admin check."
+$summaryLine = "$ScriptName`: $totalScripts script(s) checked, $likelyNeedsAdmin likely need(s) admin rights, $actionableCount missing admin check."
 
 # Display results
-Write-Host ""
+if (-not $NoConsoleOutput) {
+	Write-Host ""
 
-if ($Table) {
-	# Table output mode
-	$Results | Sort-Object NeedsAdmin, Script |
-		Format-Table Script, NeedsAdmin, AlreadyContainsAdminRights, Findings -Wrap
+	if ($Table) {
+		# Table output mode
+		$Results | Sort-Object NeedsAdmin, Script |
+			Format-Table Script, NeedsAdmin, AlreadyContainsAdminRights, Findings -Wrap
 
-	if ($actionableCount -gt 0) {
-		Write-Host $summaryLine -ForegroundColor Yellow
-	}
-	else {
-		Write-Host $summaryLine -ForegroundColor Green
-	}
-}
-else {
-	# Per-script output mode
-	$sorted = $Results | Sort-Object NeedsAdmin, Script
-	foreach ($result in $sorted) {
-		$color = if ($result.NeedsAdmin -eq 'Likely' -and $result.AlreadyContainsAdminRights -eq 'No') { 'Yellow' } else { 'Green' }
-
-		Write-Host $result.Script -ForegroundColor $color
-		Write-Host "  Needs Admin:    $($result.NeedsAdmin)" -ForegroundColor $color
-		Write-Host "  Admin Check:    $($result.AlreadyContainsAdminRights)" -ForegroundColor $color
-
-		if ($result.FindingsArray.Count -gt 1) {
-			Write-Host "  Findings:" -ForegroundColor $color
-			foreach ($finding in $result.FindingsArray) {
-				Write-Host "    - $finding" -ForegroundColor $color
-			}
+		if ($actionableCount -gt 0) {
+			Write-Host ""
+			Write-Warning $summaryLine
 		}
 		else {
-			Write-Host "  Findings:       $($result.Findings)" -ForegroundColor $color
+			Write-Host $summaryLine -ForegroundColor Green
 		}
-
-		Write-Host ""
-	}
-
-	if ($actionableCount -gt 0) {
-		Write-Host $summaryLine -ForegroundColor Yellow
 	}
 	else {
-		Write-Host $summaryLine -ForegroundColor Green
+		# Per-script output mode
+		$sorted = $Results | Sort-Object NeedsAdmin, Script
+		foreach ($result in $sorted) {
+			$color = if ($result.NeedsAdmin -eq 'Likely' -and $result.AlreadyContainsAdminRights -eq 'No') { 'Yellow' } else { 'Green' }
+
+			Write-Host $result.Script -ForegroundColor $color
+			Write-Host "  Needs Admin:    $($result.NeedsAdmin)" -ForegroundColor $color
+			Write-Host "  Admin Check:    $($result.AlreadyContainsAdminRights)" -ForegroundColor $color
+
+			if ($result.FindingsArray.Count -gt 1) {
+				Write-Host "  Findings:" -ForegroundColor $color
+				foreach ($finding in $result.FindingsArray) {
+					Write-Host "    - $finding" -ForegroundColor $color
+				}
+			}
+			else {
+				Write-Host "  Findings:       $($result.Findings)" -ForegroundColor $color
+			}
+
+			Write-Host ""
+		}
+
+		if ($actionableCount -gt 0) {
+			Write-Host ""
+			Write-Warning $summaryLine
+		}
+		else {
+			Write-Host $summaryLine -ForegroundColor Green
+		}
 	}
 }
 
@@ -229,9 +261,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

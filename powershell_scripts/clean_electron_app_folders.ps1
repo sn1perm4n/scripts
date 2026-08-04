@@ -6,6 +6,7 @@
 # Optional flags:
 #     -DeleteAll: Automatically delete all redundant app-* folders without prompting
 #     -List: Show all app-* folders found without processing
+#     -NoConsoleOutput: Suppress console output (requires -DeleteAll and -SaveResults)
 #     -Preview: Show what would be deleted without making any changes
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Table: Show all app-* folders in table format (Name, FullName, LastWriteTime)
@@ -15,6 +16,7 @@
 param (
 	[switch]$DeleteAll,
 	[switch]$List,
+	[switch]$NoConsoleOutput,
 	[switch]$Preview,
 	[string]$SaveResults,
 	[switch]$Table,
@@ -26,10 +28,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-DeleteAll] [-List] [-Preview] [-SaveResults <PATH>] [-Table] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-DeleteAll] [-List] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Table] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -DeleteAll           Automatically delete all redundant app-* folders without prompting" -ForegroundColor Cyan
 	Write-Host "  -List                Show all app-* folders found without processing" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be deleted without making any changes" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Table               Show all app-* folders in table format (Name, FullName, LastWriteTime)" -ForegroundColor Cyan
@@ -48,35 +51,78 @@ if ($SaveResults) {
 	}
 }
 
+# -NoConsoleOutput requires -DeleteAll and -SaveResults, since without -DeleteAll this script
+# can still block on an interactive prompt with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not $DeleteAll -or -not $SaveResults)) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -DeleteAll and -SaveResults."
+	exit 1
+}
+
 $FileOutputLines = @()
 $deletedCount = 0
 $skippedCount = 0
 $totalBytesFreed = 0
 
-Write-Host "`nScanning $env:LOCALAPPDATA for app-* folders..." -ForegroundColor Cyan
+if (-not $NoConsoleOutput) { Write-Host "`nScanning $env:LOCALAPPDATA for app-* folders..." -ForegroundColor Cyan }
 
 # Find all app-* versioned folders recursively under AppData\Local
 $appFolders = Get-ChildItem -Path $env:LOCALAPPDATA -Directory -Filter "app-*" -Recurse -ErrorAction SilentlyContinue |
 	Where-Object { $_.Name -match '^app-(\d+(?:\.\d+)*)$' }
 
 if (-not $appFolders -or $appFolders.Count -eq 0) {
-	Write-Host "`nNo app-* folders found." -ForegroundColor Green
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: No app-* folders found." -ForegroundColor Green }
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: No app-* folders found.")
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
 # -List: show all app-* folders as a simple list and exit
 if ($List) {
-	Write-Host ""
-	$appFolders | Select-Object -ExpandProperty FullName
-	Write-Host "`n$($appFolders.Count) app-* folder(s) found." -ForegroundColor Cyan
+	$lines = $appFolders | Select-Object -ExpandProperty FullName
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		$lines
+		Write-Host "`n$($appFolders.Count) app-* folder(s) found." -ForegroundColor Cyan
+	}
+	if ($SaveResults) {
+		try {
+			$outputString = (($lines + "" + "$($appFolders.Count) app-* folder(s) found.") -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
 # -Table: show all app-* folders in table format and exit
 if ($Table) {
-	Write-Host ""
-	$appFolders | Select-Object Name, FullName, LastWriteTime | Format-Table -AutoSize
-	Write-Host "$($appFolders.Count) app-* folder(s) found." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		$appFolders | Select-Object Name, FullName, LastWriteTime | Format-Table -AutoSize
+		Write-Host "$($appFolders.Count) app-* folder(s) found." -ForegroundColor Cyan
+	}
+	if ($SaveResults) {
+		try {
+			$tableLines = $appFolders | Select-Object Name, FullName, LastWriteTime | Format-Table -AutoSize | Out-String
+			$outputString = "$tableLines`n$($appFolders.Count) app-* folder(s) found."
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
@@ -102,8 +148,10 @@ foreach ($group in $grouped) {
 	if (-not $keepSize) { $keepSize = 0 }
 	$keepSizeMB = [math]::Round($keepSize / 1MB, 2)
 
-	Write-Host "`n$($group.Name)" -ForegroundColor Cyan
-	Write-Host "  Keeping: $($keep.Name) ($keepSizeMB MB)" -ForegroundColor Green
+	if (-not $NoConsoleOutput) {
+		Write-Host "`n$($group.Name)" -ForegroundColor Cyan
+		Write-Host "  Keeping: $($keep.Name) ($keepSizeMB MB)" -ForegroundColor Green
+	}
 	if ($SaveResults) {
 		$FileOutputLines += $group.Name
 		$FileOutputLines += "  Keeping: $($keep.Name) ($keepSizeMB MB)"
@@ -116,7 +164,7 @@ foreach ($group in $grouped) {
 
 		if ($Preview) {
 			$folderSizeMB = [math]::Round($folderSize / 1MB, 2)
-			Write-Host "  Would delete: $($folder.Name) ($folderSizeMB MB)" -ForegroundColor Yellow
+			if (-not $NoConsoleOutput) { Write-Host "  Would delete: $($folder.Name) ($folderSizeMB MB)" -ForegroundColor Yellow }
 			if ($SaveResults) {
 				$FileOutputLines += "  Would delete: $($folder.Name) ($folderSizeMB MB)"
 			}
@@ -128,7 +176,7 @@ foreach ($group in $grouped) {
 			if (-not $DeleteAll) {
 				$response = Read-Host "`n  Delete '$($folder.Name)'? (Y/N)"
 				if ($response -notmatch '^[Yy]$') {
-					Write-Host "  Skipped: $($folder.Name)" -ForegroundColor Yellow
+					if (-not $NoConsoleOutput) { Write-Host "  Skipped: $($folder.Name)" -ForegroundColor Yellow }
 					if ($SaveResults) {
 						$FileOutputLines += "  Skipped: $($folder.Name)"
 					}
@@ -140,15 +188,20 @@ foreach ($group in $grouped) {
 				$totalBytesFreed += $folderSize
 				Remove-Item -Path $folder.FullName -Recurse -Force -ErrorAction Stop
 				$folderSizeMB = [math]::Round($folderSize / 1MB, 2)
-				Write-Host "  Deleted: $($folder.Name) ($folderSizeMB MB)" -ForegroundColor Yellow
+				if (-not $NoConsoleOutput) { Write-Host "  Deleted: $($folder.Name) ($folderSizeMB MB)" -ForegroundColor Yellow }
 				if ($SaveResults) {
 					$FileOutputLines += "  Deleted: $($folder.Name) ($folderSizeMB MB)"
 				}
 				$deletedCount++
 			}
 			catch {
-				Write-Host ""
-				Write-Warning "Could not delete $($folder.FullName): $($_.Exception.Message)"
+				if (-not $NoConsoleOutput) {
+					Write-Host ""
+					Write-Warning "Could not delete $($folder.FullName): $($_.Exception.Message)"
+				}
+				if ($SaveResults) {
+					$FileOutputLines += "Could not delete $($folder.FullName): $($_.Exception.Message)"
+				}
 			}
 		}
 	}
@@ -163,11 +216,11 @@ else { "$totalFreedMB MB" }
 # Summary
 if ($Preview) {
 	$summaryLine = "$ScriptName`: Preview complete. $deletedCount folder(s) would be deleted, freeing approximately $freedDisplay."
-	Write-Host "`n$summaryLine" -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Cyan }
 }
 else {
 	$summaryLine = "$ScriptName`: $deletedCount folder(s) deleted, $freedDisplay freed."
-	Write-Host "`n$summaryLine" -ForegroundColor Green
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 }
 
 # Save results to text file if requested
@@ -182,9 +235,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

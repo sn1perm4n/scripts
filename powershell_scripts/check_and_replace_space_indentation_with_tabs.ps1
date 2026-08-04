@@ -4,6 +4,8 @@
 # Optional flags:
 #     -Backup: Automatically create backups before modifying files (skips interactive prompt)
 #     -ConvertAll: Automatically process all files without prompting
+#     -NoConsoleOutput: Suppress console output (requires -ConvertAll and -SaveResults)
+#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
 #     -Recurse: Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -12,6 +14,8 @@
 param (
 	[switch]$Backup,
 	[switch]$ConvertAll,
+	[switch]$NoConsoleOutput,
+	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -22,10 +26,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-ConvertAll] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-ConvertAll] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before modifying files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -ConvertAll          Automatically process all files without prompting" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -ConvertAll and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -43,16 +49,39 @@ if ($SaveResults) {
 	}
 }
 
+# -NoConsoleOutput requires -ConvertAll and -SaveResults, since without -ConvertAll this script
+# can still block on an interactive prompt with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not $ConvertAll -or -not $SaveResults)) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -ConvertAll and -SaveResults."
+	exit 1
+}
+
 # Number of spaces per tab
 $spacesPerTab = 4
 
-# Prompt user for file or folder path
-$scriptFileOrDirectory = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
+# Prompt user for file or folder path if not specified
+if (-not $Path) {
+	$Path = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
+}
+$scriptFileOrDirectory = $Path
 
 # Validate the path
 if (-not (Test-Path $scriptFileOrDirectory)) {
-	Write-Host ""
-	Write-Error "The path '$scriptFileOrDirectory' does not exist."
+	$errorMessage = "The path '$scriptFileOrDirectory' does not exist."
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
@@ -60,14 +89,38 @@ if (-not (Test-Path $scriptFileOrDirectory)) {
 if ((Get-Item $scriptFileOrDirectory).PSIsContainer) {
 	$files = Get-ChildItem -Path $scriptFileOrDirectory -Filter *.ps1 -Recurse:$Recurse
 	if ($files.Count -eq 0) {
-		Write-Host "`nNo .ps1 files found in the directory." -ForegroundColor Yellow
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "$ScriptName`: No .ps1 files found in the directory."
+		}
+		if ($SaveResults) {
+			try {
+				[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: No .ps1 files found in the directory.")
+			}
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			}
+		}
 		exit 0
 	}
 }
 else {
 	if ($scriptFileOrDirectory -notlike "*.ps1") {
-		Write-Host ""
-		Write-Error "The file '$scriptFileOrDirectory' is not a .ps1 script."
+		$errorMessage = "The file '$scriptFileOrDirectory' is not a .ps1 script."
+		if ($NoConsoleOutput) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			}
+			catch {
+				Write-Host ""
+				Write-Error $errorMessage
+			}
+		}
+		else {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
 		exit 1
 	}
 	$files = @(Get-Item $scriptFileOrDirectory)
@@ -95,7 +148,7 @@ else {
 # Process each file
 foreach ($fileObj in $files) {
 	$file = $fileObj.FullName
-	Write-Host "`nProcessing: $file" -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nProcessing: $file" -ForegroundColor Cyan }
 
 	$changed = $false
 	$newContent = @()
@@ -121,7 +174,7 @@ foreach ($fileObj in $files) {
 			if ($newLine -ne $line) {
 				$line = $newLine
 				$changed = $true
-				Write-Host "  Line $lineNumber`: replaced leading spaces with $tabCount tab(s) + $remainingSpaces space(s)" -ForegroundColor Yellow
+				if (-not $NoConsoleOutput) { Write-Host "  Line $lineNumber`: replaced leading spaces with $tabCount tab(s) + $remainingSpaces space(s)" -ForegroundColor Yellow }
 			}
 		}
 		$newContent += $line
@@ -132,7 +185,7 @@ foreach ($fileObj in $files) {
 			if ($doBackup) {
 				$backupPath = "$file.bak"
 				Copy-Item $file $backupPath -Force -ErrorAction Stop
-				Write-Host "  Backup created: $backupPath" -ForegroundColor Cyan
+				if (-not $NoConsoleOutput) { Write-Host "  Backup created: $backupPath" -ForegroundColor Cyan }
 				if ($SaveResults) {
 					$FileOutputLines += "Backup created: $backupPath"
 				}
@@ -140,19 +193,24 @@ foreach ($fileObj in $files) {
 
 			$utf8Bom = New-Object System.Text.UTF8Encoding $true
 			[System.IO.File]::WriteAllLines($file, $newContent, $utf8Bom)
-			Write-Host "  Updated: $file" -ForegroundColor Green
+			if (-not $NoConsoleOutput) { Write-Host "  Updated: $file" -ForegroundColor Green }
 			if ($SaveResults) {
 				$FileOutputLines += "Updated: $file"
 			}
 			$modifiedCount++
 		}
 		catch {
-			Write-Host ""
-			Write-Warning "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+			if (-not $NoConsoleOutput) {
+				Write-Host ""
+				Write-Warning "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+			}
+			if ($SaveResults) {
+				$FileOutputLines += "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+			}
 		}
 	}
 	else {
-		Write-Host "  No changes needed." -ForegroundColor Yellow
+		if (-not $NoConsoleOutput) { Write-Host "  No changes needed." -ForegroundColor Yellow }
 		if ($SaveResults) {
 			$FileOutputLines += "No changes needed: $file"
 		}
@@ -160,12 +218,15 @@ foreach ($fileObj in $files) {
 }
 
 # Summary
-$summaryLine = "Complete. $modifiedCount file(s) modified."
-if ($modifiedCount -gt 0) {
-	Write-Host "`n$summaryLine" -ForegroundColor Green
-}
-else {
-	Write-Host "`n$summaryLine" -ForegroundColor Yellow
+$summaryLine = "$ScriptName`: Complete. $modifiedCount file(s) modified."
+if (-not $NoConsoleOutput) {
+	if ($modifiedCount -gt 0) {
+		Write-Host "`n$summaryLine" -ForegroundColor Green
+	}
+	else {
+		Write-Host ""
+		Write-Warning $summaryLine
+	}
 }
 
 # Save results to text file if requested
@@ -180,9 +241,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

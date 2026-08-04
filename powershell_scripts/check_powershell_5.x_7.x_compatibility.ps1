@@ -4,6 +4,8 @@
 # Optional flags:
 #     -CompactOutput: Simplifies console output to match saved file style (removes separators and extra spacing)
 #     -Failures: Shows only scripts with issues in output
+#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
+#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
 #     -Recurse: Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Successes: Shows only scripts with no issues in output
@@ -14,6 +16,8 @@
 param (
 	[switch]$CompactOutput,
 	[switch]$Failures,
+	[switch]$NoConsoleOutput,
+	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Successes,
@@ -26,10 +30,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-Recurse] [-Successes] [-Summary] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-Successes] [-Summary] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CompactOutput       Simplifies console output to match saved file style (removes separators and extra spacing)" -ForegroundColor Cyan
 	Write-Host "  -Failures            Show only scripts with compatibility issues" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -Successes           Show only scripts with no compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
@@ -56,35 +62,66 @@ if ($Successes -and $Failures) {
 	exit 1
 }
 
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
+}
+
 # Ensure PSScriptAnalyzer module is installed
 try {
-	Write-Host "`nChecking for PSScriptAnalyzer module..." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nChecking for PSScriptAnalyzer module..." -ForegroundColor Cyan }
 	if (-not (Get-Module -ListAvailable -Name 'PSScriptAnalyzer')) {
-		Write-Host "PSScriptAnalyzer module not found. Installing..." -ForegroundColor Yellow
+		if (-not $NoConsoleOutput) { Write-Host "PSScriptAnalyzer module not found. Installing..." -ForegroundColor Yellow }
 		Install-Module -Name PSScriptAnalyzer -Repository PSGallery -Force -Scope CurrentUser -ErrorAction Stop
-		Write-Host "PSScriptAnalyzer module installed successfully." -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "PSScriptAnalyzer module installed successfully." -ForegroundColor Green }
 	}
 	else {
-		Write-Host "PSScriptAnalyzer module already installed." -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "PSScriptAnalyzer module already installed." -ForegroundColor Green }
 	}
 	Import-Module PSScriptAnalyzer -ErrorAction Stop
 }
 catch {
-	Write-Host ""
-	Write-Warning "Failed to install or import PSScriptAnalyzer: $($_.Exception.Message)"
+	$errorMessage = "Failed to install or import PSScriptAnalyzer: $($_.Exception.Message)"
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Warning $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Warning $errorMessage
+	}
 	exit 1
 }
 
-Write-Host ""  # blank line before prompt
-
-# Prompt the user for the file or folder path
-$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
-
-Write-Host ""  # blank line after prompt
+# Prompt user for file or folder path if not specified
+if (-not $Path) {
+	Write-Host ""  # blank line before prompt
+	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
+	Write-Host ""  # blank line after prompt
+}
 
 if (-not (Test-Path $Path)) {
-	Write-Host ""
-	Write-Error "The specified path does not exist."
+	$errorMessage = "The specified path does not exist."
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
@@ -97,14 +134,35 @@ else {
 		$scripts = @(Get-Item $Path)
 	}
 	else {
-		Write-Host ""
-		Write-Error "The specified file is not a PowerShell script (.ps1)."
+		$errorMessage = "The specified file is not a PowerShell script (.ps1)."
+		if ($NoConsoleOutput) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			}
+			catch {
+				Write-Host ""
+				Write-Error $errorMessage
+			}
+		}
+		else {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
 		exit 1
 	}
 }
 
 if ($scripts.Count -eq 0) {
-	Write-Host "No PowerShell scripts (.ps1) found." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "No PowerShell scripts (.ps1) found." -ForegroundColor Cyan }
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::WriteAllText($SaveResults, "No PowerShell scripts (.ps1) found.")
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
@@ -146,8 +204,10 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 		}
 		catch {
 			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $($_.Exception.Message)"
-			Write-Host ""
-			Write-Warning $warningLine
+			if (-not $NoConsoleOutput) {
+				Write-Host ""
+				Write-Warning $warningLine
+			}
 			if ($SaveResults) {
 				$FileOutputLines += $warningLine
 			}
@@ -196,7 +256,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 	}
 
 	# Only print to console if output exists
-	if ($scriptOutput.Count -gt 0) {
+	if ($scriptOutput.Count -gt 0 -and -not $NoConsoleOutput) {
 		if (-not $CompactOutput) {
 			Write-Host "=========================================" -ForegroundColor DarkCyan
 		}
@@ -225,16 +285,18 @@ if ($Summary) {
 	$FailedScripts = ($AllResults | Select-Object -ExpandProperty ScriptName | Sort-Object -Unique).Count
 	$PassedScripts = $TotalScripts - $FailedScripts
 
-	# Handle newlines before summary
-	if ($Failures -and $CompactOutput) {
-		Write-Host ""
-	}
-	elseif (-not $Failures) {
-		Write-Host ""  # normal spacing for other flags
-	}
-
 	$summaryLine = "Analysis complete! Analyzed $TotalScripts scripts: $PassedScripts passed, $FailedScripts failed, $TotalIssues issues detected."
-	Write-Host $summaryLine -ForegroundColor Cyan
+
+	if (-not $NoConsoleOutput) {
+		# Handle newlines before summary
+		if ($Failures -and $CompactOutput) {
+			Write-Host ""
+		}
+		elseif (-not $Failures) {
+			Write-Host ""  # normal spacing for other flags
+		}
+		Write-Host $summaryLine -ForegroundColor Cyan
+	}
 }
 
 # Save results to text file if requested
@@ -253,12 +315,32 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		if ($Failures -and -not $CompactOutput -and -not $Summary) {
-			Write-Host "Results saved to text file: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) {
+			if ($Failures -and -not $CompactOutput -and -not $Summary) {
+				Write-Host "$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green
+			}
+			else {
+				Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green
+			}
 		}
-		else {
-			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
-		}
+	}
+	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+	}
+}
+
+if ($Failures -and $AllResults.Count -eq 0 -and -not $NoConsoleOutput) {
+	Write-Host "Scripts scanned: $($scripts.Count) - No failures found." -ForegroundColor Green
+}
+
+# Unconditional completion line
+$completionLine = "$ScriptName`: Completed successfully."
+if (-not $NoConsoleOutput) { Write-Host "`n$completionLine" -ForegroundColor Green }
+if ($SaveResults) {
+	try {
+		[System.IO.File]::AppendAllText($SaveResults, "`n$completionLine")
 	}
 	catch {
 		Write-Host ""
@@ -266,18 +348,16 @@ if ($SaveResults) {
 	}
 }
 
-if ($Failures -and $AllResults.Count -eq 0) {
-	Write-Host "Scripts scanned: $($scripts.Count) - No failures found." -ForegroundColor Green
-}
-
 # Keep window open
-if ($Failures -and $AllResults.Count -gt 0 -and -not $Summary -and -not $SaveResults) {
-	Write-Host "Press any key to exit..." -ForegroundColor Cyan
+if (-not $NoConsoleOutput) {
+	if ($Failures -and $AllResults.Count -gt 0 -and -not $Summary -and -not $SaveResults) {
+		Write-Host "Press any key to exit..." -ForegroundColor Cyan
+	}
+	else {
+		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
+	}
+	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
-else {
-	Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
-}
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output
 

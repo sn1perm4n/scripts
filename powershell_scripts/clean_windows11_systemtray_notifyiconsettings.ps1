@@ -9,6 +9,7 @@
 #     -Backup <PATH>: Back up NotifyIconSettings to a .reg file before making changes (default location: %USERPROFILE%\Desktop)
 #     -DeleteAll: Delete all flagged keys without prompting
 #     -List: Show all NotifyIconSettings keys without processing
+#     -NoConsoleOutput: Suppress console output (requires -DeleteAll and -SaveResults)
 #     -Preview: Show what would be deleted without making any changes (backup is skipped)
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -18,6 +19,7 @@ param (
 	[string]$Backup,
 	[switch]$DeleteAll,
 	[switch]$List,
+	[switch]$NoConsoleOutput,
 	[switch]$Preview,
 	[string]$SaveResults,
 	[switch]$Help
@@ -27,12 +29,13 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-DeleteAll] [-List] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-DeleteAll] [-List] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup <PATH>       Back up NotifyIconSettings to a .reg file before making changes" -ForegroundColor Cyan
 	Write-Host "                       Default location if no path supplied: %USERPROFILE%\Desktop" -ForegroundColor Cyan
 	Write-Host "  -DeleteAll           Delete all flagged keys without prompting" -ForegroundColor Cyan
 	Write-Host "  -List                Show all NotifyIconSettings keys without processing" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be deleted without making any changes (backup is skipped)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -57,6 +60,14 @@ if ($PSBoundParameters.ContainsKey('Backup') -and $Backup -ne '' -and -not (Test
 	exit 1
 }
 
+# -NoConsoleOutput requires -DeleteAll and -SaveResults, since without -DeleteAll this script
+# can still block on the delete confirmation prompt with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not $DeleteAll -or -not $SaveResults)) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -DeleteAll and -SaveResults."
+	exit 1
+}
+
 $FileOutputLines = @()
 $deletedCount = 0
 $totalFlaggedCount = 0
@@ -64,8 +75,20 @@ $totalFlaggedCount = 0
 $registryPath = "HKCU:\Control Panel\NotifyIconSettings"
 
 if (-not (Test-Path $registryPath)) {
-	Write-Host ""
-	Write-Error "Registry path not found: $registryPath"
+	$errorMessage = "Registry path not found: $registryPath"
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
@@ -97,7 +120,20 @@ Add-Type -TypeDefinition $regQueryInfoKeySource
 $subkeys = Get-ChildItem -Path $registryPath -ErrorAction SilentlyContinue
 
 if (-not $subkeys) {
-	Write-Host "`nNo subkeys found." -ForegroundColor Yellow
+	$warningMessage = "$ScriptName`: No subkeys found."
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Warning $warningMessage
+	}
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
@@ -107,8 +143,15 @@ foreach ($key in $subkeys) {
 	if (-not $exePath) { continue }
 
 	$isPromoted = $key.GetValue("IsPromoted")
-	$shownInTaskbar = if ($isPromoted -eq 1) { "Yes" } elseif ($isPromoted -eq 0) { "No" }
-else { "Unknown" }
+	$shownInTaskbar = if ($isPromoted -eq 1) {
+		"Yes"
+	}
+	elseif ($isPromoted -eq 0) {
+		"No"
+	}
+	else {
+		"Unknown"
+	}
 
 	# Retrieve LastWriteTime via RegQueryInfoKey Windows API
 	$lastWriteTime = $null
@@ -159,15 +202,17 @@ else { "Unknown" }
 
 # -List: show all keys without processing and exit
 if ($List) {
-	Write-Host "`nListing all keys in: $registryPath`n" -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nListing all keys in: $registryPath`n" -ForegroundColor Cyan }
 	if ($SaveResults) { $FileOutputLines += "Listing all keys in: $registryPath" }
 
 	foreach ($entry in $entries) {
-		Write-Host $entry.KeyName
-		Write-Host "     ExecutablePath  : $($entry.ExecutablePath)"
-		Write-Host "     LastWriteTime   : $($entry.LastWriteTime)"
-		Write-Host "     ShownInTaskbar  : $($entry.ShownInTaskbar)"
-		Write-Host ""
+		if (-not $NoConsoleOutput) {
+			Write-Host $entry.KeyName
+			Write-Host "     ExecutablePath  : $($entry.ExecutablePath)"
+			Write-Host "     LastWriteTime   : $($entry.LastWriteTime)"
+			Write-Host "     ShownInTaskbar  : $($entry.ShownInTaskbar)"
+			Write-Host ""
+		}
 		if ($SaveResults) {
 			$FileOutputLines += $entry.KeyName
 			$FileOutputLines += "     ExecutablePath  : $($entry.ExecutablePath)"
@@ -177,8 +222,8 @@ if ($List) {
 		}
 	}
 
-	$summaryLine = "Total keys: $($entries.Count)"
-	Write-Host $summaryLine -ForegroundColor Cyan
+	$summaryLine = "$ScriptName`: Total keys: $($entries.Count)"
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
@@ -188,8 +233,10 @@ if ($List) {
 		try {
 			$outputString = ($FileOutputLines -join "`n")
 			[System.IO.File]::WriteAllText($SaveResults, $outputString)
-			Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
-		} catch {
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
+		}
+		catch {
+			# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 			Write-Host ""
 			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
@@ -198,13 +245,23 @@ if ($List) {
 	exit 0
 }
 
-Write-Host "`nScanning: $registryPath`n" -ForegroundColor Cyan
+if (-not $NoConsoleOutput) { Write-Host "`nScanning: $registryPath`n" -ForegroundColor Cyan }
 
 $groups = $entries | Group-Object -Property NormalizedPath
 $duplicateGroups = $groups | Where-Object { $_.Count -ge 2 }
 
 if (-not $duplicateGroups) {
-	Write-Host "No duplicate groups found." -ForegroundColor Green
+	$messageLine = "$ScriptName`: No duplicate groups found."
+	if (-not $NoConsoleOutput) { Write-Host $messageLine -ForegroundColor Green }
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::WriteAllText($SaveResults, $messageLine)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
@@ -215,16 +272,20 @@ if ($PSBoundParameters.ContainsKey('Backup') -and -not $Preview) {
 	$backupPath = if ($Backup -ne '') {
 		$Backup
 	}
-else {
+	else {
 		"$env:USERPROFILE\Desktop\NotifyIconSettings_backup_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').reg"
 	}
 	try {
 		reg export "HKCU\Control Panel\NotifyIconSettings" $backupPath /y 2>&1 | Out-Null
-		Write-Host "Backup saved to: $backupPath`n" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "Backup saved to: $backupPath`n" -ForegroundColor Green }
 		if ($SaveResults) { $FileOutputLines += "Backup saved to: $backupPath" }
-	} catch {
-		Write-Host ""
-		Write-Warning "Could not save backup: $($_.Exception.Message)"
+	}
+	catch {
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "Could not save backup: $($_.Exception.Message)"
+		}
+		if ($SaveResults) { $FileOutputLines += "Could not save backup: $($_.Exception.Message)" }
 	}
 }
 
@@ -234,13 +295,15 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 	if ($versioned) {
 		$keeper = $versioned | Sort-Object Version -Descending | Select-Object -First 1
 	}
-else {
+	else {
 		$keeper = $group.Group | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 	}
 
-	Write-Host "----------------------------------------" -ForegroundColor DarkGray
-	Write-Host "Group: $($group.Name)" -ForegroundColor Yellow
-	Write-Host "  Entries: $($group.Count)"
+	if (-not $NoConsoleOutput) {
+		Write-Host "----------------------------------------" -ForegroundColor DarkGray
+		Write-Host "Group: $($group.Name)" -ForegroundColor Yellow
+		Write-Host "  Entries: $($group.Count)"
+	}
 	if ($SaveResults) {
 		$FileOutputLines += "----------------------------------------"
 		$FileOutputLines += "Group: $($group.Name)"
@@ -249,17 +312,31 @@ else {
 
 	foreach ($entry in $group.Group | Sort-Object ExecutablePath) {
 		$isKeeper = ($entry.KeyName -eq $keeper.KeyName)
-		$tag = if ($isKeeper) { "[KEEP]" }
-else { "[REMOVE]" }
-		$color = if ($isKeeper) { "Green" }
-else { "Red" }
-		$ver = if ($entry.Version) { " (v$($entry.Version))" }
-else { "" }
+		$tag = if ($isKeeper) {
+			"[KEEP]"
+		}
+		else {
+			"[REMOVE]"
+		}
+		$color = if ($isKeeper) {
+			"Green"
+		}
+		else {
+			"Red"
+		}
+		$ver = if ($entry.Version) {
+			" (v$($entry.Version))"
+		}
+		else {
+			""
+		}
 
-		Write-Host "  $tag $($entry.KeyName)$ver" -ForegroundColor $color
-		Write-Host "       ExecutablePath  : $($entry.ExecutablePath)"
-		Write-Host "       LastWriteTime   : $($entry.LastWriteTime)"
-		Write-Host "       ShownInTaskbar  : $($entry.ShownInTaskbar)"
+		if (-not $NoConsoleOutput) {
+			Write-Host "  $tag $($entry.KeyName)$ver" -ForegroundColor $color
+			Write-Host "       ExecutablePath  : $($entry.ExecutablePath)"
+			Write-Host "       LastWriteTime   : $($entry.LastWriteTime)"
+			Write-Host "       ShownInTaskbar  : $($entry.ShownInTaskbar)"
+		}
 		if ($SaveResults) {
 			$FileOutputLines += "  $tag $($entry.KeyName)$ver"
 			$FileOutputLines += "       ExecutablePath  : $($entry.ExecutablePath)"
@@ -269,51 +346,57 @@ else { "" }
 
 		if (-not $isKeeper) {
 			if ($Preview) {
-				Write-Host "  Would delete: $($entry.KeyName)" -ForegroundColor Yellow
+				if (-not $NoConsoleOutput) { Write-Host "  Would delete: $($entry.KeyName)" -ForegroundColor Yellow }
 				if ($SaveResults) { $FileOutputLines += "  Would delete: $($entry.KeyName)" }
 				$deletedCount++
 			}
-else {
+			else {
 				if (-not $DeleteAll) {
 					$response = Read-Host "`n  Delete '$($entry.KeyName)'? (Y/N)"
 					if ($response -notmatch '^[Yy]$') {
-						Write-Host "  Skipped: $($entry.KeyName)" -ForegroundColor Yellow
+						if (-not $NoConsoleOutput) { Write-Host "  Skipped: $($entry.KeyName)" -ForegroundColor Yellow }
 						if ($SaveResults) { $FileOutputLines += "  Skipped: $($entry.KeyName)" }
 						continue
 					}
 				}
 				try {
 					Remove-Item -Path "HKCU:\Control Panel\NotifyIconSettings\$($entry.KeyName)" -Recurse -Force -ErrorAction Stop
-					Write-Host "  Deleted: $($entry.KeyName)" -ForegroundColor Yellow
+					if (-not $NoConsoleOutput) { Write-Host "  Deleted: $($entry.KeyName)" -ForegroundColor Yellow }
 					if ($SaveResults) { $FileOutputLines += "  Deleted: $($entry.KeyName)" }
 					$deletedCount++
-				} catch {
-					Write-Host ""
-					Write-Warning "Could not delete $($entry.KeyName): $($_.Exception.Message)"
+				}
+				catch {
+					if (-not $NoConsoleOutput) {
+						Write-Host ""
+						Write-Warning "Could not delete $($entry.KeyName): $($_.Exception.Message)"
+					}
+					if ($SaveResults) { $FileOutputLines += "Could not delete $($entry.KeyName): $($_.Exception.Message)" }
 				}
 			}
 		}
 	}
 
-	Write-Host ""
+	if (-not $NoConsoleOutput) { Write-Host "" }
 	if ($SaveResults) { $FileOutputLines += "" }
 }
 
-Write-Host ""
+if (-not $NoConsoleOutput) { Write-Host "" }
 if ($Preview) {
 	$summaryLine = "$ScriptName`: Preview complete. $deletedCount of $totalFlaggedCount key(s) would be deleted."
-	Write-Host $summaryLine -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 else {
 	$summaryLine = "$ScriptName`: $deletedCount of $totalFlaggedCount key(s) deleted."
-	Write-Host $summaryLine -ForegroundColor Green
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 }
 
-Write-Host @"
+if (-not $NoConsoleOutput) {
+	Write-Host @"
 `nNOTE: If a program is no longer visible in the System Tray that you expect to be there, or vice versa,
 re-open the affected program and manually reconfigure its System Tray visibility via
 Settings -> Personalization -> Taskbar -> Other system tray icons
 "@ -ForegroundColor Cyan
+}
 
 if ($SaveResults) {
 	$FileOutputLines += $summaryLine
@@ -329,8 +412,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
-	} catch {
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
+	}
+	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

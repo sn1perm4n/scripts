@@ -5,6 +5,9 @@
 #     -Different: Only show files that differ or are unique to one directory
 #     -Filenames: Show filenames only instead of full paths (useful with -Recurse)
 #     -Identical: Only show files that match between both directories
+#     -NoConsoleOutput: Suppress console output (requires -Path1, -Path2, and -SaveResults)
+#     -Path1 <PATH>: Path to the first file or folder (prompts if not specified)
+#     -Path2 <PATH>: Path to the second file or folder (prompts if not specified)
 #     -Recurse: Include files in subdirectories (only applicable when comparing directories)
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -14,6 +17,9 @@ param (
 	[switch]$Different,
 	[switch]$Filenames,
 	[switch]$Identical,
+	[switch]$NoConsoleOutput,
+	[string]$Path1,
+	[string]$Path2,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -24,11 +30,14 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Different] [-Filenames] [-Identical] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Different] [-Filenames] [-Identical] [-NoConsoleOutput] [-Path1 <PATH>] [-Path2 <PATH>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Different           Only show files that differ or are unique to one directory" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Show filenames only instead of full paths (useful with -Recurse)" -ForegroundColor Cyan
 	Write-Host "  -Identical           Only show files that match between both directories" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -Path1, -Path2, and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Path1 <PATH>        Path to the first file or folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Path2 <PATH>        Path to the second file or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories (only applicable when comparing directories)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -46,69 +55,143 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for both paths
-$Path1st = Read-Host "`nEnter the full path to the first file or folder"
-
-if (-not (Test-Path -Path $Path1st)) {
+# -NoConsoleOutput requires -Path1, -Path2, and -SaveResults, since without both paths
+# this script can still block on interactive prompts with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not $Path1 -or -not $Path2 -or -not $SaveResults)) {
 	Write-Host ""
-	Write-Error "Path not found: $Path1st"
+	Write-Error "-NoConsoleOutput requires -Path1, -Path2, and -SaveResults."
 	exit 1
 }
 
-$Path2nd = Read-Host "`nEnter the full path to the second file or folder"
+# Prompt user for both paths if not specified
+if (-not $Path1) {
+	$Path1 = Read-Host "`nEnter the full path to the first file or folder"
+}
 
-if (-not (Test-Path -Path $Path2nd)) {
-	Write-Host ""
-	Write-Error "Path not found: $Path2nd"
+if (-not (Test-Path -Path $Path1)) {
+	$errorMessage = "Path not found: $Path1"
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
-$item1st = Get-Item $Path1st
-$item2nd = Get-Item $Path2nd
+if (-not $Path2) {
+	$Path2 = Read-Host "`nEnter the full path to the second file or folder"
+}
+
+if (-not (Test-Path -Path $Path2)) {
+	$errorMessage = "Path not found: $Path2"
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
+	exit 1
+}
+
+$item1st = Get-Item $Path1
+$item2nd = Get-Item $Path2
 
 # Initialize output lines
 $FileOutputLines = @()
 
 # Handle file vs directory mismatch
 if ($item1st.PSIsContainer -ne $item2nd.PSIsContainer) {
-	Write-Host ""
-	Write-Error "Cannot compare a file with a directory."
+	$errorMessage = "Cannot compare a file with a directory."
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
-Write-Host "`nComparing...`n" -ForegroundColor Cyan
+if (-not $NoConsoleOutput) { Write-Host "`nComparing...`n" -ForegroundColor Cyan }
 
 # Compare two individual files
 if (-not $item1st.PSIsContainer) {
 	if ($item1st.Length -eq $item2nd.Length) {
-		$line = "IDENTICAL:  $($item1st.Name) ($($item1st.Length) bytes)"
-		Write-Host $line -ForegroundColor Green
+		$line = "$ScriptName`: IDENTICAL:  $($item1st.Name) ($($item1st.Length) bytes)"
+		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Green }
 	}
 	else {
-		$line = "DIFFERENT:  $($item1st.Name) vs $($item2nd.Name) (1st: $($item1st.Length) bytes | 2nd: $($item2nd.Length) bytes)"
-		Write-Host $line -ForegroundColor Yellow
+		$line = "$ScriptName`: DIFFERENT:  $($item1st.Name) vs $($item2nd.Name) (1st: $($item1st.Length) bytes | 2nd: $($item2nd.Length) bytes)"
+		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
 	}
 	if ($SaveResults) { $FileOutputLines += $line }
 }
 else {
 	# Compare two directories
-	$files1st = Get-ChildItem -Path $Path1st -File -Recurse:$Recurse
-	$files2nd = Get-ChildItem -Path $Path2nd -File -Recurse:$Recurse
+	$files1st = Get-ChildItem -Path $Path1 -File -Recurse:$Recurse
+	$files2nd = Get-ChildItem -Path $Path2 -File -Recurse:$Recurse
 
 	if ($files1st.Count -eq 0) {
-		Write-Host "No files found in: $Path1st" -ForegroundColor Yellow
+		$warningMessage = "$ScriptName`: No files found in: $Path1"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning $warningMessage
+		}
+		if ($SaveResults) {
+			try {
+				[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			}
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			}
+		}
 		exit 0
 	}
 
 	if ($files2nd.Count -eq 0) {
-		Write-Host "No files found in: $Path2nd" -ForegroundColor Yellow
+		$warningMessage = "$ScriptName`: No files found in: $Path2"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning $warningMessage
+		}
+		if ($SaveResults) {
+			try {
+				[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			}
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			}
+		}
 		exit 0
 	}
 
 	# Build lookup hashtable for 2nd directory by full path relative to root
 	$lookup2nd = @{}
 	foreach ($file in $files2nd) {
-		$relPath = $file.FullName.Substring($Path2nd.Length).TrimStart('\')
+		$relPath = $file.FullName.Substring($Path2.Length).TrimStart('\')
 		$lookup2nd[$relPath] = $file
 	}
 
@@ -124,7 +207,7 @@ else {
 
 	# Compare files in 1st against 2nd
 	foreach ($file1st in $files1st) {
-		$relPath = $file1st.FullName.Substring($Path1st.Length).TrimStart('\')
+		$relPath = $file1st.FullName.Substring($Path1.Length).TrimStart('\')
 		$displayName = if ($Filenames) { $file1st.Name } else { $relPath }
 
 		if ($lookup2nd.ContainsKey($relPath)) {
@@ -132,13 +215,15 @@ else {
 			if ($file1st.Length -eq $file2nd.Length) {
 				$line = "IDENTICAL:     $displayName ($($file1st.Length) bytes)"
 				if (-not $Different) {
-					if ($lastLineType -ne "" -and $lastLineType -ne "IDENTICAL") {
-						Write-Host ""
+					if (-not $NoConsoleOutput) {
+						if ($lastLineType -ne "" -and $lastLineType -ne "IDENTICAL") {
+							Write-Host ""
+						}
+						Write-Host $line -ForegroundColor Green
 					}
 					if ($SaveResults -and $lastSavedType -ne "" -and $lastSavedType -ne "IDENTICAL") {
 						$FileOutputLines += ""
 					}
-					Write-Host $line -ForegroundColor Green
 					if ($SaveResults) { $FileOutputLines += $line }
 					$lastLineType  = "IDENTICAL"
 					$lastSavedType = "IDENTICAL"
@@ -153,13 +238,15 @@ else {
 					$line = "DIFFERENT:     1st: $($file1st.FullName) ($($file1st.Length) bytes) | 2nd: $($file2nd.FullName) ($($file2nd.Length) bytes)"
 				}
 				if (-not $Identical) {
-					if ($lastLineType -ne "" -and $lastLineType -ne "DIFFERENT") {
-						Write-Host ""
+					if (-not $NoConsoleOutput) {
+						if ($lastLineType -ne "" -and $lastLineType -ne "DIFFERENT") {
+							Write-Host ""
+						}
+						Write-Host $line -ForegroundColor Yellow
 					}
 					if ($SaveResults -and $lastSavedType -ne "" -and $lastSavedType -ne "DIFFERENT") {
 						$FileOutputLines += ""
 					}
-					Write-Host $line -ForegroundColor Yellow
 					if ($SaveResults) { $FileOutputLines += $line }
 					$lastLineType  = "DIFFERENT"
 					$lastSavedType = "DIFFERENT"
@@ -175,13 +262,15 @@ else {
 				$line = "ONLY IN 1ST:   $($file1st.FullName) ($($file1st.Length) bytes)"
 			}
 			if (-not $Identical) {
-				if ($lastLineType -ne "" -and $lastLineType -ne "ONLY IN 1ST") {
-					Write-Host ""
+				if (-not $NoConsoleOutput) {
+					if ($lastLineType -ne "" -and $lastLineType -ne "ONLY IN 1ST") {
+						Write-Host ""
+					}
+					Write-Host $line -ForegroundColor Cyan
 				}
 				if ($SaveResults -and $lastSavedType -ne "" -and $lastSavedType -ne "ONLY IN 1ST") {
 					$FileOutputLines += ""
 				}
-				Write-Host $line -ForegroundColor Cyan
 				if ($SaveResults) { $FileOutputLines += $line }
 				$lastLineType  = "ONLY IN 1ST"
 				$lastSavedType = "ONLY IN 1ST"
@@ -192,8 +281,8 @@ else {
 
 	# Find files only in 2nd
 	foreach ($file2nd in $files2nd) {
-		$relPath = $file2nd.FullName.Substring($Path2nd.Length).TrimStart('\')
-		if (-not $lookup2nd.ContainsKey($relPath) -or -not ($files1st | Where-Object { $_.FullName.Substring($Path1st.Length).TrimStart('\') -eq $relPath })) {
+		$relPath = $file2nd.FullName.Substring($Path2.Length).TrimStart('\')
+		if (-not $lookup2nd.ContainsKey($relPath) -or -not ($files1st | Where-Object { $_.FullName.Substring($Path1.Length).TrimStart('\') -eq $relPath })) {
 			if ($Filenames) {
 				$line = "ONLY IN 2ND:   $($file2nd.Name) ($($file2nd.Length) bytes)"
 			}
@@ -201,13 +290,15 @@ else {
 				$line = "ONLY IN 2ND:   $($file2nd.FullName) ($($file2nd.Length) bytes)"
 			}
 			if (-not $Identical) {
-				if ($lastLineType -ne "" -and $lastLineType -ne "ONLY IN 2ND") {
-					Write-Host ""
+				if (-not $NoConsoleOutput) {
+					if ($lastLineType -ne "" -and $lastLineType -ne "ONLY IN 2ND") {
+						Write-Host ""
+					}
+					Write-Host $line -ForegroundColor Cyan
 				}
 				if ($SaveResults -and $lastSavedType -ne "" -and $lastSavedType -ne "ONLY IN 2ND") {
 					$FileOutputLines += ""
 				}
-				Write-Host $line -ForegroundColor Cyan
 				if ($SaveResults) { $FileOutputLines += $line }
 				$lastLineType  = "ONLY IN 2ND"
 				$lastSavedType = "ONLY IN 2ND"
@@ -217,12 +308,14 @@ else {
 	}
 
 	# Summary
-	$summaryLine = "Comparison complete. Identical: $identicalCount, Different: $differentCount, Only in 1st: $onlyIn1stCount, Only in 2nd: $onlyIn2ndCount."
-	if ($Different -and $differentCount -eq 0 -and $onlyIn1stCount -eq 0 -and $onlyIn2ndCount -eq 0) {
-		Write-Host $summaryLine -ForegroundColor Cyan
-	}
-	else {
-		Write-Host "`n$summaryLine" -ForegroundColor Cyan
+	$summaryLine = "$ScriptName`: Comparison complete. Identical: $identicalCount, Different: $differentCount, Only in 1st: $onlyIn1stCount, Only in 2nd: $onlyIn2ndCount."
+	if (-not $NoConsoleOutput) {
+		if ($Different -and $differentCount -eq 0 -and $onlyIn1stCount -eq 0 -and $onlyIn2ndCount -eq 0) {
+			Write-Host $summaryLine -ForegroundColor Cyan
+		}
+		else {
+			Write-Host "`n$summaryLine" -ForegroundColor Cyan
+		}
 	}
 	if ($SaveResults) {
 		$FileOutputLines += ""
@@ -239,9 +332,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

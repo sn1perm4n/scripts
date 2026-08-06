@@ -4,6 +4,8 @@
 # Optional flags:
 #     -Backup: Automatically create backups before fixing files (skips interactive prompt)
 #     -Fix: Automatically fix issues without prompting
+#     -NoConsoleOutput: Suppress console output (requires -Fix and -SaveResults)
+#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
 #     -Recurse: Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Help / -?: Display this help message
@@ -12,6 +14,8 @@
 param (
 	[switch]$Backup,
 	[switch]$Fix,
+	[switch]$NoConsoleOutput,
+	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -22,10 +26,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Fix] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Fix] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before fixing files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -Fix                 Automatically fix issues without prompting" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -Fix and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -43,12 +49,35 @@ if ($SaveResults) {
 	}
 }
 
-# Prompt user for file or folder path
-$InputPath = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
+# -NoConsoleOutput requires -Fix and -SaveResults, since without -Fix this script
+# can still block on interactive prompts with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not $Fix -or -not $SaveResults)) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -Fix and -SaveResults."
+	exit 1
+}
+
+# Prompt user for file or folder path if not specified
+if (-not $Path) {
+	$Path = Read-Host "`nEnter the full path to a .ps1 file or a folder containing scripts"
+}
+$InputPath = $Path
 
 if (-not (Test-Path -LiteralPath $InputPath)) {
-	Write-Host ""
-	Write-Error "Path '$InputPath' does not exist."
+	$errorMessage = "Path '$InputPath' does not exist."
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
@@ -59,12 +88,29 @@ $files = if ($item.PSIsContainer) {
 	Get-ChildItem -Path $InputPath -Filter *.ps1 -File -Recurse:$Recurse
 }
 else {
-	if ($item.Extension -eq '.ps1') { @($item) }
-else { @() }
+	if ($item.Extension -eq '.ps1') {
+		@($item)
+	}
+	else {
+		@()
+	}
 }
 
 if (-not $files -or $files.Count -eq 0) {
-	Write-Host "`nNo PowerShell (.ps1) files found." -ForegroundColor Yellow
+	$warningMessage = "$ScriptName`: No PowerShell (.ps1) files found."
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Warning $warningMessage
+	}
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
@@ -73,7 +119,7 @@ $issueCount = 0
 $fixedCount = 0
 $FileOutputLines = @()
 
-Write-Host "`nScanning for trailing periods after `$(`$_.Exception.Message)...`n" -ForegroundColor Cyan
+if (-not $NoConsoleOutput) { Write-Host "`nScanning for trailing periods after `$(`$_.Exception.Message)...`n" -ForegroundColor Cyan }
 
 # First pass: scan all files and collect issues
 $fileIssuesMap = @{}
@@ -94,20 +140,20 @@ foreach ($file in $files) {
 	if ($fileIssues.Count -gt 0) {
 		$fileIssuesMap[$file.FullName] = $fileIssues
 		$headerLine = "$($file.FullName):"
-		Write-Host $headerLine -ForegroundColor Yellow
+		if (-not $NoConsoleOutput) { Write-Host $headerLine -ForegroundColor Yellow }
 		if ($SaveResults) {
 			$FileOutputLines += $headerLine
 		}
 
 		foreach ($issue in $fileIssues) {
-			Write-Host $issue -ForegroundColor Yellow
+			if (-not $NoConsoleOutput) { Write-Host $issue -ForegroundColor Yellow }
 			if ($SaveResults) {
 				$FileOutputLines += $issue
 			}
 		}
 
 		if (@($files).IndexOf($file) -lt ($files.Count - 1)) {
-			Write-Host ""
+			if (-not $NoConsoleOutput) { Write-Host "" }
 			if ($SaveResults) {
 				$FileOutputLines += ""
 			}
@@ -116,15 +162,15 @@ foreach ($file in $files) {
 }
 
 if ($issueCount -eq 0) {
-	$summaryLine = "Scan complete. No trailing periods found."
-	Write-Host $summaryLine -ForegroundColor Green
+	$summaryLine = "$ScriptName`: Scan complete. No trailing periods found."
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
 		try {
 			$outputString = ($FileOutputLines -join "`n")
 			[System.IO.File]::WriteAllText($SaveResults, $outputString)
-			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
 			Write-Host ""
@@ -149,8 +195,8 @@ else {
 }
 
 if (-not $doFix) {
-	$summaryLine = "Scan complete. $issueCount instance(s) found. No fixes applied."
-	Write-Host "`n$summaryLine" -ForegroundColor Yellow
+	$summaryLine = "$ScriptName`: Scan complete. $issueCount instance(s) found. No fixes applied."
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 
 	if ($SaveResults) {
 		$FileOutputLines += ""
@@ -163,7 +209,7 @@ if (-not $doFix) {
 		try {
 			$outputString = ($FileOutputLines -join "`n")
 			[System.IO.File]::WriteAllText($SaveResults, $outputString)
-			Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
 			Write-Host ""
@@ -198,7 +244,7 @@ foreach ($file in $files) {
 	}
 
 	if ($firstFixFile) {
-		Write-Host ""
+		if (-not $NoConsoleOutput) { Write-Host "" }
 		$firstFixFile = $false
 		if ($SaveResults) {
 			$FileOutputLines += ""
@@ -221,7 +267,7 @@ foreach ($file in $files) {
 		if ($doBackup) {
 			$backupPath = $file.FullName + ".bak"
 			Copy-Item -Path $file.FullName -Destination $backupPath -Force -ErrorAction Stop
-			Write-Host "Backup created: $backupPath" -ForegroundColor Cyan
+			if (-not $NoConsoleOutput) { Write-Host "Backup created: $backupPath" -ForegroundColor Cyan }
 			if ($SaveResults) {
 				$FileOutputLines += "Backup created: $backupPath"
 			}
@@ -232,20 +278,25 @@ foreach ($file in $files) {
 		if ($firstFix -and -not $doBackup) {
 			$firstFix = $false
 		}
-		Write-Host "Fixed: $($file.Name)" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "Fixed: $($file.Name)" -ForegroundColor Green }
 		if ($SaveResults) {
 			$FileOutputLines += "Fixed: $($file.Name)"
 		}
 	}
 	catch {
-		Write-Host ""
-		Write-Warning "Could not write to $($file.Name): $($_.Exception.Message)"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "Could not write to $($file.Name): $($_.Exception.Message)"
+		}
+		if ($SaveResults) {
+			$FileOutputLines += "Could not write to $($file.Name): $($_.Exception.Message)"
+		}
 	}
 }
 
 # Summary
-$summaryLine = "Scan complete. $issueCount instance(s) found, $fixedCount fixed."
-Write-Host "`n$summaryLine" -ForegroundColor Green
+$summaryLine = "$ScriptName`: Scan complete. $issueCount instance(s) found, $fixedCount fixed."
+if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 
 # Save results to text file if requested
 if ($SaveResults) {
@@ -259,9 +310,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to text file: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

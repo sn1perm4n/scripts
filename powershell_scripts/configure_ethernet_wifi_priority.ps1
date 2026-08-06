@@ -11,6 +11,7 @@
 
 # Optional flags:
 #     -IncludeIPv6: Also configure IPv6 interface metrics
+#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
 #     -Preview: Show what would be changed without making any changes
 #     -RestoreDefaults: Restore automatic metric for all affected adapters
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
@@ -21,6 +22,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$IncludeIPv6,
+	[switch]$NoConsoleOutput,
 	[switch]$Preview,
 	[switch]$RestoreDefaults,
 	[string]$SaveResults,
@@ -31,9 +33,10 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-IncludeIPv6] [-Preview] [-RestoreDefaults] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-IncludeIPv6] [-NoConsoleOutput] [-Preview] [-RestoreDefaults] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -IncludeIPv6         Also configure IPv6 interface metrics" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be changed without making any changes" -ForegroundColor Cyan
 	Write-Host "  -RestoreDefaults     Restore automatic metric for all affected adapters" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
@@ -50,6 +53,13 @@ if ($SaveResults) {
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
+}
+
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
 }
 
 $FileOutputLines = @()
@@ -70,8 +80,10 @@ $virtualPatterns = @(
 	'Teredo'
 )
 
-Write-Host "`nHostname: $hostname" -ForegroundColor Cyan
-Write-Host "Detecting network adapters..." -ForegroundColor Cyan
+if (-not $NoConsoleOutput) {
+	Write-Host "`nHostname: $hostname" -ForegroundColor Cyan
+	Write-Host "Detecting network adapters..." -ForegroundColor Cyan
+}
 if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += "Hostname: $hostname"
@@ -95,26 +107,43 @@ $wifiAdapters = $adapters | Where-Object {
 }
 
 if (-not $ethernetAdapters -and -not $wifiAdapters) {
-	Write-Host "`nNo physical Ethernet or Wi-Fi adapters found." -ForegroundColor Yellow
+	$warningMessage = "$ScriptName`: No physical Ethernet or Wi-Fi adapters found."
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Warning $warningMessage
+	}
+	if ($SaveResults) {
+		$FileOutputLines += $warningMessage
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::AppendAllText($SaveResults, $outputString)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
 if (-not $ethernetAdapters) {
-	Write-Host "`nNo Ethernet adapters found, skipping." -ForegroundColor Yellow
+	if (-not $NoConsoleOutput) {
+		Write-Host "`nNo Ethernet adapters found, skipping." -ForegroundColor Yellow
+	}
 	if ($SaveResults) { $FileOutputLines += "No Ethernet adapters found, skipping." }
 }
 
 if ($ethernetAdapters) {
-	Write-Host "`nEthernet adapter(s) found:" -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nEthernet adapter(s) found:" -ForegroundColor Cyan }
 	if ($SaveResults) { $FileOutputLines += "`nEthernet adapter(s) found:" }
 	foreach ($adapter in $ethernetAdapters) {
 		$ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
 
-		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
+		if (-not $NoConsoleOutput) { Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
 		if ($SaveResults) { $FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
 
 		if (-not $ipInterface) {
-			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." -ForegroundColor Yellow
+			if (-not $NoConsoleOutput) { Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." -ForegroundColor Yellow }
 			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." }
 			continue
 		}
@@ -132,37 +161,40 @@ if ($ethernetAdapters) {
 			$action = "Set interface metric to 10"
 		}
 
-		Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
+		if (-not $NoConsoleOutput) { Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 		if ($SaveResults) { $FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 
 		if ($alreadyConfigured) {
-			Write-Host "       Result          : Already configured, skipping (IPv4)" -ForegroundColor Yellow
+			if (-not $NoConsoleOutput) { Write-Host "       Result          : Already configured, skipping (IPv4)" -ForegroundColor Yellow }
 			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv4)" }
 		}
 		elseif ($Preview) {
-			Write-Host "       Action          : $action"
+			if (-not $NoConsoleOutput) { Write-Host "       Action          : $action" }
 			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
 			$changedCount++
 		}
 		else {
-			Write-Host "       Action          : $action"
+			if (-not $NoConsoleOutput) { Write-Host "       Action          : $action" }
 			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
 			try {
 				if ($RestoreDefaults) {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Enabled -ErrorAction Stop
-					Write-Host "       Result          : Automatic metric restored (IPv4)" -ForegroundColor Green
+					if (-not $NoConsoleOutput) { Write-Host "       Result          : Automatic metric restored (IPv4)" -ForegroundColor Green }
 					if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv4)" }
 				}
 				else {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Disabled -InterfaceMetric 10 -ErrorAction Stop
-					Write-Host "       Result          : Interface metric set to 10 (IPv4)" -ForegroundColor Green
+					if (-not $NoConsoleOutput) { Write-Host "       Result          : Interface metric set to 10 (IPv4)" -ForegroundColor Green }
 					if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 10 (IPv4)" }
 				}
 				$changedCount++
 			}
 			catch {
-				Write-Host ""
-				Write-Warning "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)"
+				if (-not $NoConsoleOutput) {
+					Write-Host ""
+					Write-Warning "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)"
+				}
+				if ($SaveResults) { $FileOutputLines += "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)" }
 			}
 		}
 
@@ -176,29 +208,32 @@ if ($ethernetAdapters) {
 				                         ($RestoreDefaults -and $ipv6CurrentAuto -eq 'Enabled')
 
 				if ($ipv6AlreadyConfigured) {
-					Write-Host "       Result          : Already configured, skipping (IPv6)" -ForegroundColor Yellow
+					if (-not $NoConsoleOutput) { Write-Host "       Result          : Already configured, skipping (IPv6)" -ForegroundColor Yellow }
 					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv6)" }
 				}
 				elseif ($Preview) {
-					Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })"
+					if (-not $NoConsoleOutput) { Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })" }
 					if ($SaveResults) { $FileOutputLines += "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 10 (IPv6)' })" }
 				}
 				else {
 					try {
 						if ($RestoreDefaults) {
 							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Enabled -ErrorAction Stop
-							Write-Host "       Result          : Automatic metric restored (IPv6)" -ForegroundColor Green
+							if (-not $NoConsoleOutput) { Write-Host "       Result          : Automatic metric restored (IPv6)" -ForegroundColor Green }
 							if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv6)" }
 						}
 						else {
 							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Disabled -InterfaceMetric 10 -ErrorAction Stop
-							Write-Host "       Result          : Interface metric set to 10 (IPv6)" -ForegroundColor Green
+							if (-not $NoConsoleOutput) { Write-Host "       Result          : Interface metric set to 10 (IPv6)" -ForegroundColor Green }
 							if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 10 (IPv6)" }
 						}
 					}
 					catch {
-						Write-Host ""
-						Write-Warning "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)"
+						if (-not $NoConsoleOutput) {
+							Write-Host ""
+							Write-Warning "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)"
+						}
+						if ($SaveResults) { $FileOutputLines += "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)" }
 					}
 				}
 			}
@@ -207,21 +242,21 @@ if ($ethernetAdapters) {
 }
 
 if (-not $wifiAdapters) {
-	Write-Host "`nNo Wi-Fi adapters found, skipping." -ForegroundColor Yellow
+	if (-not $NoConsoleOutput) { Write-Host "`nNo Wi-Fi adapters found, skipping." -ForegroundColor Yellow }
 	if ($SaveResults) { $FileOutputLines += "No Wi-Fi adapters found, skipping." }
 }
 
 if ($wifiAdapters) {
-	Write-Host "`nWi-Fi adapter(s) found:" -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "`nWi-Fi adapter(s) found:" -ForegroundColor Cyan }
 	if ($SaveResults) { $FileOutputLines += "`nWi-Fi adapter(s) found:" }
 	foreach ($adapter in $wifiAdapters) {
 		$ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
 
-		Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))"
+		if (-not $NoConsoleOutput) { Write-Host "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
 		if ($SaveResults) { $FileOutputLines += "  $($adapter.Name) ($($adapter.InterfaceDescription))" }
 
 		if (-not $ipInterface) {
-			Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." -ForegroundColor Yellow
+			if (-not $NoConsoleOutput) { Write-Host "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." -ForegroundColor Yellow }
 			if ($SaveResults) { $FileOutputLines += "       Result          : Adapter is disabled, skipping. Enable the adapter and re-run this script to configure." }
 			continue
 		}
@@ -239,37 +274,40 @@ if ($wifiAdapters) {
 			$action = "Set interface metric to 20"
 		}
 
-		Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })"
+		if (-not $NoConsoleOutput) { Write-Host "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 		if ($SaveResults) { $FileOutputLines += "       Current metric  : $(if ($currentAuto -eq 'Enabled') { 'Automatic' } else { $currentMetric })" }
 
 		if ($alreadyConfigured) {
-			Write-Host "       Result          : Already configured, skipping (IPv4)" -ForegroundColor Yellow
+			if (-not $NoConsoleOutput) { Write-Host "       Result          : Already configured, skipping (IPv4)" -ForegroundColor Yellow }
 			if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv4)" }
 		}
 		elseif ($Preview) {
-			Write-Host "       Action          : $action"
+			if (-not $NoConsoleOutput) { Write-Host "       Action          : $action" }
 			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
 			$changedCount++
 		}
 		else {
-			Write-Host "       Action          : $action"
+			if (-not $NoConsoleOutput) { Write-Host "       Action          : $action" }
 			if ($SaveResults) { $FileOutputLines += "       Action          : $action" }
 			try {
 				if ($RestoreDefaults) {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Enabled -ErrorAction Stop
-					Write-Host "       Result          : Automatic metric restored (IPv4)" -ForegroundColor Green
+					if (-not $NoConsoleOutput) { Write-Host "       Result          : Automatic metric restored (IPv4)" -ForegroundColor Green }
 					if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv4)" }
 				}
 				else {
 					Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -AutomaticMetric Disabled -InterfaceMetric 20 -ErrorAction Stop
-					Write-Host "       Result          : Interface metric set to 20 (IPv4)" -ForegroundColor Green
+					if (-not $NoConsoleOutput) { Write-Host "       Result          : Interface metric set to 20 (IPv4)" -ForegroundColor Green }
 					if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 20 (IPv4)" }
 				}
 				$changedCount++
 			}
 			catch {
-				Write-Host ""
-				Write-Warning "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)"
+				if (-not $NoConsoleOutput) {
+					Write-Host ""
+					Write-Warning "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)"
+				}
+				if ($SaveResults) { $FileOutputLines += "Could not configure $($adapter.Name) IPv4: $($_.Exception.Message)" }
 			}
 		}
 
@@ -283,29 +321,32 @@ if ($wifiAdapters) {
 				                         ($RestoreDefaults -and $ipv6CurrentAuto -eq 'Enabled')
 
 				if ($ipv6AlreadyConfigured) {
-					Write-Host "       Result          : Already configured, skipping (IPv6)" -ForegroundColor Yellow
+					if (-not $NoConsoleOutput) { Write-Host "       Result          : Already configured, skipping (IPv6)" -ForegroundColor Yellow }
 					if ($SaveResults) { $FileOutputLines += "       Result          : Already configured, skipping (IPv6)" }
 				}
 				elseif ($Preview) {
-					Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })"
+					if (-not $NoConsoleOutput) { Write-Host "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })" }
 					if ($SaveResults) { $FileOutputLines += "       Action          : $(if ($RestoreDefaults) { 'Restore automatic metric (IPv6)' } else { 'Set interface metric to 20 (IPv6)' })" }
 				}
 				else {
 					try {
 						if ($RestoreDefaults) {
 							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Enabled -ErrorAction Stop
-							Write-Host "       Result          : Automatic metric restored (IPv6)" -ForegroundColor Green
+							if (-not $NoConsoleOutput) { Write-Host "       Result          : Automatic metric restored (IPv6)" -ForegroundColor Green }
 							if ($SaveResults) { $FileOutputLines += "       Result          : Automatic metric restored (IPv6)" }
 						}
 						else {
 							Set-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv6 -AutomaticMetric Disabled -InterfaceMetric 20 -ErrorAction Stop
-							Write-Host "       Result          : Interface metric set to 20 (IPv6)" -ForegroundColor Green
+							if (-not $NoConsoleOutput) { Write-Host "       Result          : Interface metric set to 20 (IPv6)" -ForegroundColor Green }
 							if ($SaveResults) { $FileOutputLines += "       Result          : Interface metric set to 20 (IPv6)" }
 						}
 					}
 					catch {
-						Write-Host ""
-						Write-Warning "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)"
+						if (-not $NoConsoleOutput) {
+							Write-Host ""
+							Write-Warning "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)"
+						}
+						if ($SaveResults) { $FileOutputLines += "Could not configure $($adapter.Name) IPv6: $($_.Exception.Message)" }
 					}
 				}
 			}
@@ -313,22 +354,22 @@ if ($wifiAdapters) {
 	}
 }
 
-Write-Host ""
+if (-not $NoConsoleOutput) { Write-Host "" }
 if ($Preview) {
 	$summaryLine = "$ScriptName`: Preview complete. $changedCount adapter(s) would be configured."
-	Write-Host $summaryLine -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 elseif ($RestoreDefaults) {
 	$summaryLine = "$ScriptName`: Automatic metric restored for $changedCount adapter(s)."
-	Write-Host $summaryLine -ForegroundColor Green
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 }
 elseif ($changedCount -eq 0) {
 	$summaryLine = "$ScriptName`: All adapters already configured, no changes made."
-	Write-Host $summaryLine -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 else {
 	$summaryLine = "$ScriptName`: $changedCount adapter(s) configured successfully."
-	Write-Host $summaryLine -ForegroundColor Green
+	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 }
 
 if ($SaveResults) {
@@ -342,9 +383,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

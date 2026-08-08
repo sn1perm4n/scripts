@@ -14,6 +14,7 @@
 #     -HostFile <PATH>: Path to a text file containing one hostname per line
 #     -Hostname <NAME> / -IP <ADDRESS>: Target hostname, IP address, or comma-separated list
 #     -Interactive: Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
+#     -NoConsoleOutput: Suppress console output (requires -SaveResults; cannot be used with -Interactive)
 #     -Parallel: Process all hosts simultaneously instead of sequentially
 #     -Restart: Restart the target(s)
 #     -SaveResults <PATH>: Save results to a text file
@@ -29,6 +30,7 @@ param (
 	[Alias("IP")]
 	[string]$Hostname,
 	[switch]$Interactive,
+	[switch]$NoConsoleOutput,
 	[switch]$Parallel,
 	[switch]$Restart,
 	[string]$SaveResults,
@@ -40,7 +42,7 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-Parallel] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-NoConsoleOutput] [-Parallel] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Abort               Cancel a pending restart or shutdown on the target(s)" -ForegroundColor Cyan
 	Write-Host "  -Delay <N>           Seconds before the operation executes (default: 0)" -ForegroundColor Cyan
@@ -48,6 +50,7 @@ if ($Help) {
 	Write-Host "  -HostFile <PATH>     Path to a text file containing one hostname per line" -ForegroundColor Cyan
 	Write-Host "  -Hostname / -IP      Target hostname, IP address, or comma-separated list" -ForegroundColor Cyan
 	Write-Host "  -Interactive         Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog." -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults; cannot be used with -Interactive)" -ForegroundColor Cyan
 	Write-Host "  -Parallel            Process all hosts simultaneously instead of sequentially" -ForegroundColor Cyan
 	Write-Host "  -Restart             Restart the target(s)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file" -ForegroundColor Cyan
@@ -79,6 +82,21 @@ if (-not $Restart -and -not $Shutdown -and -not $Abort) {
 if ($Hostname -and $HostFile) {
 	Write-Host ""
 	Write-Warning "-Hostname and -HostFile cannot be used together."
+	exit 1
+}
+
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results.
+# It also cannot be combined with -Interactive, since that triggers a credential prompt that
+# would have no visible context if console output were suppressed.
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
+}
+
+if ($NoConsoleOutput -and $Interactive) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput cannot be used with -Interactive."
 	exit 1
 }
 
@@ -124,6 +142,7 @@ if ($isLocal) {
 }
 
 if ($Parallel -and $hosts.Count -eq 1) {
+	Write-Host ""
 	Write-Warning "-Parallel has no effect when targeting a single host."
 }
 
@@ -146,7 +165,7 @@ $operation = if ($Restart) { "Restart" }
 elseif ($Shutdown) { "Shutdown" }
 else { "Abort" }
 
-Write-Host ""
+if (-not $NoConsoleOutput) { Write-Host "" }
 
 $processHost = {
 	param($targetHost, $op, $forceOp, $delayOp, [System.Management.Automation.PSCredential]$credOp, $isLocalOp)
@@ -201,7 +220,7 @@ $processHost = {
 }
 
 if ($Parallel -and $hosts.Count -gt 1) {
-	Write-Host "Processing $($hosts.Count) host(s) in parallel..." -ForegroundColor Cyan
+	if (-not $NoConsoleOutput) { Write-Host "Processing $($hosts.Count) host(s) in parallel..." -ForegroundColor Cyan }
 	$jobs = @()
 	foreach ($h in $hosts) {
 		$jobs += Start-Job -ScriptBlock $processHost -ArgumentList $h, $operation, $Force, $Delay, $cred, $isLocal
@@ -212,27 +231,37 @@ if ($Parallel -and $hosts.Count -gt 1) {
 else {
 	$results = @()
 	foreach ($h in $hosts) {
-		Write-Host "Processing: $h" -ForegroundColor Cyan
+		if (-not $NoConsoleOutput) { Write-Host "Processing: $h" -ForegroundColor Cyan }
 		$results += & $processHost $h $operation $Force $Delay $cred $isLocal
 	}
 }
 
 foreach ($result in $results) {
 	if ($result.Success) {
-		Write-Host "$($result.Host): $($result.Message)" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "$($result.Host): $($result.Message)" -ForegroundColor Green }
 		$OutputLines += "$($result.Host): $($result.Message)"
 		$successCount++
 	}
 	else {
-		Write-Host ""
-		Write-Warning "$($result.Host): $($result.Message)"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "$($result.Host): $($result.Message)"
+		}
 		$OutputLines += "Warning: $($result.Host): $($result.Message)"
 		$failCount++
 	}
 }
 
 $summaryLine = "$ScriptName`: $operation completed — $successCount succeeded, $failCount failed."
-Write-Host "`n$summaryLine" -ForegroundColor $(if ($failCount -eq 0) { 'Green' } else { 'Yellow' })
+if (-not $NoConsoleOutput) {
+	if ($failCount -eq 0) {
+		Write-Host "`n$summaryLine" -ForegroundColor Green
+	}
+	else {
+		Write-Host ""
+		Write-Warning $summaryLine
+	}
+}
 $OutputLines += $summaryLine
 
 # Save results
@@ -243,9 +272,10 @@ if ($SaveResults) {
 		}
 		$outputString = ($OutputLines -join "`n")
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

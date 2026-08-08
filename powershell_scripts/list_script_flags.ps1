@@ -7,6 +7,7 @@
 #     -Description:           Include flag descriptions from the # Optional flags comment block
 #     -Filenames:             Print only script names with no flag details or blank lines between entries
 #     -FlagFilter <NAME,...>: Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter "-SaveResults,-NoConsoleOutput")
+#     -NoConsoleOutput:       Suppress console output (requires -SaveResults)
 #     -Path <PATH>:           Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse:               Search subdirectories recursively
 #     -SaveResults <PATH>:    Save results to a .csv file (appends if file exists)
@@ -20,6 +21,7 @@ param (
 	[switch]$Description,
 	[switch]$Filenames,
 	[string[]]$FlagFilter,
+	[switch]$NoConsoleOutput,
 	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
@@ -31,13 +33,14 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME,...>] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME,...>] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Align                  Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count                  Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description            Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
 	Write-Host "  -Filenames              Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
 	Write-Host "  -FlagFilter <NAME,...>  Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter `"-SaveResults,-NoConsoleOutput`")" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput        Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>            Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse                Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>     Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
@@ -85,16 +88,35 @@ if ($SaveResults) {
 	}
 }
 
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
+}
+
 # Prompt for path if not specified
 if (-not $Path) {
-	Write-Host ""
+	if (-not $NoConsoleOutput) { Write-Host "" }
 	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
-	Write-Host ""
+	if (-not $NoConsoleOutput) { Write-Host "" }
 }
 
 if (-not (Test-Path $Path)) {
-	Write-Host ""
-	Write-Error "The specified path does not exist."
+	$errorMessage = "The specified path does not exist."
+	if ($NoConsoleOutput) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+	}
+	else {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
 	exit 1
 }
 
@@ -107,14 +129,39 @@ else {
 		$scripts = @(Get-Item $Path)
 	}
 	else {
-		Write-Host ""
-		Write-Error "The specified file is not a PowerShell script (.ps1)."
+		$errorMessage = "The specified file is not a PowerShell script (.ps1)."
+		if ($NoConsoleOutput) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			}
+			catch {
+				Write-Host ""
+				Write-Error $errorMessage
+			}
+		}
+		else {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
 		exit 1
 	}
 }
 
 if ($scripts.Count -eq 0) {
-	Write-Host "No PowerShell scripts (.ps1) found." -ForegroundColor Yellow
+	$warningMessage = "$ScriptName`: No PowerShell scripts (.ps1) found."
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Warning $warningMessage
+	}
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$warningMessage`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 	exit 0
 }
 
@@ -223,13 +270,13 @@ foreach ($script in $scripts) {
 
 	if (-not $Unique) {
 		if ($Filenames) {
-			Write-Host $script.Name -ForegroundColor Cyan
+			if (-not $NoConsoleOutput) { Write-Host $script.Name -ForegroundColor Cyan }
 			if ($SaveResults) { $CsvOutputLines += $script.Name }
 			$totalFlags++
 		}
 		else {
 			if ($scripts.Count -gt 1 -or $FlagFilter) {
-				Write-Host $script.Name -ForegroundColor Cyan
+				if (-not $NoConsoleOutput) { Write-Host $script.Name -ForegroundColor Cyan }
 				if ($SaveResults) { $CsvOutputLines += $script.Name }
 			}
 
@@ -255,24 +302,26 @@ foreach ($script in $scripts) {
 				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
 
 				if ($Description -and $desc) {
-					if ($Align) {
-						$padded = $f.PadRight($padWidth)
-						Write-Host "  $padded  $desc"
-					}
-					else {
-						Write-Host "  $f`: $desc"
+					if (-not $NoConsoleOutput) {
+						if ($Align) {
+							$padded = $f.PadRight($padWidth)
+							Write-Host "  $padded  $desc"
+						}
+						else {
+							Write-Host "  $f`: $desc"
+						}
 					}
 					if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
 				}
 				else {
-					Write-Host "  $f"
+					if (-not $NoConsoleOutput) { Write-Host "  $f" }
 					if ($SaveResults) { $CsvOutputLines += $f }
 				}
 				$totalFlags++
 			}
 
 			if (($scripts.Count -gt 1 -or $FlagFilter) -and $script -ne $scripts[-1]) {
-				Write-Host ""
+				if (-not $NoConsoleOutput) { Write-Host "" }
 				if ($SaveResults) { $CsvOutputLines += "" }
 			}
 		}
@@ -292,7 +341,7 @@ if ($Unique) {
 	$sorted = $allFlags.Keys | Sort-Object
 	foreach ($key in $sorted) {
 		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" } else { "" }
-		Write-Host "  $($allFlags[$key])$countSuffix"
+		if (-not $NoConsoleOutput) { Write-Host "  $($allFlags[$key])$countSuffix" }
 		if ($SaveResults) {
 			if ($Count) {
 				$CsvOutputLines += "$($allFlags[$key]),$($flagCounts[$key])"
@@ -315,9 +364,16 @@ else {
 	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
 }
 
-if ($Filenames) { Write-Host "" }
-if ($Unique) { Write-Host "" }
-Write-Host $summaryLine -ForegroundColor Green
+if (-not $NoConsoleOutput) {
+	if ($Filenames) { Write-Host "" }
+	if ($Unique) { Write-Host "" }
+	if ($totalFlags -eq 0) {
+		Write-Warning $summaryLine
+	}
+	else {
+		Write-Host $summaryLine -ForegroundColor Green
+	}
+}
 
 # Save results
 if ($SaveResults) {
@@ -327,9 +383,10 @@ if ($SaveResults) {
 	try {
 		$outputString = ($CsvOutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
-		Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}

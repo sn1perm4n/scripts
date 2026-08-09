@@ -105,9 +105,11 @@ if ($Interactive -and $NoConsoleOutput) {
 	exit 1
 }
 
-# Warn if -NoConsoleOutput is used without -SaveResults
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
 if ($NoConsoleOutput -and -not $SaveResults) {
-	Write-Warning "-NoConsoleOutput has no effect without -SaveResults. Output would be suppressed entirely."
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
 }
 
 # Validate -SaveResults path if specified
@@ -162,7 +164,13 @@ if (-not $localFile) {
 			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
 		}
 		$outputString = ($OutputLines -join "`n")
-		try { [System.IO.File]::AppendAllText($SaveResults, $outputString) } catch { $null = $_ }
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, $outputString)
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
 	}
 	exit 1
 }
@@ -207,7 +215,13 @@ else {
 		$OutputLines += "Please install WinSCP from https://winscp.net and re-run."
 		if ($SaveResults) {
 			$outputString = ($OutputLines -join "`n") + "`n"
-			try { [System.IO.File]::AppendAllText($SaveResults, $outputString) } catch { $null = $_ }
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, $outputString)
+			}
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			}
 		}
 		exit 1
 	}
@@ -249,7 +263,13 @@ else {
 			if (-not $NoConsoleOutput) { Write-Host "Old remote Synology_* files deleted successfully." -ForegroundColor Green }
 			$OutputLines += "Old remote Synology_* files deleted successfully."
 		}
-		catch { $null = $_ }
+		catch {
+			if (-not $NoConsoleOutput) {
+				Write-Host ""
+				Write-Warning "Could not delete old remote Synology_* files: $($_.Exception.Message)"
+			}
+			$OutputLines += "Warning: Could not delete old remote Synology_* files: $($_.Exception.Message)"
+		}
 
 		# Upload the new Synology backup config
 		if (-not $NoConsoleOutput) { Write-Host "`nUploading: $($localFile.FullName)" -ForegroundColor Cyan }
@@ -291,15 +311,19 @@ else {
 		$OutputLines += "No old local Synology_* files found to delete."
 	}
 
-	$summaryLine = if ($uploadSuccess) {
-		"$ScriptName`: Synology config backup uploaded and cleanup completed successfully."
-	} else {
-		"$ScriptName`: Synology config backup upload failed."
+	if ($uploadSuccess) {
+		$summaryLine = "$ScriptName`: Synology config backup uploaded and cleanup completed successfully."
+		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
+		$OutputLines += $summaryLine
 	}
-
-	$summaryColor = if ($uploadSuccess) { 'Green' } else { 'Red' }
-	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor $summaryColor }
-	$OutputLines += $summaryLine
+	else {
+		$summaryLine = "$ScriptName`: Synology config backup upload failed."
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Error $summaryLine
+		}
+		$OutputLines += $summaryLine
+	}
 }
 
 # Save results
@@ -310,14 +334,17 @@ if ($SaveResults) {
 		}
 		$outputString = ($OutputLines -join "`n")
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
-		if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
-		if (-not $NoConsoleOutput) {
-			Write-Host ""
-			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
-		}
+		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
+		Write-Host ""
+		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
+}
+
+if (-not $Preview -and -not $uploadSuccess) {
+	exit 1
 }
 
 exit 0

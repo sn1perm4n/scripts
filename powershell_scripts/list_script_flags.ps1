@@ -5,6 +5,7 @@
 #     -Align:                 Align flag descriptions into two columns when used with -Description (console output only)
 #     -Count:                 Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description:           Include flag descriptions from the # Optional flags comment block
+#     -Exclude:               Show scripts missing at least one flag specified via -FlagFilter, instead of scripts containing all of them (requires -FlagFilter)
 #     -Filenames:             Print only script names with no flag details or blank lines between entries
 #     -FlagFilter <NAME,...>: Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter "-SaveResults,-NoConsoleOutput")
 #     -NoConsoleOutput:       Suppress console output (requires -SaveResults)
@@ -19,6 +20,7 @@ param (
 	[switch]$Align,
 	[switch]$Count,
 	[switch]$Description,
+	[switch]$Exclude,
 	[switch]$Filenames,
 	[string[]]$FlagFilter,
 	[switch]$NoConsoleOutput,
@@ -33,11 +35,12 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Filenames] [-FlagFilter <NAME,...>] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Exclude] [-Filenames] [-FlagFilter <NAME,...>] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Align                  Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count                  Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description            Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
+	Write-Host "  -Exclude                Show scripts missing at least one flag specified via -FlagFilter, instead of scripts containing all of them (requires -FlagFilter)" -ForegroundColor Cyan
 	Write-Host "  -Filenames              Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
 	Write-Host "  -FlagFilter <NAME,...>  Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter `"-SaveResults,-NoConsoleOutput`")" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput        Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
@@ -76,6 +79,11 @@ if ($Filenames -and $Description) {
 if ($Align -and -not $Description) {
 	Write-Host ""
 	Write-Warning "-Align has no effect without -Description."
+}
+
+if ($Exclude -and -not $FlagFilter) {
+	Write-Host ""
+	Write-Warning "-Exclude has no effect without -FlagFilter."
 }
 
 # Validate -SaveResults path if specified
@@ -221,7 +229,7 @@ foreach ($script in $scripts) {
 
 	if ($parsedFlags.Count -eq 0) { continue }
 
-	# If -FlagFilter is specified, skip scripts that don't contain ALL specified flags
+	# If -FlagFilter is specified, skip scripts that don't match: normally scripts must contain ALL specified flags, but with -Exclude scripts must be missing at least one of them instead
 	if ($FlagFilter) {
 		$allMatch = $true
 		foreach ($filter in $FlagFilter) {
@@ -231,7 +239,12 @@ foreach ($script in $scripts) {
 				break
 			}
 		}
-		if (-not $allMatch) { continue }
+		if ($Exclude) {
+			if ($allMatch) { continue }
+		}
+		else {
+			if (-not $allMatch) { continue }
+		}
 	}
 
 	# Build description lookup from # Optional flags comment block if -Description specified
@@ -280,7 +293,7 @@ foreach ($script in $scripts) {
 				if ($SaveResults) { $CsvOutputLines += $script.Name }
 			}
 
-			$flagsToShow = if ($FlagFilter) {
+			$flagsToShow = if ($FlagFilter -and -not $Exclude) {
 				$parsedFlags | Where-Object {
 					$baseName = ($_ -split ' ')[0]
 					$FlagFilter | Where-Object { $baseName -eq "-$($_.TrimStart('-'))" }

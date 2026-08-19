@@ -43,7 +43,7 @@ try {
 
 	if (-not (Get-Module -ListAvailable -Name 'PSWindowsUpdate')) {
 		Write-Host "PSWindowsUpdate module not found. Installing..." -ForegroundColor Yellow
-		Install-Module PSWindowsUpdate -Repository PSGallery -Force -ErrorAction Stop
+		Install-Module PSWindowsUpdate -Repository PSGallery -Force -SkipPublisherCheck -ErrorAction Stop
 		Write-Host "PSWindowsUpdate module installed successfully." -ForegroundColor Green
 	}
 	else {

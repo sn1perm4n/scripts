@@ -79,6 +79,17 @@ if ($SaveResults) {
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
+
+	# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
+	if (-not (Test-Path $SaveResults)) {
+		try {
+			[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
 }
 
 $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'

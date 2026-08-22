@@ -3,9 +3,13 @@
 
 # NOTE: This script is intended for Windows 11 only — the NotifyIconSettings registry path does not exist on Windows 10
 
-# NOTE2: Claude updates frequently and each update registers a new system tray icon entry. This script identifies the newest version by extracting the version number from the app-x.x.x folder in the executable path, deletes all older entries, and promotes the active entry.
+# NOTE2: Claude updates frequently and each update registers a new system tray icon entry. This script identifies the newest version by extracting the version number from either the classic Electron/Squirrel installer path (an app-x.x.x folder) or the newer MSIX-packaged path (WindowsApps\Claude_x.x.x.x_platform__hash\app\claude.exe), deletes all older entries, and promotes the active entry.
 
-# NOTE3: If Claude is not visible in the System Tray after running this script, re-open Claude and manually configure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
+# NOTE3: MSIX-packaged ExecutablePath values may reference a KNOWNFOLDERID GUID instead of a literal drive path (i.e. {6D809377-6AF0-444B-8957-A3773F02200E} for Program Files). This script resolves the GUIDs it recognizes; unrecognized ones are reported as "Unknown" for ExistsOnDisk rather than incorrectly reported as missing.
+
+# NOTE4: The WindowsApps folder has restrictive permissions by default, even for administrators, so ExistsOnDisk may be inaccurate for MSIX entries even when Claude is properly installed. This field is diagnostic only and does not affect the stale-cleanup/promotion logic, which relies on version comparison.
+
+# NOTE5: If Claude is not visible in the System Tray after running this script, re-open Claude and manually configure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
 
 # Optional flags:
 #     -Preview: Show what would be changed without making any changes
@@ -44,6 +48,12 @@ if (-not $subkeys) {
 	exit 0
 }
 
+# Known KNOWNFOLDERID GUIDs that may appear in place of a literal path in MSIX-packaged ExecutablePath values
+$knownFolderMap = @{
+	'{6D809377-6AF0-444B-8957-A3773F02200E}' = $env:ProgramFiles
+	'{7C5A40EF-A0FB-4BFC-874A-C0F2E0B9FA8E}' = ${env:ProgramFiles(x86)}
+}
+
 # Collect all Claude entries
 $claudeEntries = @()
 foreach ($key in $subkeys) {
@@ -53,13 +63,30 @@ foreach ($key in $subkeys) {
 
 	$isPromoted = $key.GetValue("IsPromoted")
 
-	# Extract version from app-x.x.x folder segment in the path
+	# Extract version from either the classic Electron/Squirrel app-x.x.x folder or the newer MSIX Claude_x.x.x.x_platform__hash folder
 	$version = $null
 	if ($exePath -match '(?i)app-(\d+\.\d+[\.\d]*)') {
 		try { $version = [version]$Matches[1] } catch { $null = $_ }
 	}
+	elseif ($exePath -match '(?i)Claude_(\d+(?:\.\d+)+)_') {
+		try { $version = [version]$Matches[1] } catch { $null = $_ }
+	}
 
-	$existsOnDisk = Test-Path $exePath
+	# Resolve a leading KNOWNFOLDERID GUID to a literal path if recognized, so ExistsOnDisk can be checked accurately
+	$resolvedExePath = $exePath
+	$unresolvedKnownFolder = $false
+	if ($exePath -match '^(\{[0-9A-Fa-f-]{36}\})(\\.*)$') {
+		$folderGuid = $Matches[1]
+		$remainder = $Matches[2]
+		if ($knownFolderMap.ContainsKey($folderGuid)) {
+			$resolvedExePath = "$($knownFolderMap[$folderGuid])$remainder"
+		}
+		else {
+			$unresolvedKnownFolder = $true
+		}
+	}
+
+	$existsOnDisk = if ($unresolvedKnownFolder) { $null } else { Test-Path $resolvedExePath -ErrorAction SilentlyContinue }
 
 	$claudeEntries += [PSCustomObject]@{
 		KeyName = $key.PSChildName
@@ -77,7 +104,7 @@ if ($claudeEntries.Count -eq 0) {
 
 Write-Host "`nFound $($claudeEntries.Count) Claude entry/entries in NotifyIconSettings:" -ForegroundColor Cyan
 foreach ($entry in $claudeEntries) {
-	$diskStatus = if ($entry.ExistsOnDisk) { "exists on disk" } else { "NOT found on disk" }
+	$diskStatus = if ($null -eq $entry.ExistsOnDisk) { "Unknown (unrecognized known-folder reference)" } elseif ($entry.ExistsOnDisk) { "exists on disk" } else { "NOT found on disk" }
 	$promotedStatus = if ($entry.IsPromoted -eq 1) { "Yes" } elseif ($entry.IsPromoted -eq 0) { "No" } else { "Unknown" }
 	$versionDisplay = if ($entry.Version) { $entry.Version.ToString() } else { "unknown" }
 	Write-Host "  $($entry.KeyName)" -ForegroundColor Cyan

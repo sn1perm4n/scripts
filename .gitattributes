@@ -4,3 +4,4 @@
 *.ps1 text eol=lf
 *.py text eol=lf
 *.md text eol=lf
+*.reg text eol=crlf

@@ -238,7 +238,7 @@ if ($Restore) {
 }
 elseif ($Preview) {
 	# Preview mode
-	if (-not $NoConsoleOutput) { Write-Host "`nPreviewing current service status (no changes will be made)..." -ForegroundColor Cyan }
+	if (-not $NoConsoleOutput) { Write-Host "`nPreviewing current service status (no changes will be made)...`n" -ForegroundColor Cyan }
 
 	$totalExcluded = 0
 

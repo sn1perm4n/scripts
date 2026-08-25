@@ -36,7 +36,8 @@ if (-not $Show -and -not $Hide) {
 	while ($true) {
 		$key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").Character
 		if ($key -eq '1' -or $key -eq '2') { break }
-		Write-Host "`nInvalid input. Please press 1 or 2..." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Invalid input. Please press 1 or 2..."
 	}
 
 	$Show = $key -eq '1'

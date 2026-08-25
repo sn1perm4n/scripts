@@ -40,7 +40,8 @@ if (-not $Windows10 -and -not $Windows11) {
 	while ($true) {
 		$key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").Character
 		if ($key -eq '1' -or $key -eq '2') { break }
-		Write-Host "`nInvalid input. Please press 1 or 2..." -ForegroundColor Yellow
+		Write-Host ""
+		Write-Warning "Invalid input. Please press 1 or 2..."
 	}
 
 	$Windows10 = $key -eq '1'

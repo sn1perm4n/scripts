@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script forcefully restarts the Nvidia Display Container LS service (NVDisplay.ContainerLocalSystem)
+# This script forcefully restarts the NVIDIA Display Container LS service (NVDisplay.ContainerLocalSystem)
 
 #Requires -RunAsAdministrator
 

@@ -11,6 +11,8 @@
 
 # NOTE5: If Claude is not visible in the System Tray after running this script, re-open Claude and manually configure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
 
+# NOTE6: Restarting File Explorer below can cause the Nvidia system tray icon to disappear, since Nvidia's tray component does not always respond to the TaskbarCreated broadcast Explorer sends on restart. This script automatically restarts the NVIDIA Display Container LS service (if present) to work around it; this is a no-op on machines without an Nvidia GPU.
+
 # Optional flags:
 #     -Preview: Show what would be changed without making any changes
 #     -Help / -?: Display this help message
@@ -200,6 +202,24 @@ if (-not $Preview) {
 	catch {
 		Write-Host ""
 		Write-Warning "Could not restart File Explorer: $($_.Exception.Message)"
+	}
+}
+
+# Restart the NVIDIA Display Container LS service if present, since the Explorer restart above can cause the Nvidia system tray icon to disappear
+if (-not $Preview) {
+	$nvidiaServiceName = "NVDisplay.ContainerLocalSystem"
+	$nvidiaService = Get-Service -Name $nvidiaServiceName -ErrorAction SilentlyContinue
+	if ($nvidiaService) {
+		Write-Host "`nRestarting NVIDIA Display Container LS service to restore its system tray icon..." -ForegroundColor Cyan
+		try {
+			Stop-Service -Name $nvidiaServiceName -Force -ErrorAction Stop
+			Start-Service -Name $nvidiaServiceName -ErrorAction Stop
+			Write-Host "NVIDIA Display Container LS service restarted successfully." -ForegroundColor Green
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not restart NVIDIA Display Container LS service: $($_.Exception.Message)"
+		}
 	}
 }
 

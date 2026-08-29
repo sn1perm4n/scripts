@@ -2,13 +2,14 @@
 # This script checks a folder of PowerShell scripts or an individual PowerShell script for space indentation and replaces it with tab indentation
 
 # Optional flags:
-#     -Backup: Automatically create backups before modifying files (skips interactive prompt)
-#     -ConvertAll: Automatically process all files without prompting
-#     -NoConsoleOutput: Suppress console output (requires -ConvertAll and -SaveResults)
-#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories
+#     -Backup:             Automatically create backups before modifying files (skips interactive prompt)
+#     -ConvertAll:         Automatically process all files without prompting
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults, and one of -ConvertAll/-Preview)
+#     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
+#     -Preview:            Show which files/lines would be re-indented without modifying anything
+#     -Recurse:            Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -16,6 +17,7 @@ param (
 	[switch]$ConvertAll,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
+	[switch]$Preview,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -26,12 +28,13 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-ConvertAll] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-ConvertAll] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before modifying files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -ConvertAll          Automatically process all files without prompting" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress console output (requires -ConvertAll and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults, and one of -ConvertAll/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show which files/lines would be re-indented without modifying anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -49,11 +52,11 @@ if ($SaveResults) {
 	}
 }
 
-# -NoConsoleOutput requires -ConvertAll and -SaveResults, since without -ConvertAll this script
-# can still block on an interactive prompt with no visible context if output is suppressed
-if ($NoConsoleOutput -and (-not $ConvertAll -or -not $SaveResults)) {
+# -NoConsoleOutput requires -SaveResults, and one of -ConvertAll or -Preview, since without one of
+# those this script can still block on an interactive prompt with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not ($ConvertAll -or $Preview) -or -not $SaveResults)) {
 	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -ConvertAll and -SaveResults."
+	Write-Error "-NoConsoleOutput requires -SaveResults, and one of -ConvertAll or -Preview."
 	exit 1
 }
 
@@ -136,7 +139,7 @@ if ($Backup) {
 	$doBackup = $true
 }
 else {
-	if (-not $ConvertAll) {
+	if (-not $ConvertAll -and -not $Preview) {
 		Write-Host ""
 		$backupResponse = Read-Host "Would you like to create backups before modifying? (Y/N)"
 		if ($backupResponse -match '^[Yy]$') {
@@ -154,7 +157,21 @@ foreach ($fileObj in $files) {
 	$newContent = @()
 	$lineNumber = 0
 
-	foreach ($line in Get-Content $file) {
+	try {
+		$originalLines = Get-Content $file -ErrorAction Stop
+	}
+	catch {
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "Could not read $($fileObj.Name): $($_.Exception.Message)"
+		}
+		if ($SaveResults) {
+			$FileOutputLines += "Could not read $($fileObj.Name): $($_.Exception.Message)"
+		}
+		continue
+	}
+
+	foreach ($line in $originalLines) {
 		$lineNumber++
 
 		# Match any leading whitespace (spaces or tabs)
@@ -174,38 +191,50 @@ foreach ($fileObj in $files) {
 			if ($newLine -ne $line) {
 				$line = $newLine
 				$changed = $true
-				if (-not $NoConsoleOutput) { Write-Host "  Line $lineNumber`: replaced leading spaces with $tabCount tab(s) + $remainingSpaces space(s)" -ForegroundColor Yellow }
+				if (-not $NoConsoleOutput) {
+					$verb = if ($Preview) { "would replace" } else { "replaced" }
+					Write-Host "  Line $lineNumber`: $verb leading spaces with $tabCount tab(s) + $remainingSpaces space(s)" -ForegroundColor Yellow
+				}
 			}
 		}
 		$newContent += $line
 	}
 
 	if ($changed) {
-		try {
-			if ($doBackup) {
-				$backupPath = "$file.bak"
-				Copy-Item $file $backupPath -Force -ErrorAction Stop
-				if (-not $NoConsoleOutput) { Write-Host "  Backup created: $backupPath" -ForegroundColor Cyan }
-				if ($SaveResults) {
-					$FileOutputLines += "Backup created: $backupPath"
-				}
-			}
-
-			$utf8Bom = New-Object System.Text.UTF8Encoding $true
-			[System.IO.File]::WriteAllLines($file, $newContent, $utf8Bom)
-			if (-not $NoConsoleOutput) { Write-Host "  Updated: $file" -ForegroundColor Green }
+		if ($Preview) {
+			if (-not $NoConsoleOutput) { Write-Host "  Would update: $file" -ForegroundColor Yellow }
 			if ($SaveResults) {
-				$FileOutputLines += "Updated: $file"
+				$FileOutputLines += "Would update: $file"
 			}
 			$modifiedCount++
 		}
-		catch {
-			if (-not $NoConsoleOutput) {
-				Write-Host ""
-				Write-Warning "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+		else {
+			try {
+				if ($doBackup) {
+					$backupPath = "$file.bak"
+					Copy-Item $file $backupPath -Force -ErrorAction Stop
+					if (-not $NoConsoleOutput) { Write-Host "  Backup created: $backupPath" -ForegroundColor Cyan }
+					if ($SaveResults) {
+						$FileOutputLines += "Backup created: $backupPath"
+					}
+				}
+
+				$utf8Bom = New-Object System.Text.UTF8Encoding $true
+				[System.IO.File]::WriteAllLines($file, $newContent, $utf8Bom)
+				if (-not $NoConsoleOutput) { Write-Host "  Updated: $file" -ForegroundColor Green }
+				if ($SaveResults) {
+					$FileOutputLines += "Updated: $file"
+				}
+				$modifiedCount++
 			}
-			if ($SaveResults) {
-				$FileOutputLines += "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+			catch {
+				if (-not $NoConsoleOutput) {
+					Write-Host ""
+					Write-Warning "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+				}
+				if ($SaveResults) {
+					$FileOutputLines += "Could not write to $($fileObj.Name): $($_.Exception.Message)"
+				}
 			}
 		}
 	}
@@ -218,7 +247,8 @@ foreach ($fileObj in $files) {
 }
 
 # Summary
-$summaryLine = "$ScriptName`: Complete. $modifiedCount file(s) modified."
+$verb = if ($Preview) { "would be" } else { "were" }
+$summaryLine = "$ScriptName`: Complete. $modifiedCount file(s) $verb modified."
 if (-not $NoConsoleOutput) {
 	if ($modifiedCount -gt 0) {
 		Write-Host "`n$summaryLine" -ForegroundColor Green
@@ -234,8 +264,8 @@ if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine
 
-	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	try {

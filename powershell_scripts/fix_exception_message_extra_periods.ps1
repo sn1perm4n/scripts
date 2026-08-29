@@ -2,13 +2,14 @@
 # This script checks a single script or a folder of scripts for an extra period at the end of $($_.Exception.Message) in Write-Error and Write-Warning lines and removes it
 
 # Optional flags:
-#     -Backup: Automatically create backups before fixing files (skips interactive prompt)
-#     -Fix: Automatically fix issues without prompting
-#     -NoConsoleOutput: Suppress console output (requires -Fix and -SaveResults)
-#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories
+#     -Backup:             Automatically create backups before fixing files (skips interactive prompt)
+#     -Fix:                Automatically fix issues without prompting
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults, and one of -Fix/-Preview)
+#     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
+#     -Preview:            Scan and report issues without fixing anything
+#     -Recurse:            Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -16,6 +17,7 @@ param (
 	[switch]$Fix,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
+	[switch]$Preview,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Help
@@ -26,12 +28,13 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Fix] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Fix] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before fixing files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -Fix                 Automatically fix issues without prompting" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress console output (requires -Fix and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults, and one of -Fix/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Scan and report issues without fixing anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
@@ -49,11 +52,11 @@ if ($SaveResults) {
 	}
 }
 
-# -NoConsoleOutput requires -Fix and -SaveResults, since without -Fix this script
-# can still block on interactive prompts with no visible context if output is suppressed
-if ($NoConsoleOutput -and (-not $Fix -or -not $SaveResults)) {
+# -NoConsoleOutput requires -SaveResults, and one of -Fix or -Preview, since without one of
+# those this script can still block on interactive prompts with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not ($Fix -or $Preview) -or -not $SaveResults)) {
 	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -Fix and -SaveResults."
+	Write-Error "-NoConsoleOutput requires -SaveResults, and one of -Fix or -Preview."
 	exit 1
 }
 
@@ -125,7 +128,19 @@ if (-not $NoConsoleOutput) { Write-Host "`nScanning for trailing periods after `
 $fileIssuesMap = @{}
 
 foreach ($file in $files) {
-	$lines = @(Get-Content -LiteralPath $file.FullName)
+	try {
+		$lines = @(Get-Content -LiteralPath $file.FullName -ErrorAction Stop)
+	}
+	catch {
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "Could not read $($file.Name): $($_.Exception.Message)"
+		}
+		if ($SaveResults) {
+			$FileOutputLines += "Could not read $($file.Name): $($_.Exception.Message)"
+		}
+		continue
+	}
 	$fileIssues = @()
 
 	for ($i = 0; $i -lt $lines.Count; $i++) {
@@ -182,6 +197,32 @@ if ($issueCount -eq 0) {
 }
 
 # Determine whether to fix
+if ($Preview) {
+	$summaryLine = "$ScriptName`: Preview complete. $issueCount instance(s) found. No fixes applied."
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
+
+	if ($SaveResults) {
+		$FileOutputLines += ""
+		$FileOutputLines += $summaryLine
+
+		while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+			$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
+		}
+
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
+
+	exit 0
+}
+
 $doFix = $false
 if ($Fix) {
 	$doFix = $true
@@ -202,8 +243,8 @@ if (-not $doFix) {
 		$FileOutputLines += ""
 		$FileOutputLines += $summaryLine
 
-		while ($FileOutputLines[-1] -eq '') {
-			$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+		while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+			$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 		}
 
 		try {

@@ -2,15 +2,16 @@
 # This script checks files for UTF-8 BOM formatting and optionally converts them to UTF-8 BOM
 
 # Optional flags:
-#     -Backup: Automatically create backups before converting files (skips interactive prompt)
-#     -ConvertAll: Automatically convert all files without prompting
-#     -Failures: Only show files skipped or not converted
-#     -NoConsoleOutput: Suppress console output (requires -ConvertAll and -SaveResults)
-#     -Path <PATH>: Path to a .ps1 or .reg file or a folder (prompts if not specified)
-#     -Recurse: Include all .ps1 and .reg files in subfolders of the specified path
+#     -Backup:             Automatically create backups before converting files (skips interactive prompt)
+#     -ConvertAll:         Automatically convert all files without prompting
+#     -Failures:           Only show files skipped or not converted
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults, and one of -ConvertAll/-Failures/-Preview/-Successes)
+#     -Path <PATH>:        Path to a .ps1 or .reg file or a folder (prompts if not specified)
+#     -Preview:            Show BOM status for every file without converting anything (mutually exclusive with -ConvertAll, -Failures, -Successes)
+#     -Recurse:            Include all .ps1 and .reg files in subfolders of the specified path
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Successes: Only show successfully converted filenames
-#     -Help / -?: Display this help message
+#     -Successes:          Only show successfully converted filenames
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -19,6 +20,7 @@ param (
 	[switch]$Failures,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
+	[switch]$Preview,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$Successes,
@@ -30,13 +32,14 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-ConvertAll] [-Failures] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-Successes] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-ConvertAll] [-Failures] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-Successes] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before converting files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -ConvertAll          Automatically convert all files without prompting" -ForegroundColor Cyan
 	Write-Host "  -Failures            Only show files skipped or not converted" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress console output (requires -ConvertAll and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults, and one of -ConvertAll/-Failures/-Preview/-Successes)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a .ps1 or .reg file or a folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show BOM status for every file without converting anything (mutually exclusive with -ConvertAll, -Failures, -Successes)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include all .ps1 and .reg files in subfolders of the specified path" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Successes           Only show successfully converted filenames" -ForegroundColor Cyan
@@ -55,11 +58,24 @@ if ($SaveResults) {
 	}
 }
 
-# -NoConsoleOutput requires -ConvertAll and -SaveResults, since without -ConvertAll this script
-# can still block on interactive per-file prompts with no visible context if output is suppressed
-if ($NoConsoleOutput -and (-not $ConvertAll -or -not $SaveResults)) {
+# -Preview is mutually exclusive with -ConvertAll, -Failures, and -Successes
+if ($Preview -and ($ConvertAll -or $Failures -or $Successes)) {
 	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -ConvertAll and -SaveResults."
+	Write-Error "-Preview is mutually exclusive with -ConvertAll, -Failures, and -Successes."
+	exit 1
+}
+
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
+if ($NoConsoleOutput -and -not $SaveResults) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
+}
+
+# -NoConsoleOutput also requires one of -ConvertAll, -Failures, -Preview, or -Successes, since these are the only modes guaranteed not to hit an interactive prompt
+if ($NoConsoleOutput -and -not ($ConvertAll -or $Failures -or $Preview -or $Successes)) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -ConvertAll, -Failures, -Preview, or -Successes."
 	exit 1
 }
 
@@ -117,8 +133,13 @@ foreach ($file in $files) {
 		$bytes = [System.IO.File]::ReadAllBytes($file.FullName)
 	}
 	catch {
-		Write-Host ""
-		Write-Warning "Could not read $($file.Name): $($_.Exception.Message)"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "Could not read $($file.Name): $($_.Exception.Message)"
+		}
+		if ($SaveResults) {
+			$FileOutputLines += "Could not read $($file.Name): $($_.Exception.Message)"
+		}
 		continue
 	}
 
@@ -137,6 +158,46 @@ foreach ($file in $files) {
 		$MissingBOM++
 		$FailureFiles += $file.FullName
 	}
+}
+
+# Preview mode: show BOM status for every file without converting anything
+if ($Preview) {
+	$lines = @()
+
+	foreach ($filePath in $SuccessFiles) {
+		$fileName = Split-Path $filePath -Leaf
+		$line = "${fileName}: UTF-8 BOM OK"
+		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Cyan }
+		$lines += $line
+	}
+
+	foreach ($filePath in $FailureFiles) {
+		$fileName = Split-Path $filePath -Leaf
+		$line = "${fileName}: UTF-8 BOM Incorrect"
+		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
+		$lines += $line
+	}
+
+	$summaryLine = "$ScriptName`: Preview complete. Analyzed $TotalFiles file(s): $MissingBOM missing BOM. No changes were made."
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Host $summaryLine -ForegroundColor Cyan
+	}
+	$lines += ""
+	$lines += $summaryLine
+
+	if ($SaveResults) {
+		try {
+			[System.IO.File]::WriteAllText($SaveResults, ($lines -join "`n"))
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
+
+	exit 0
 }
 
 # Show successes only
@@ -318,8 +379,8 @@ if ($SaveResults) {
 	$FileOutputLines += $summaryLine
 
 	# Remove trailing blank lines
-	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	try {

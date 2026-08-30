@@ -7,19 +7,22 @@
 
 # NOTE3: -Parallel processes all hosts simultaneously. Without it, hosts are processed sequentially. -Parallel is only relevant when targeting multiple hosts.
 
+# NOTE4: Every remote host is tested for connectivity (via ICMP ping) before any operation is attempted or previewed; unreachable hosts are recorded as failures and skipped. This check is skipped for the local machine. Caution: some environments block ICMP by firewall even when the host is otherwise reachable via WinRM/WMI, which could cause a reachable host to be incorrectly skipped here.
+
 # Optional flags:
-#     -Abort: Cancel a pending restart or shutdown on the target(s)
-#     -Delay <N>: Seconds before the operation executes (default: 0)
-#     -Force: Force close running applications without prompting
-#     -HostFile <PATH>: Path to a text file containing one hostname per line
+#     -Abort:                           Cancel a pending restart or shutdown on the target(s)
+#     -Delay <N>:                       Seconds before the operation executes (default: 0)
+#     -Force:                           Force close running applications without prompting
+#     -HostFile <PATH>:                 Path to a text file containing one hostname per line
 #     -Hostname <NAME> / -IP <ADDRESS>: Target hostname, IP address, or comma-separated list
-#     -Interactive: Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
-#     -NoConsoleOutput: Suppress console output (requires -SaveResults; cannot be used with -Interactive)
-#     -Parallel: Process all hosts simultaneously instead of sequentially
-#     -Restart: Restart the target(s)
-#     -SaveResults <PATH>: Save results to a text file
-#     -Shutdown: Shut down the target(s)
-#     -Help / -?: Display this help message
+#     -Interactive:                     Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
+#     -NoConsoleOutput:                 Suppress console output (requires -SaveResults; cannot be used with -Interactive)
+#     -Parallel:                        Process all hosts simultaneously instead of sequentially
+#     -Preview:                         Show what would happen for each target without performing the operation (skips credential prompt)
+#     -Restart:                         Restart the target(s)
+#     -SaveResults <PATH>:              Save results to a text file
+#     -Shutdown:                        Shut down the target(s)
+#     -Help / -?:                       Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -32,6 +35,7 @@ param (
 	[switch]$Interactive,
 	[switch]$NoConsoleOutput,
 	[switch]$Parallel,
+	[switch]$Preview,
 	[switch]$Restart,
 	[string]$SaveResults,
 	[switch]$Shutdown,
@@ -42,7 +46,7 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-NoConsoleOutput] [-Parallel] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-NoConsoleOutput] [-Parallel] [-Preview] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Abort               Cancel a pending restart or shutdown on the target(s)" -ForegroundColor Cyan
 	Write-Host "  -Delay <N>           Seconds before the operation executes (default: 0)" -ForegroundColor Cyan
@@ -52,6 +56,7 @@ if ($Help) {
 	Write-Host "  -Interactive         Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog." -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults; cannot be used with -Interactive)" -ForegroundColor Cyan
 	Write-Host "  -Parallel            Process all hosts simultaneously instead of sequentially" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show what would happen for each target without performing the operation (skips credential prompt)" -ForegroundColor Cyan
 	Write-Host "  -Restart             Restart the target(s)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file" -ForegroundColor Cyan
 	Write-Host "  -Shutdown            Shut down the target(s)" -ForegroundColor Cyan
@@ -146,9 +151,30 @@ if ($Parallel -and $hosts.Count -eq 1) {
 	Write-Warning "-Parallel has no effect when targeting a single host."
 }
 
-# Prompt for credentials if -Interactive is specified and targeting remote machines
+# Test connectivity to each remote host before proceeding; unreachable hosts are recorded as failures and excluded from the operation
+$connectivityResults = @()
+if (-not $isLocal) {
+	if (-not $NoConsoleOutput) { Write-Host "Checking connectivity to $($hosts.Count) host(s)..." -ForegroundColor Cyan }
+	$reachableHosts = @()
+	foreach ($h in $hosts) {
+		$isReachable = Test-Connection -ComputerName $h -Count 1 -Quiet -ErrorAction SilentlyContinue
+		if ($isReachable) {
+			$reachableHosts += $h
+		}
+		else {
+			$connectivityResults += [PSCustomObject]@{
+				Host = $h
+				Success = $false
+				Message = "Host unreachable (connectivity check failed)."
+			}
+		}
+	}
+	$hosts = $reachableHosts
+}
+
+# Prompt for credentials if -Interactive is specified, targeting remote machines, and at least one host is reachable
 $cred = $null
-if ($Interactive -and -not $isLocal) {
+if ($Interactive -and -not $isLocal -and -not $Preview -and $hosts.Count -gt 0) {
 	$cred = Get-Credential -Message "Enter credentials for remote operation"
 	if (-not $cred) {
 		Write-Host ""
@@ -219,17 +245,33 @@ $processHost = {
 	return $result
 }
 
-if ($Parallel -and $hosts.Count -gt 1) {
+if ($Preview) {
+	$results = @($connectivityResults)
+	foreach ($h in $hosts) {
+		$message = switch ($operation) {
+			"Restart" { "Would restart (Delay=$Delay, Force=$Force)." }
+			"Shutdown" { "Would shut down (Delay=$Delay, Force=$Force)." }
+			"Abort" { "Would cancel a pending restart/shutdown." }
+		}
+		if (-not $NoConsoleOutput) { Write-Host "Processing: $h" -ForegroundColor Cyan }
+		$results += [PSCustomObject]@{
+			Host = $h
+			Success = $true
+			Message = $message
+		}
+	}
+}
+elseif ($Parallel -and $hosts.Count -gt 1) {
 	if (-not $NoConsoleOutput) { Write-Host "Processing $($hosts.Count) host(s) in parallel..." -ForegroundColor Cyan }
 	$jobs = @()
 	foreach ($h in $hosts) {
 		$jobs += Start-Job -ScriptBlock $processHost -ArgumentList $h, $operation, $Force, $Delay, $cred, $isLocal
 	}
-	$results = $jobs | Wait-Job | Receive-Job
+	$results = @($connectivityResults) + @($jobs | Wait-Job | Receive-Job)
 	$jobs | Remove-Job
 }
 else {
-	$results = @()
+	$results = @($connectivityResults)
 	foreach ($h in $hosts) {
 		if (-not $NoConsoleOutput) { Write-Host "Processing: $h" -ForegroundColor Cyan }
 		$results += & $processHost $h $operation $Force $Delay $cred $isLocal
@@ -252,7 +294,12 @@ foreach ($result in $results) {
 	}
 }
 
-$summaryLine = "$ScriptName`: $operation completed — $successCount succeeded, $failCount failed."
+$summaryLine = if ($Preview) {
+	"$ScriptName`: Preview complete for $operation — $successCount host(s) would be processed, $failCount unreachable."
+}
+else {
+	"$ScriptName`: $operation completed — $successCount succeeded, $failCount failed."
+}
 if (-not $NoConsoleOutput) {
 	if ($failCount -eq 0) {
 		Write-Host "`n$summaryLine" -ForegroundColor Green
@@ -268,7 +315,7 @@ $OutputLines += $summaryLine
 if ($SaveResults) {
 	try {
 		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
-			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+			$OutputLines = @($OutputLines | Select-Object -First ($OutputLines.Count - 1))
 		}
 		$outputString = ($OutputLines -join "`n")
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)

@@ -1,16 +1,21 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script searches files or directories for a user-defined string and replaces it with a user-defined replacement string
 
+# NOTE: The replacement text is inserted literally via a MatchEvaluator, so characters with special meaning in .NET regex replacement syntax (i.e. $1, $&) in -ReplaceString are treated as plain text, not substitution sequences
+
+# NOTE2: Each file's original encoding (UTF-8 BOM, UTF-8 no BOM, UTF-16 LE, UTF-16 BE) is detected and preserved on write, rather than forcing UTF-8 BOM on every file
+
 # Optional flags:
-#     -Backup: Automatically create backups before modifying files (skips interactive prompt)
-#     -CaseSensitive: Perform a case-sensitive search (default is case-insensitive)
-#     -NoConsoleOutput: Suppress console output (requires -Path, -SearchString, -ReplaceString, -Backup, and -SaveResults)
-#     -Path <PATH>: Path to a file or a folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories
+#     -Backup:               Automatically create backups before modifying files (skips interactive prompt)
+#     -CaseSensitive:        Perform a case-sensitive search (default is case-insensitive)
+#     -NoConsoleOutput:      Suppress console output (requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup/-Preview)
+#     -Path <PATH>:          Path to a file or a folder (prompts if not specified)
+#     -Preview:              Show matched files and occurrence counts without modifying anything
+#     -Recurse:              Include files in subdirectories
 #     -ReplaceString <TEXT>: The replacement text (prompts if not specified)
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -SearchString <TEXT>: The text to search for (prompts if not specified)
-#     -Help / -?: Display this help message
+#     -SaveResults <PATH>:   Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SearchString <TEXT>:  The text to search for (prompts if not specified)
+#     -Help / -?:            Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
@@ -18,6 +23,7 @@ param (
 	[switch]$CaseSensitive,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
+	[switch]$Preview,
 	[switch]$Recurse,
 	[string]$ReplaceString,
 	[string]$SaveResults,
@@ -30,12 +36,13 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-CaseSensitive] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-ReplaceString <TEXT>] [-SaveResults <PATH>] [-SearchString <TEXT>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-CaseSensitive] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-ReplaceString <TEXT>] [-SaveResults <PATH>] [-SearchString <TEXT>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup                Automatically create backups before modifying files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive         Perform a case-sensitive search (default is case-insensitive)" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput       Suppress console output (requires -Path, -SearchString, -ReplaceString, -Backup, and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput       Suppress console output (requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>           Path to a file or a folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Preview               Show matched files and occurrence counts without modifying anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse               Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -ReplaceString <TEXT>  The replacement text (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>    Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
@@ -55,11 +62,11 @@ if ($SaveResults) {
 	}
 }
 
-# -NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -Backup, and -SaveResults, since without
+# -NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview, since without
 # all of these this script can still block on interactive prompts with no visible context if output is suppressed
-if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $ReplaceString -or -not $Backup -or -not $SaveResults)) {
+if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $ReplaceString -or -not $SaveResults -or -not ($Backup -or $Preview))) {
 	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -Backup, and -SaveResults."
+	Write-Error "-NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview."
 	exit 1
 }
 
@@ -122,19 +129,46 @@ if (-not $files -or $files.Count -eq 0) {
 	exit 0
 }
 
+# Build the search regex once, reused for both counting and (via MatchEvaluator) literal replacement
+$regexOptions = if ($CaseSensitive) { [System.Text.RegularExpressions.RegexOptions]::None } else { [System.Text.RegularExpressions.RegexOptions]::IgnoreCase }
+$searchRegex = New-Object System.Text.RegularExpressions.Regex([regex]::Escape($SearchString), $regexOptions)
+$replacementEvaluator = [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $ReplaceString }
+
 # Initialize counters and output lines
-$matchedCount = 0
-$replacedCount = 0
+$matchedFileCount = 0
+$totalOccurrences = 0
 $FileOutputLines = @()
 
-if (-not $NoConsoleOutput) { Write-Host "`nScanning for '$searchString'...`n" -ForegroundColor Cyan }
+if (-not $NoConsoleOutput) { Write-Host "`nScanning for '$SearchString'...`n" -ForegroundColor Cyan }
 
-# First pass: scan all files and collect matches
+# First pass: scan all files, detect each file's encoding, and count occurrences
 $fileMatchMap = @{}
+$fileEncodingMap = @{}
+$fileBomLengthMap = @{}
 
 foreach ($file in $files) {
 	try {
-		$content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
+		$bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+
+		$bomLength = 0
+		if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+			$fileEncoding = New-Object System.Text.UTF8Encoding $true
+			$bomLength = 3
+		}
+		elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
+			$fileEncoding = [System.Text.Encoding]::Unicode
+			$bomLength = 2
+		}
+		elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF) {
+			$fileEncoding = [System.Text.Encoding]::BigEndianUnicode
+			$bomLength = 2
+		}
+		else {
+			$fileEncoding = New-Object System.Text.UTF8Encoding $false
+			$bomLength = 0
+		}
+
+		$content = $fileEncoding.GetString($bytes, $bomLength, $bytes.Length - $bomLength)
 	}
 	catch {
 		if (-not $NoConsoleOutput) {
@@ -145,28 +179,53 @@ foreach ($file in $files) {
 		continue
 	}
 
-	$hasMatch = if ($CaseSensitive) {
-		$content -cmatch [regex]::Escape($searchString)
-	}
-	else {
-		$content -imatch [regex]::Escape($searchString)
-	}
+	$occurrenceCount = $searchRegex.Matches($content).Count
 
-	if ($hasMatch) {
-		$fileMatchMap[$file.FullName] = $true
-		$matchedCount++
-		$line = "Found in: $($file.FullName)"
+	if ($occurrenceCount -gt 0) {
+		$fileMatchMap[$file.FullName] = $occurrenceCount
+		$fileEncodingMap[$file.FullName] = $fileEncoding
+		$fileBomLengthMap[$file.FullName] = $bomLength
+		$matchedFileCount++
+		$totalOccurrences += $occurrenceCount
+		$line = "Found $occurrenceCount occurrence(s) in: $($file.FullName)"
 		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
 		if ($SaveResults) { $FileOutputLines += $line }
 	}
 }
 
-if ($matchedCount -eq 0) {
-	$summaryLine = "$ScriptName`: Scan complete. No matches found for '$searchString'."
+if ($matchedFileCount -eq 0) {
+	$summaryLine = "$ScriptName`: Scan complete. No matches found for '$SearchString'."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
+
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
+
+	exit 0
+}
+
+# Preview mode: report matches without modifying anything
+if ($Preview) {
+	$summaryLine = "$ScriptName`: Preview complete. $matchedFileCount file(s) contain $totalOccurrences total occurrence(s) of '$SearchString'. Would replace with: '$ReplaceString'. No files were modified."
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
+
+	if ($SaveResults) {
+		$FileOutputLines += ""
+		$FileOutputLines += $summaryLine
+
+		while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+			$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
+		}
 
 		try {
 			$outputString = ($FileOutputLines -join "`n")
@@ -195,15 +254,19 @@ else {
 	}
 }
 
-# Second pass: replace in matched files
+# Second pass: replace in matched files, preserving each file's original encoding
 if (-not $NoConsoleOutput) { Write-Host "" }
+$replacedCount = 0
 foreach ($file in $files) {
 	if (-not $fileMatchMap.ContainsKey($file.FullName)) {
 		continue
 	}
 
 	try {
-		$content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
+		$fileEncoding = $fileEncodingMap[$file.FullName]
+		$bomLength = $fileBomLengthMap[$file.FullName]
+		$bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+		$content = $fileEncoding.GetString($bytes, $bomLength, $bytes.Length - $bomLength)
 
 		if ($doBackup) {
 			$backupPath = $file.FullName + ".bak"
@@ -212,17 +275,11 @@ foreach ($file in $files) {
 			if ($SaveResults) { $FileOutputLines += "Backup created: $backupPath" }
 		}
 
-		$newContent = if ($CaseSensitive) {
-			$content -creplace [regex]::Escape($searchString), $replaceString
-		}
-		else {
-			$content -ireplace [regex]::Escape($searchString), $replaceString
-		}
+		$newContent = $searchRegex.Replace($content, $replacementEvaluator)
 
-		$utf8Bom = New-Object System.Text.UTF8Encoding $true
-		[System.IO.File]::WriteAllText($file.FullName, $newContent, $utf8Bom)
-		if (-not $NoConsoleOutput) { Write-Host "Replaced in: $($file.Name)" -ForegroundColor Green }
-		if ($SaveResults) { $FileOutputLines += "Replaced in: $($file.Name)" }
+		[System.IO.File]::WriteAllText($file.FullName, $newContent, $fileEncoding)
+		if (-not $NoConsoleOutput) { Write-Host "Replaced $($fileMatchMap[$file.FullName]) occurrence(s) in: $($file.Name)" -ForegroundColor Green }
+		if ($SaveResults) { $FileOutputLines += "Replaced $($fileMatchMap[$file.FullName]) occurrence(s) in: $($file.Name)" }
 		$replacedCount++
 	}
 	catch {
@@ -235,7 +292,7 @@ foreach ($file in $files) {
 }
 
 # Summary
-$summaryLine = "$ScriptName`: Complete. $matchedCount file(s) contained matches, $replacedCount file(s) updated."
+$summaryLine = "$ScriptName`: Complete. $matchedFileCount file(s) contained matches, $replacedCount file(s) updated."
 if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 
 # Save results to text file if requested
@@ -243,8 +300,8 @@ if ($SaveResults) {
 	$FileOutputLines += ""
 	$FileOutputLines += $summaryLine
 
-	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	try {

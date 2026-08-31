@@ -72,8 +72,7 @@ if ($LogToDesktop) {
 	$logFile = Join-Path $desktopPath "winget_$($env:COMPUTERNAME).txt"
 }
 
-# Snapshot winget's own diagnostic log directory before running so -NoLog can identify and
-# remove only the log file(s) created during this run, without touching any pre-existing logs
+# Snapshot winget's own diagnostic log directory before running so -NoLog can identify and remove only the log file(s) created during this run, without touching any pre-existing logs
 if ($NoLog) {
 	$wingetLogDir = "$env:LOCALAPPDATA\Packages\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe\LocalState\DiagOutputDir"
 	$preExistingLogs = if (Test-Path $wingetLogDir) { (Get-ChildItem -Path $wingetLogDir -File -ErrorAction SilentlyContinue).Name } else { @() }
@@ -124,7 +123,8 @@ try {
 	}
 	$upgradeable = $allUpgrades | Where-Object {
 		$appId = ($_ -split '\s{2,}')[1]
-		-not $pinnedApps.Contains($appId)
+		# Require the ID column to look like a real winget package ID (i.e. Publisher.Package), which excludes the header row, separator line, and summary line ("N upgrades available.")
+		$appId -match '^\S+\.\S+' -and -not $pinnedApps.Contains($appId)
 	}
 
 	# Display native table to console
@@ -176,9 +176,7 @@ try {
 			if (-not $NoConsoleOutput) { Write-Host "`nResults appended to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
-			# This warning covers a failure to write to -SaveResults itself, so there's no
-			# file left to redirect it into - it always prints to console, even with
-			# -NoConsoleOutput, since otherwise it would vanish with no record anywhere
+			# This warning covers a failure to write to -SaveResults itself, so there's nofile left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 			Write-Host ""
 			Write-Warning "Could not append results to '$SaveResults': $($_.Exception.Message)"
 		}
@@ -194,8 +192,7 @@ catch {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
-			# The results file itself couldn't be written to, so there's nowhere else to
-			# record this - fall back to console as a last resort rather than losing it entirely
+			# The results file itself couldn't be written to, so there's nowhere else torecord this - fall back to console as a last resort rather than losing it entirely
 			Write-Host ""
 			Write-Error $errorMessage
 		}

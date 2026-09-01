@@ -11,7 +11,7 @@
 # 4–7		Success with minor issues (mismatched files, skipped files, retryable errors)
 # 8+		Failure — serious errors (network issue, permissions, etc.)
 
-# NOTE: Exit codes 0–7 are generally considered successful for backup validation
+# NOTE: Exit codes 0–7 are generally considered successful for backup validation (only bit value 8 indicates an actual copy failure); this is reflected in the exit code check below
 
 # Optional flags:
 #     -Force:              Automatically close Chrome if running, without prompting
@@ -87,18 +87,18 @@ $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 if (-not $NoConsoleOutput) { Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan }
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Backup aborted: $nasHost is not reachable."
-	if ($NoConsoleOutput) {
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
+	if ($SaveResults) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
 			Write-Host ""
-			Write-Error $errorMessage
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
-	}
-	else {
-		Write-Host ""
-		Write-Error $errorMessage
 	}
 	exit 1
 }
@@ -136,18 +136,18 @@ $Source = Join-Path $env:LOCALAPPDATA "Google\Chrome\User Data\Default"
 
 if (-not (Test-Path $Source)) {
 	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Chrome profile path not found: $Source"
-	if ($NoConsoleOutput) {
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
+	if ($SaveResults) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
 			Write-Host ""
-			Write-Error $errorMessage
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
-	}
-	else {
-		Write-Host ""
-		Write-Error $errorMessage
 	}
 	exit 1
 }
@@ -160,7 +160,7 @@ if (-not $NoConsoleOutput) {
 # Build Robocopy arguments
 # NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup
 # The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source
-# This safely maintains a single up-to-date backup at all times
+# This safely maintains a single up-to-date backup at all times. Robocopy also creates the destination folder automatically if it does not already exist.
 $robocopyArgs = @(
 	$Source,
 	$Destination,
@@ -182,7 +182,9 @@ if (-not $IncludeCache) {
 
 # Preview mode: show what would happen without running Robocopy
 if ($Preview) {
-	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. Would back up '$Source' to '$Destination' (robocopy $($robocopyArgs -join ' ')). No files were copied."
+	# Quote any argument containing a space so the displayed command is accurate if copy-pasted, even though the real robocopy call below passes $robocopyArgs as a proper array regardless
+	$displayArgs = $robocopyArgs | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. Would back up '$Source' to '$Destination' (robocopy $($displayArgs -join ' ')). No files were copied."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 	$resultLines += $summaryLine
 
@@ -208,7 +210,8 @@ $robocopyOutput = robocopy @robocopyArgs
 $exitCode = $LASTEXITCODE
 if (-not $NoConsoleOutput) { Write-Host ($robocopyOutput -join "`n").TrimEnd() }
 
-if ($exitCode -le 3) {
+# Only exit code 8+ indicates an actual copy failure; 0-7 are various combinations of successful /MIR activity (see exit code NOTE above)
+if ($exitCode -le 7) {
 	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Google Chrome profile backup completed successfully (Robocopy exit code: $exitCode)."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 	$resultLines += $summaryLine

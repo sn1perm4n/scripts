@@ -10,7 +10,9 @@
 # 3			Files copied and extra files/directories deleted (1 + 2)
 # 4–7		Success with minor issues (mismatched files, skipped files, retryable errors)
 # 8+		Failure — serious errors (network issue, permissions, etc.)
-# NOTE: Exit codes 0–7 are generally considered successful for backup validation
+# NOTE: Exit codes 0–7 are generally considered successful for backup validation (only bit value 8 indicates an actual copy failure); this is reflected in the exit code check below
+
+# NOTE2: Since Thunderbird 68, installs.ini tracks a per-installation default profile that can differ from profiles.ini's Default=1 marker. This script prefers installs.ini when exactly one installation is listed there, since the on-disk install-to-profile mapping cannot be otherwise determined from this script; it falls back to profiles.ini's Default=1 if installs.ini is absent, unreadable, lists multiple installations, or its recorded path does not exist.
 
 # Optional flags:
 #     -Force:              Automatically close Thunderbird if running, without prompting
@@ -86,18 +88,18 @@ $nasHost = "NAS_HOSTNAME"  # Change this to your NAS hostname
 if (-not $NoConsoleOutput) { Write-Host "`nChecking NAS availability ($nasHost)..." -ForegroundColor Cyan }
 if (-not (Test-Connection -ComputerName $nasHost -Count 1 -Quiet)) {
 	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Backup aborted: $nasHost is not reachable."
-	if ($NoConsoleOutput) {
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
+	if ($SaveResults) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
 			Write-Host ""
-			Write-Error $errorMessage
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
-	}
-	else {
-		Write-Host ""
-		Write-Error $errorMessage
 	}
 	exit 1
 }
@@ -130,60 +132,147 @@ if ($thunderbirdProcess) {
 	}
 }
 
-# Locate profiles.ini
+# Try installs.ini first (see NOTE2), falling back to profiles.ini's Default=1 marker
 $profilesIni = Join-Path $env:APPDATA "Thunderbird\profiles.ini"
+$installsIni = Join-Path $env:APPDATA "Thunderbird\installs.ini"
+$profilePath = $null
+$isRelative = $true
+$usedInstallsIni = $false
 
-if (-not (Test-Path $profilesIni)) {
-	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] profiles.ini not found."
-	if ($NoConsoleOutput) {
-		try {
-			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+if (Test-Path $installsIni) {
+	try {
+		$installLines = @(Get-Content $installsIni -ErrorAction Stop)
+		$installDefaults = @()
+		foreach ($line in $installLines) {
+			if ($line -match '^Default=(.+)$') {
+				$installDefaults += $Matches[1]
+			}
 		}
-		catch {
+
+		if ($installDefaults.Count -eq 1) {
+			$candidatePath = $installDefaults[0]
+			$candidateIsRelative = -not ($candidatePath -match '^[A-Za-z]:\\' -or $candidatePath.StartsWith('\\'))
+			$resolvedCandidate = if ($candidateIsRelative) { Join-Path $env:APPDATA "Thunderbird\$candidatePath" } else { $candidatePath }
+
+			if (Test-Path $resolvedCandidate) {
+				$profilePath = $candidatePath
+				$isRelative = $candidateIsRelative
+				$usedInstallsIni = $true
+			}
+			else {
+				if (-not $NoConsoleOutput) {
+					Write-Host ""
+					Write-Warning "installs.ini's default profile path does not exist on disk ('$resolvedCandidate'). Falling back to profiles.ini's Default=1 marker instead."
+				}
+			}
+		}
+		elseif ($installDefaults.Count -gt 1) {
+			if (-not $NoConsoleOutput) {
+				Write-Host ""
+				Write-Warning "Multiple Thunderbird installations found in installs.ini; could not determine which applies to this installation. Falling back to profiles.ini's Default=1 marker instead."
+			}
+		}
+	}
+	catch {
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning "Could not read installs.ini: $($_.Exception.Message). Falling back to profiles.ini's Default=1 marker instead."
+		}
+	}
+}
+
+if (-not $usedInstallsIni) {
+	if (-not (Test-Path $profilesIni)) {
+		$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] profiles.ini not found."
+		if (-not $NoConsoleOutput) {
 			Write-Host ""
 			Write-Error $errorMessage
 		}
-	}
-	else {
-		Write-Host ""
-		Write-Error $errorMessage
-	}
-	exit 1
-}
-
-# Parse Default profile
-$profilePath = $null
-$isRelative = $true
-$lines = Get-Content $profilesIni
-
-for ($i = 0; $i -lt $lines.Count; $i++) {
-	if ($lines[$i] -match "Default=1") {
-		for ($j = $i; $j -ge 0; $j--) {
-			if ($lines[$j] -match "^Path=") {
-				$profilePath = $lines[$j] -replace "^Path=", ""
+		if ($SaveResults) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 			}
-			if ($lines[$j] -match "^IsRelative=") {
-				$isRelative = [bool]([int]($lines[$j] -replace "^IsRelative=", ""))
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 			}
 		}
-		break
+		exit 1
+	}
+
+	try {
+		$lines = @(Get-Content $profilesIni -ErrorAction Stop)
+	}
+	catch {
+		$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Could not read profiles.ini: $($_.Exception.Message)"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+		if ($SaveResults) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			}
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			}
+		}
+		exit 1
+	}
+
+	try {
+		for ($i = 0; $i -lt $lines.Count; $i++) {
+			if ($lines[$i] -match "Default=1") {
+				# Scan backward from the Default=1 line, but stop at the start of this profile's own section (a blank line or the next [Section] header above it)
+				for ($j = $i; $j -ge 0; $j--) {
+					if ($j -lt $i -and ($lines[$j].Trim() -eq '' -or $lines[$j] -match '^\[')) {
+						break
+					}
+					if ($lines[$j] -match "^Path=") {
+						$profilePath = $lines[$j] -replace "^Path=", ""
+					}
+					if ($lines[$j] -match "^IsRelative=") {
+						$isRelative = [bool]([int]($lines[$j] -replace "^IsRelative=", ""))
+					}
+				}
+				break
+			}
+		}
+	}
+	catch {
+		$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Could not parse profiles.ini: $($_.Exception.Message)"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+		if ($SaveResults) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			}
+			catch {
+				Write-Host ""
+				Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+			}
+		}
+		exit 1
 	}
 }
 
 if (-not $profilePath) {
 	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Default profile not found."
-	if ($NoConsoleOutput) {
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
+	if ($SaveResults) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
 			Write-Host ""
-			Write-Error $errorMessage
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
-	}
-	else {
-		Write-Host ""
-		Write-Error $errorMessage
 	}
 	exit 1
 }
@@ -197,18 +286,18 @@ else {
 
 if (-not (Test-Path $Source)) {
 	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] Profile path not found: $Source"
-	if ($NoConsoleOutput) {
+	if (-not $NoConsoleOutput) {
+		Write-Host ""
+		Write-Error $errorMessage
+	}
+	if ($SaveResults) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
 			Write-Host ""
-			Write-Error $errorMessage
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
-	}
-	else {
-		Write-Host ""
-		Write-Error $errorMessage
 	}
 	exit 1
 }
@@ -221,7 +310,7 @@ if (-not $NoConsoleOutput) {
 # Build Robocopy Arguments
 # NOTE: There is no need to delete the existing backup folder from the destination folder before starting the backup
 # The /MIR (mirror) flag in Robocopy ensures the backup folder always matches the source profile exactly — it copies new/updated files and removes any files that no longer exist in the source
-# This safely maintains a single up-to-date backup at all times
+# This safely maintains a single up-to-date backup at all times. Robocopy also creates the destination folder automatically if it does not already exist.
 $robocopyArgs = @(
 	$Source,
 	$Destination,
@@ -243,7 +332,9 @@ if (-not $IncludeCache) {
 
 # Preview mode: show what would happen without running Robocopy
 if ($Preview) {
-	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. Would back up '$Source' to '$Destination' (robocopy $($robocopyArgs -join ' ')). No files were copied."
+	# Quote any argument containing a space so the displayed command is accurate if copy-pasted, even though the real robocopy call below passes $robocopyArgs as a proper array regardless
+	$displayArgs = $robocopyArgs | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } }
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. Would back up '$Source' to '$Destination' (robocopy $($displayArgs -join ' ')). No files were copied."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 	$resultLines += $summaryLine
 
@@ -269,7 +360,8 @@ $robocopyOutput = robocopy @robocopyArgs
 $exitCode = $LASTEXITCODE
 if (-not $NoConsoleOutput) { Write-Host ($robocopyOutput -join "`n").TrimEnd() }
 
-if ($exitCode -le 3) {
+# Only exit code 8+ indicates an actual copy failure; 0-7 are various combinations of successful /MIR activity (see exit code NOTE above)
+if ($exitCode -le 7) {
 	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Thunderbird profile backup completed successfully (Robocopy exit code: $exitCode)."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 	$resultLines += $summaryLine

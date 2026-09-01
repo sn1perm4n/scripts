@@ -2,8 +2,9 @@
 # This script enables or disables Bluetooth
 
 # Optional flags:
-#     -Disable: Disable Bluetooth without prompting
-#     -Enable:  Enable Bluetooth without prompting
+#     -Disable:   Disable Bluetooth without prompting
+#     -Enable:    Enable Bluetooth without prompting
+#     -Preview:   Report current Bluetooth device status without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -12,6 +13,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -20,12 +22,45 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable Bluetooth without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable Bluetooth without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current Bluetooth device status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	try {
+		$devices = Get-PnpDevice -Class Bluetooth -ErrorAction Stop
+
+		if (-not $devices) {
+			Write-Host ""
+			Write-Warning "No Bluetooth devices found."
+			exit 0
+		}
+
+		foreach ($device in $devices) {
+			$state = if ($device.Status -eq 'OK') { "ENABLED" } elseif ($device.Status -eq 'Error') { "DISABLED" } else { "STATUS: $($device.Status)" }
+			Write-Host "$($device.FriendlyName): $state"
+		}
+	}
+	catch {
+		Write-Host ""
+		Write-Error "$ScriptName`: An error occurred while checking Bluetooth status: $($_.Exception.Message)"
+		exit 1
+	}
+
 	exit 0
 }
 

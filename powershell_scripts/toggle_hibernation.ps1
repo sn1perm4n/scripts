@@ -9,8 +9,9 @@
 # - If it appears under "not available" or is missing, it is disabled
 
 # Optional flags:
-#     -Disable: Disable Hibernation without prompting
-#     -Enable:  Enable Hibernation without prompting
+#     -Disable:   Disable Hibernation without prompting
+#     -Enable:    Enable Hibernation without prompting
+#     -Preview:   Report current Hibernation status without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -19,6 +20,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -27,12 +29,40 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable Hibernation without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable Hibernation without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current Hibernation status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	try {
+		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
+		if ($hibernationEnabled) {
+			Write-Host "Hibernation is currently ENABLED."
+		}
+		else {
+			Write-Host "Hibernation is currently DISABLED."
+		}
+	}
+	catch {
+		Write-Host ""
+		Write-Error "$ScriptName`: Failed to check Hibernation status: $($_.Exception.Message)"
+		exit 1
+	}
+
 	exit 0
 }
 
@@ -57,7 +87,7 @@ $enabling = $Enable -eq $true
 
 try {
 	Write-Host "`nChecking Hibernation status..." -ForegroundColor Cyan
-	$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
+	$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 
 	if ($enabling) {
 		if ($hibernationEnabled) {
@@ -67,7 +97,7 @@ try {
 		}
 		Write-Host "`nEnabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate on
-		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
+		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if ($hibernationEnabled) {
 			Write-Host "`n$ScriptName`: Hibernation enabled successfully." -ForegroundColor Green
 		}
@@ -85,7 +115,7 @@ try {
 		}
 		Write-Host "`nDisabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate off
-		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
+		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if (-not $hibernationEnabled) {
 			Write-Host "`n$ScriptName`: Hibernation disabled successfully." -ForegroundColor Green
 		}

@@ -8,14 +8,16 @@
 # NOTE3: Windows Update may reset ForegroundLockTimeout back to the default value. If the issue reappears after a Windows update, re-run this script and reboot.
 
 # Optional flags:
-#     -Default: Restore ForegroundLockTimeout to the Windows default (0x30d40 / 200000ms) without prompting
-#     -Disable: Set ForegroundLockTimeout to 0 (disables the timeout) without prompting
+#     -Default:   Restore ForegroundLockTimeout to the Windows default (0x30d40 / 200000ms) without prompting
+#     -Disable:   Set ForegroundLockTimeout to 0 (disables the timeout) without prompting
+#     -Preview:   Report current ForegroundLockTimeout status without changing anything
 #     -Help / -?: Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Default,
 	[switch]$Disable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -24,10 +26,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Default] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Default] [-Disable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Default  Restore ForegroundLockTimeout to the Windows default (0x30d40 / 200000ms) without prompting" -ForegroundColor Cyan
 	Write-Host "  -Disable  Set ForegroundLockTimeout to 0 (disables the timeout) without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current ForegroundLockTimeout status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -36,6 +39,40 @@ if ($Help) {
 $regPath = 'HKCU:\Control Panel\Desktop'
 $regName = 'ForegroundLockTimeout'
 $defaultValue = 0x30d40
+
+# -Default and -Disable are mutually exclusive
+if ($Default -and $Disable) {
+	Write-Host ""
+	Write-Error "-Default and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	try {
+		$currentValue = if (Test-Path $regPath) { (Get-ItemProperty -Path $regPath -Name $regName -ErrorAction SilentlyContinue).$regName } else { $null }
+
+		if ($null -eq $currentValue) {
+			Write-Host "ForegroundLockTimeout is not explicitly set (Windows uses its internal default of 0x30d40 / 200000ms)."
+		}
+		elseif ($currentValue -eq 0) {
+			Write-Host "ForegroundLockTimeout is currently 0 (timeout disabled)."
+		}
+		elseif ($currentValue -eq $defaultValue) {
+			Write-Host "ForegroundLockTimeout is currently set to the default value (0x30d40 / 200000ms)."
+		}
+		else {
+			Write-Host "ForegroundLockTimeout is currently set to a custom value: $currentValue (0x$('{0:X}' -f $currentValue))."
+		}
+	}
+	catch {
+		Write-Host ""
+		Write-Error "$ScriptName`: Failed to check ForegroundLockTimeout status: $($_.Exception.Message)"
+		exit 1
+	}
+
+	exit 0
+}
 
 # If neither flag is passed, fall through to interactive menu
 if (-not $Disable -and -not $Default) {

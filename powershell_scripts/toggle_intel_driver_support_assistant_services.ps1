@@ -2,8 +2,9 @@
 # This script enables or disables the Intel Driver and Support Assistant (DSA) services
 
 # Optional flags:
-#     -Disable: Disable the Intel DSA services without prompting
-#     -Enable:  Enable the Intel DSA services without prompting
+#     -Disable:   Disable the Intel DSA services without prompting
+#     -Enable:    Enable the Intel DSA services without prompting
+#     -Preview:   Report current status of the Intel DSA services without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -12,6 +13,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -20,12 +22,37 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable the Intel DSA services without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable the Intel DSA services without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current status of the Intel DSA services without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+$dsaService = "DSAService"
+$dsaUpdateService = "DSAUpdateService"
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	foreach ($serviceName in @($dsaService, $dsaUpdateService)) {
+		$svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+		if (-not $svc) {
+			Write-Host "Service '$serviceName': NOT FOUND"
+		}
+		else {
+			Write-Host "Service '$serviceName': StartType=$($svc.StartType), Status=$($svc.Status)"
+		}
+	}
 	exit 0
 }
 
@@ -47,8 +74,6 @@ if (-not $Enable -and -not $Disable) {
 }
 
 $enabling = $Enable -eq $true
-$dsaService = "DSAService"
-$dsaUpdateService = "DSAUpdateService"
 $changesMade = $false
 
 Write-Host "`nChecking Intel DSA service(s) status..." -ForegroundColor Cyan

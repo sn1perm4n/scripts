@@ -2,8 +2,9 @@
 # This script enables or disables all VirtualBox Host-Only Ethernet Adapters in Device Manager
 
 # Optional flags:
-#     -Disable: Disable all VirtualBox Host-Only Ethernet Adapters without prompting
-#     -Enable: Enable all VirtualBox Host-Only Ethernet Adapters without prompting
+#     -Disable:   Disable all VirtualBox Host-Only Ethernet Adapters without prompting
+#     -Enable:    Enable all VirtualBox Host-Only Ethernet Adapters without prompting
+#     -Preview:   Report current status of all VirtualBox Host-Only Ethernet Adapters without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -12,6 +13,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -19,10 +21,11 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable all VirtualBox Host-Only Ethernet Adapters without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable all VirtualBox Host-Only Ethernet Adapters without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current status of all VirtualBox Host-Only Ethernet Adapters without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -30,8 +33,28 @@ if ($Help) {
 
 if ($Disable -and $Enable) {
 	Write-Host ""
-	Write-Warning "-Disable and -Enable cannot be used together."
+	Write-Error "-Disable and -Enable cannot be used together."
 	exit 1
+}
+
+Write-Host "`nSearching for VirtualBox Host-Only Ethernet Adapters..." -ForegroundColor Cyan
+
+$adapters = Get-PnpDevice | Where-Object {
+	$_.FriendlyName -match 'VirtualBox Host-Only'
+}
+
+if (-not $adapters) {
+	Write-Host ""
+	Write-Error "No VirtualBox Host-Only Ethernet Adapters found. Is VirtualBox installed?"
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	foreach ($adapter in $adapters) {
+		Write-Host "$($adapter.FriendlyName): Status=$($adapter.Status)"
+	}
+	exit 0
 }
 
 # If neither flag is passed, fall through to interactive menu
@@ -49,18 +72,6 @@ if (-not $Disable -and -not $Enable) {
 
 	$Enable = $key -eq '1'
 	$Disable = $key -eq '2'
-}
-
-Write-Host "`nSearching for VirtualBox Host-Only Ethernet Adapters..." -ForegroundColor Cyan
-
-$adapters = Get-PnpDevice | Where-Object {
-	$_.FriendlyName -match 'VirtualBox Host-Only'
-}
-
-if (-not $adapters) {
-	Write-Host ""
-	Write-Error "No VirtualBox Host-Only Ethernet Adapters found. Is VirtualBox installed?"
-	exit 1
 }
 
 Write-Host "Found $($adapters.Count) adapter(s):" -ForegroundColor Cyan

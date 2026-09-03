@@ -2,8 +2,9 @@
 # This script enables or disables Remote Assistance
 
 # Optional flags:
-#     -Disable: Disable Remote Assistance without prompting
-#     -Enable:  Enable Remote Assistance without prompting
+#     -Disable:   Disable Remote Assistance without prompting
+#     -Enable:    Enable Remote Assistance without prompting
+#     -Preview:   Report current Remote Assistance registry and firewall status without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -12,6 +13,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -20,12 +22,53 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable Remote Assistance without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable Remote Assistance without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current Remote Assistance registry and firewall status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+$raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	try {
+		$currentValue = if (Test-Path $raPath) { (Get-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -ErrorAction SilentlyContinue).fAllowToGetHelp } else { $null }
+
+		if ($currentValue -eq 1) {
+			Write-Host "Remote Assistance registry setting is currently ENABLED."
+		}
+		else {
+			Write-Host "Remote Assistance registry setting is currently DISABLED."
+		}
+
+		$fwRules = Get-NetFirewallRule -DisplayGroup "Remote Assistance" -ErrorAction SilentlyContinue
+		if ($fwRules) {
+			$enabledCount = @($fwRules | Where-Object { $_.Enabled -eq "True" }).Count
+			$totalCount = @($fwRules).Count
+			Write-Host "Remote Assistance firewall rules: $enabledCount of $totalCount currently enabled."
+		}
+		else {
+			Write-Host "No Remote Assistance firewall rules found."
+		}
+	}
+	catch {
+		Write-Host ""
+		Write-Error "$ScriptName`: Failed to check Remote Assistance status: $($_.Exception.Message)"
+		exit 1
+	}
+
 	exit 0
 }
 
@@ -47,14 +90,17 @@ if (-not $Enable -and -not $Disable) {
 }
 
 $enabling = $Enable -eq $true
-$raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
 $registryChanged = $false
 $firewallChanged = $false
 
 Write-Host "`nChecking Remote Assistance status..." -ForegroundColor Cyan
 
 try {
-	$currentValue = Get-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -ErrorAction Stop | Select-Object -ExpandProperty fAllowToGetHelp
+	if (-not (Test-Path $raPath)) {
+		New-Item -Path $raPath -Force | Out-Null
+	}
+
+	$currentValue = Get-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty fAllowToGetHelp
 
 	if ($enabling) {
 		if ($currentValue -eq 1) {

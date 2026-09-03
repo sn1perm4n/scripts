@@ -13,8 +13,6 @@
 #     -Windows11: Switch to Windows 11 style right-click menu without prompting
 #     -Help / -?: Display this help message
 
-#Requires -RunAsAdministrator
-
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Preview,

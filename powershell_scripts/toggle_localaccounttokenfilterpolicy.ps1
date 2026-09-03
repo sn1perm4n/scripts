@@ -4,8 +4,9 @@
 # Disable: Restores default behavior, enforcing UAC token filtering for remote connections
 
 # Optional flags:
-#     -Disable: Disable LocalAccountTokenFilterPolicy without prompting
-#     -Enable:  Enable LocalAccountTokenFilterPolicy without prompting
+#     -Disable:   Disable LocalAccountTokenFilterPolicy without prompting
+#     -Enable:    Enable LocalAccountTokenFilterPolicy without prompting
+#     -Preview:   Report current LocalAccountTokenFilterPolicy status without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -14,6 +15,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -22,12 +24,43 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable LocalAccountTokenFilterPolicy without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable LocalAccountTokenFilterPolicy without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current LocalAccountTokenFilterPolicy status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+$regPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	try {
+		$currentValue = if (Test-Path $regPath) { (Get-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -ErrorAction SilentlyContinue).LocalAccountTokenFilterPolicy } else { $null }
+
+		if ($currentValue -eq 1) {
+			Write-Host "LocalAccountTokenFilterPolicy is currently ENABLED."
+		}
+		else {
+			Write-Host "LocalAccountTokenFilterPolicy is currently DISABLED."
+		}
+	}
+	catch {
+		Write-Host ""
+		Write-Error "$ScriptName`: Failed to check LocalAccountTokenFilterPolicy status: $($_.Exception.Message)"
+		exit 1
+	}
+
 	exit 0
 }
 
@@ -49,7 +82,6 @@ if (-not $Enable -and -not $Disable) {
 }
 
 $enabling = $Enable -eq $true
-$regPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
 
 Write-Host "`nChecking LocalAccountTokenFilterPolicy status..." -ForegroundColor Cyan
 

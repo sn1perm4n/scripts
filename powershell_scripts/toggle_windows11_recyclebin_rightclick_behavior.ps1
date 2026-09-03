@@ -5,7 +5,10 @@
 
 # NOTE2: File Explorer will be restarted automatically to apply changes — a Taskbar redraw delay of up to ~30 seconds is normal
 
+# NOTE3: Restarting File Explorer can cause the Nvidia system tray icon to disappear, since Nvidia's tray component does not always respond to the TaskbarCreated broadcast Explorer sends on restart. This script automatically restarts the NVIDIA Display Container LS service (if present) to work around it; this is a no-op on machines without an Nvidia GPU.
+
 # Optional flags:
+#     -Preview:   Report current right-click menu style without changing anything
 #     -Windows10: Switch to Windows 10 style right-click menu without prompting
 #     -Windows11: Switch to Windows 11 style right-click menu without prompting
 #     -Help / -?: Display this help message
@@ -14,6 +17,7 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
+	[switch]$Preview,
 	[switch]$Windows10,
 	[switch]$Windows11,
 	[switch]$Help
@@ -23,12 +27,34 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Windows10] [-Windows11] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Preview] [-Windows10] [-Windows11] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
+	Write-Host "  -Preview    Report current right-click menu style without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Windows10  Switch to Windows 10 style right-click menu without prompting" -ForegroundColor Cyan
 	Write-Host "  -Windows11  Switch to Windows 11 style right-click menu without prompting" -ForegroundColor Cyan
 	Write-Host "  -Help       Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+# -Windows10 and -Windows11 are mutually exclusive
+if ($Windows10 -and $Windows11) {
+	Write-Host ""
+	Write-Error "-Windows10 and -Windows11 are mutually exclusive."
+	exit 1
+}
+
+$regPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
+$regParent = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}'
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	if (Test-Path $regPath) {
+		Write-Host "Windows 10 style right-click menu is currently active."
+	}
+	else {
+		Write-Host "Windows 11 style right-click menu is currently active."
+	}
 	exit 0
 }
 
@@ -49,8 +75,6 @@ if (-not $Windows10 -and -not $Windows11) {
 }
 
 $usingWindows10Style = $Windows10 -eq $true
-$regPath = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
-$regParent = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}'
 
 Write-Host "`nChecking right-click menu style..." -ForegroundColor Cyan
 
@@ -96,6 +120,22 @@ catch {
 	Write-Host ""
 	Write-Error "$ScriptName`: Failed to restart File Explorer: $($_.Exception.Message)"
 	exit 1
+}
+
+# Restart the Nvidia Display Container LS service if present, since the Explorer restart above can cause the Nvidia system tray icon to disappear
+$nvidiaServiceName = "NVDisplay.ContainerLocalSystem"
+$nvidiaService = Get-Service -Name $nvidiaServiceName -ErrorAction SilentlyContinue
+if ($nvidiaService) {
+	Write-Host "`nRestarting NVIDIA Display Container LS service to restore its system tray icon..." -ForegroundColor Cyan
+	try {
+		Stop-Service -Name $nvidiaServiceName -Force -ErrorAction Stop
+		Start-Service -Name $nvidiaServiceName -ErrorAction Stop
+		Write-Host "NVIDIA Display Container LS service restarted successfully." -ForegroundColor Green
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not restart NVIDIA Display Container LS service: $($_.Exception.Message)"
+	}
 }
 
 exit 0

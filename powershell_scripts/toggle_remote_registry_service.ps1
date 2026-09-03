@@ -2,8 +2,9 @@
 # This script enables or disables the RemoteRegistry service
 
 # Optional flags:
-#     -Disable: Disable the RemoteRegistry service without prompting
-#     -Enable:  Enable the RemoteRegistry service without prompting
+#     -Disable:   Disable the RemoteRegistry service without prompting
+#     -Enable:    Enable the RemoteRegistry service without prompting
+#     -Preview:   Report current RemoteRegistry service status without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -12,6 +13,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -20,12 +22,34 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable the RemoteRegistry service without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable the RemoteRegistry service without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current RemoteRegistry service status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+$serviceName = "RemoteRegistry"
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	$svc = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+	if (-not $svc) {
+		Write-Host "Service '$serviceName' not found."
+	}
+	else {
+		Write-Host "Service '$serviceName': StartType=$($svc.StartType), Status=$($svc.Status)"
+	}
 	exit 0
 }
 
@@ -47,7 +71,6 @@ if (-not $Enable -and -not $Disable) {
 }
 
 $enabling = $Enable -eq $true
-$serviceName = "RemoteRegistry"
 $serviceChanged = $false
 
 Write-Host "`nChecking RemoteRegistry service status..." -ForegroundColor Cyan

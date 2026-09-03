@@ -3,8 +3,9 @@
 # Get-NetAdapter
 
 # Optional flags:
-#     -Disable: Disable Wi-Fi without prompting
-#     -Enable:  Enable Wi-Fi without prompting
+#     -Disable:   Disable Wi-Fi without prompting
+#     -Enable:    Enable Wi-Fi without prompting
+#     -Preview:   Report current Wi-Fi adapter status without changing anything
 #     -Help / -?: Display this help message
 
 #Requires -RunAsAdministrator
@@ -13,6 +14,7 @@
 param (
 	[switch]$Disable,
 	[switch]$Enable,
+	[switch]$Preview,
 	[switch]$Help
 )
 
@@ -21,14 +23,36 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Disable] [-Enable] [-Preview] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Disable  Disable Wi-Fi without prompting" -ForegroundColor Cyan
 	Write-Host "  -Enable   Enable Wi-Fi without prompting" -ForegroundColor Cyan
+	Write-Host "  -Preview  Report current Wi-Fi adapter status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
 	Write-Host "`nNote: Your Wi-Fi adapter name may differ. Confirm it first with:" -ForegroundColor Cyan
 	Write-Host "    Get-NetAdapter" -ForegroundColor Cyan
 	Write-Host ""
+	exit 0
+}
+
+# -Enable and -Disable are mutually exclusive
+if ($Enable -and $Disable) {
+	Write-Host ""
+	Write-Error "-Enable and -Disable are mutually exclusive."
+	exit 1
+}
+
+# -Preview reports current status and bypasses the interactive menu entirely
+if ($Preview) {
+	try {
+		$adapter = Get-NetAdapter -Name "Wi-Fi" -ErrorAction Stop
+		Write-Host "Wi-Fi adapter status: $($adapter.Status)"
+	}
+	catch {
+		Write-Host ""
+		Write-Error "$ScriptName`: Could not check Wi-Fi status: $($_.Exception.Message)"
+		exit 1
+	}
 	exit 0
 }
 

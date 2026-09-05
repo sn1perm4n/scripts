@@ -115,6 +115,17 @@ if ($SaveResults) {
 	}
 }
 
+# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
+if ($SaveResults -and -not (Test-Path $SaveResults)) {
+	try {
+		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
+	}
+}
+
 # Validate -HostFile if specified
 if ($HostFile) {
 	if (-not (Test-Path $HostFile)) {

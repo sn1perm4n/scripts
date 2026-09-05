@@ -122,8 +122,8 @@ $Converted = 0
 $SuccessFiles = @()
 $FailureFiles = @()
 
-# File output lines
-$FileOutputLines = @()
+# File output lines (seeded with the hostname if -SaveResults is used)
+$FileOutputLines = if ($SaveResults) { @("$env:COMPUTERNAME`:") } else { @() }
 
 foreach ($file in $files) {
 	$TotalFiles++

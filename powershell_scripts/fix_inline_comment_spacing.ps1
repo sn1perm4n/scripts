@@ -118,10 +118,10 @@ if (-not $files -or $files.Count -eq 0) {
 	exit 0
 }
 
-# Initialize counters and output lines
+# Initialize counters and output lines (seeded with the hostname if -SaveResults is used)
 $issueCount = 0
 $fixedCount = 0
-$FileOutputLines = @()
+$FileOutputLines = if ($SaveResults) { @("$env:COMPUTERNAME`:") } else { @() }
 
 if (-not $NoConsoleOutput) { Write-Host "`nScanning for incorrect inline comment spacing...`n" -ForegroundColor Cyan }
 

@@ -129,9 +129,9 @@ else {
 	$files = @(Get-Item $scriptFileOrDirectory)
 }
 
-# Initialize counters and output lines
+# Initialize counters and output lines (seeded with the hostname if -SaveResults is used)
 $modifiedCount = 0
-$FileOutputLines = @()
+$FileOutputLines = if ($SaveResults) { @("$env:COMPUTERNAME`:") } else { @() }
 
 # Determine whether to create backups
 $doBackup = $false

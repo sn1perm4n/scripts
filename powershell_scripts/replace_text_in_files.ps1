@@ -62,6 +62,17 @@ if ($SaveResults) {
 	}
 }
 
+# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
+if ($SaveResults -and -not (Test-Path $SaveResults)) {
+	try {
+		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
+	}
+}
+
 # -NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview, since without
 # all of these this script can still block on interactive prompts with no visible context if output is suppressed
 if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $ReplaceString -or -not $SaveResults -or -not ($Backup -or $Preview))) {

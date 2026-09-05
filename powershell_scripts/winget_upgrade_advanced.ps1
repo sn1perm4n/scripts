@@ -59,6 +59,17 @@ if ($SaveResults) {
 	}
 }
 
+# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
+if ($SaveResults -and -not (Test-Path $SaveResults)) {
+	try {
+		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
+	}
+}
+
 # -NoConsoleOutput requires -SaveResults
 if ($NoConsoleOutput -and -not $SaveResults) {
 	Write-Host ""
@@ -176,7 +187,7 @@ try {
 			if (-not $NoConsoleOutput) { Write-Host "`nResults appended to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
-			# This warning covers a failure to write to -SaveResults itself, so there's nofile left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
+			# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
 			Write-Host ""
 			Write-Warning "Could not append results to '$SaveResults': $($_.Exception.Message)"
 		}
@@ -192,7 +203,7 @@ catch {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
 		}
 		catch {
-			# The results file itself couldn't be written to, so there's nowhere else torecord this - fall back to console as a last resort rather than losing it entirely
+			# The results file itself couldn't be written to, so there's nowhere else to record this - fall back to console as a last resort rather than losing it entirely
 			Write-Host ""
 			Write-Error $errorMessage
 		}

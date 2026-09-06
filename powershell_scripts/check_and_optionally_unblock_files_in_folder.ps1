@@ -4,14 +4,15 @@
 # NOTE: Admin is required to unblock files in protected system folders. Remove #Requires -RunAsAdministrator if not needed.
 
 # Optional flags:
-#     -Backup: Automatically create backups before unblocking files (skips interactive prompt)
-#     -Filenames: Show filenames only instead of full paths
-#     -NoConsoleOutput: Suppress console output (requires -UnblockAll and -SaveResults)
-#     -Path <PATH>: Path to a folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories
+#     -Backup:             Automatically create backups before unblocking files (skips interactive prompt)
+#     -Filenames:          Show filenames only instead of full paths
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults, and one of -UnblockAll/-Preview)
+#     -Path <PATH>:        Path to a folder (prompts if not specified)
+#     -Preview:            Show blocked files without unblocking anything
+#     -Recurse:            Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -UnblockAll: Automatically unblock all blocked files without prompting
-#     -Help / -?: Display this help message
+#     -UnblockAll:         Automatically unblock all blocked files without prompting
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 
@@ -21,6 +22,7 @@ param (
 	[switch]$Filenames,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
+	[switch]$Preview,
 	[switch]$Recurse,
 	[string]$SaveResults,
 	[switch]$UnblockAll,
@@ -32,12 +34,13 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Filenames] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-UnblockAll] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Filenames] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-UnblockAll] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before unblocking files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Show filenames only instead of full paths" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput     Suppress console output (requires -UnblockAll and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults, and one of -UnblockAll/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a folder (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show blocked files without unblocking anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -UnblockAll          Automatically unblock all blocked files without prompting" -ForegroundColor Cyan
@@ -56,11 +59,11 @@ if ($SaveResults) {
 	}
 }
 
-# -NoConsoleOutput requires -UnblockAll and -SaveResults, since without -UnblockAll this script
-# can still block on interactive prompts with no visible context if output is suppressed
-if ($NoConsoleOutput -and (-not $UnblockAll -or -not $SaveResults)) {
+# -NoConsoleOutput requires -SaveResults, and one of -UnblockAll or -Preview, since without one of
+# those this script can still block on interactive prompts with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not ($UnblockAll -or $Preview) -or -not $SaveResults)) {
 	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -UnblockAll and -SaveResults."
+	Write-Error "-NoConsoleOutput requires -SaveResults, and one of -UnblockAll or -Preview."
 	exit 1
 }
 
@@ -122,8 +125,8 @@ foreach ($file in $files) {
 		$blockedFiles += $file
 	}
 	catch {
-		# Ignore "stream not found" errors (means file is not blocked)
-		if ($_.Exception.Message -notmatch "Zone.Identifier") {
+		# ObjectNotFound means the Zone.Identifier stream simply doesn't exist (file is not blocked) - anything else is a genuine error worth reporting, since the stream name we requested would appear in almost any error message regardless of cause
+		if ($_.CategoryInfo.Category -ne 'ObjectNotFound') {
 			$checkErrors += [PSCustomObject]@{
 				File = $file.FullName
 				Error = $_.Exception.Message
@@ -178,6 +181,31 @@ if ($checkErrors.Count -gt 0) {
 			$FileOutputLines += "Error: $($err.Error)"
 		}
 	}
+}
+
+# Preview mode: stop here without ever prompting to unblock
+if ($Preview) {
+	$summaryLine = "$ScriptName`: Preview complete. $($blockedFiles.Count) blocked file(s) found. No files were modified."
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
+	if ($SaveResults) {
+		$FileOutputLines += ""
+		$FileOutputLines += $summaryLine
+
+		while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+			$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
+		}
+
+		try {
+			$outputString = ($FileOutputLines -join "`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
+		}
+		catch {
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
+	exit 0
 }
 
 # Prompt the user to optionally unblock all files
@@ -267,8 +295,8 @@ else {
 
 # Save results to text file if requested
 if ($SaveResults) {
-	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+	while ($FileOutputLines.Count -gt 0 -and $FileOutputLines[-1] -eq '') {
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	try {

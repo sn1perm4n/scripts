@@ -1,9 +1,9 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
 # This script toggles Windows 11 Memory Integrity (Hypervisor-protected Code Integrity / HVCI)
 
-# NOTE: A reboot is required for changes to take effect
+# NOTE: Disabling Memory Integrity can improve performance in some games and CPU-intensive workloads, but it also disables a real protection against certain kernel-level exploits and malicious drivers
 
-# NOTE2: Disabling Memory Integrity can improve performance in some games and CPU-intensive workloads, but it also disables a real protection against certain kernel-level exploits and malicious drivers
+# NOTE2: A reboot is required for changes to take effect
 
 # Optional flags:
 #     -Disable:   Disable Memory Integrity without prompting

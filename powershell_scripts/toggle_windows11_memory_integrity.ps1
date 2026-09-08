@@ -3,6 +3,8 @@
 
 # NOTE: A reboot is required for changes to take effect
 
+# NOTE2: Disabling Memory Integrity can improve performance in some games and CPU-intensive workloads, but it also disables a real protection against certain kernel-level exploits and malicious drivers
+
 # Optional flags:
 #     -Disable:   Disable Memory Integrity without prompting
 #     -Enable:    Enable Memory Integrity without prompting

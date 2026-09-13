@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v1.1
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
 
 ; Creates the keyboard shortcut Ctrl + Shift + Z to copy the filename(s) of selected file(s) to the clipboard without the full path
 ; File Explorer and Desktop are supported, and multiple files can be selected simultaneously

@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v2
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
 
 ; Creates a Ctrl + Spacebar global Play/Pause keyboard shortcut
 ; Most media apps respond to this globally, but VLC requires its "Global Hotkeys" feature to be enabled

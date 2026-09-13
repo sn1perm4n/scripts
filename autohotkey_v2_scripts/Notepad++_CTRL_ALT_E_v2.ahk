@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v2
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
 
 ; Creates the keyboard shortcut Ctrl + Alt + E to open any selected file(s) in Notepad++
 ; Files in File Explorer and on the Desktop are supported, and multiple files can be selected and opened simultaneously

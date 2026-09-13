@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v1.1
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
 
 ; Creates the keyboard shortcut Ctrl + Alt + T to open PowerShell (Admin) in the current File Explorer folder or Desktop
 ; PowerShell 7 is used by default, falling back to PowerShell 5 if 7 is not installed

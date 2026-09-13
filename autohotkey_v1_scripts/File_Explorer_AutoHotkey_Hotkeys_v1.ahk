@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v1.1
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
 
 ; ==========================
 ; File Explorer AutoHotkey Hotkeys v1

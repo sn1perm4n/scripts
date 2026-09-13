@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v2
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
 
 ; Creates global media control shortcuts for keyboards without dedicated media keys
 ; NOTE: If you also run CTRL_Space_PlayPause_v2.ahk, disable the Ctrl + Spacebar hotkey in that script to avoid conflicts

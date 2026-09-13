@@ -1,5 +1,5 @@
 ﻿#Requires AutoHotkey v1.1
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
 
 ; Creates the keyboard shortcut Ctrl + Shift + X to copy the full path(s) of selected file(s) to the clipboard
 ; File Explorer and Desktop are supported

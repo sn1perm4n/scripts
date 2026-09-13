@@ -1,12 +1,17 @@
-﻿; This script creates the shortcut CTRL + = (CTRL EQUAL) to duplicate the functionality of CTRL + NUMPAD+ on an extended keyboard
-; This allows any keyboard that lacks the number pad [i.e. Tenkeyless (TKL), laptop, etc.] to use the Auto-Resize Details View File Explorer shortcut and requires AutoHotkey v1.1.33.11 or newer (not compatible with v2)
+﻿#Requires AutoHotkey v1.1
+; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v1_scripts
 
-#Requires AutoHotkey v1.1.33.11
+; This script creates the keyboard shortcut Ctrl + = (Ctrl Equal) to duplicate the functionality of Ctrl + Numpad+ on an extended keyboard
+; This allows any keyboard that lacks a number pad (i.e. Tenkeyless (TKL), laptop, etc.) to use the Auto-Resize Details View File Explorer shortcut
+
+#NoEnv
+SendMode Input
+SetWorkingDir %A_ScriptDir%
 
 #If WinActive("ahk_class CabinetWClass")
 ^=::
-Send {Blind}{NumpadAdd}
-return
+	Send {Blind}{NumpadAdd}
+Return
 #If
 
 ; End.

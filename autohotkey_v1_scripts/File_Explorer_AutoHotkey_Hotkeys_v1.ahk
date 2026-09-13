@@ -10,7 +10,7 @@
 ; Ctrl + Shift + X   Copy selected file path(s)
 ; Ctrl + Shift + Z   Copy selected filename(s) only (no path)
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
-; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
+; Ctrl + Alt + E     Open selected file(s) in Notepad++
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
@@ -80,8 +80,7 @@
 ;       • Open non-admin if UAC is disabled
 ; - If you run File_Explorer_AutoHotkey_Hotkeys_v1.ahk using "Run as administrator," PowerShell will open as Admin
 ; - pwsh-user ensures you can still test scripts in a non-admin environment without closing elevated windows
-; - Ctrl + Alt + E opens selected files in Notepad++ (x86 by default)
-;   If you use the 64-bit version, update the path in the script accordingly
+; - Ctrl + Alt + E automatically detects whether the 64-bit or 32-bit version of Notepad++ is installed
 ; - Ctrl + Alt + V opens selected files in VSCode (per-user install path by default)
 ;   If you have a system-wide install, update the path in the script accordingly
 
@@ -125,10 +124,12 @@ Menu, Tray, Add, Exit, ExitScript  ; working exit menu item
 ; Hotkeys
 ; ==========================
 
-; Ctrl + = → Auto-resize Details View columns
+; Ctrl + = → Auto-resize Details View columns (restricted to File Explorer only)
+#If WinActive("ahk_class CabinetWClass")
 ^=::
 	Send {LCtrl down}{NumpadAdd}{LCtrl up}
 Return
+#If
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c::
@@ -229,9 +230,11 @@ Return
 	Run, %psExe%, %currentFolder%, RunAs
 Return
 
-; Ctrl + Alt + E → Open selected file(s) in Notepad++ (x86)
+; Ctrl + Alt + E → Open selected file(s) in Notepad++ (auto-detects 64-bit or 32-bit installation)
 ^!e::
-	npp := "C:\Program Files (x86)\Notepad++\notepad++.exe"
+	npp64 := "C:\Program Files\Notepad++\notepad++.exe"
+	npp32 := "C:\Program Files (x86)\Notepad++\notepad++.exe"
+	npp := FileExist(npp64) ? npp64 : npp32
 	ClipSaved := ClipboardAll
 	Clipboard := ""
 	Send ^c
@@ -311,7 +314,7 @@ Ctrl + Shift + C`tCopy current folder path
 Ctrl + Shift + X`tCopy selected file path(s)
 Ctrl + Shift + Z`tCopy selected filename(s) only (no path)
 Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop
-Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)
+Ctrl + Alt + E`tOpen selected file(s) in Notepad++
 Ctrl + Alt + V`tOpen selected file(s) in VSCode
 Ctrl + Shift + H`tShow all hotkeys in a popup
 

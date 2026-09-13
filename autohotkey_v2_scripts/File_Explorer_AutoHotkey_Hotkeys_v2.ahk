@@ -10,7 +10,7 @@
 ; Ctrl + Shift + X   Copy selected file path(s)
 ; Ctrl + Shift + Z   Copy selected filename(s) only (no path)
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
-; Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)
+; Ctrl + Alt + E     Open selected file(s) in Notepad++
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
@@ -45,8 +45,7 @@
 ;       • Open non-admin if UAC is disabled
 ; - If you run File_Explorer_AutoHotkey_Hotkeys_v2.ahk using "Run as administrator," PowerShell will open as Admin
 ; - pwsh-user ensures you can still test scripts in a non-admin environment without closing elevated windows
-; - Ctrl + Alt + E opens selected files in Notepad++ (x86 by default)
-;   If you use the 64-bit version, update the path in the script accordingly
+; - Ctrl + Alt + E automatically detects whether the 64-bit or 32-bit version of Notepad++ is installed
 ; - Ctrl + Alt + V opens selected files in VSCode (per-user install path by default)
 ;   If you have a system-wide install, update the path in the script accordingly
 ;
@@ -104,7 +103,7 @@ TooltipGui.Add("Text",,
 	"Ctrl + Shift + X   Copy selected file path(s)`n"
 	"Ctrl + Shift + Z   Copy selected filename(s) only (no path)`n"
 	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
-	"Ctrl + Alt + E     Open selected file(s) in Notepad++ (x86)`n"
+	"Ctrl + Alt + E     Open selected file(s) in Notepad++`n"
 	"Ctrl + Alt + V     Open selected file(s) in VSCode`n"
 	"Ctrl + Shift + H   Show all hotkeys in a popup`n`n"
 	"pwsh-user          Open non-admin PowerShell from an Admin shell"
@@ -170,10 +169,12 @@ GetTrayIconRECT(hwnd) {
 ; Hotkeys
 ; ==========================
 
-; Ctrl + = → Auto-resize Details View columns
+; Ctrl + = → Auto-resize Details View columns (restricted to File Explorer only)
+#HotIf WinActive("ahk_class CabinetWClass")
 ^=:: {
 	Send("{LCtrl down}{NumpadAdd}{LCtrl up}")
 }
+#HotIf
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c:: {
@@ -299,9 +300,11 @@ GetTrayIconRECT(hwnd) {
 	Run(psExe " -NoExit -Command Set-Location '" currentFolder "'",, "RunAs")
 }
 
-; Ctrl + Alt + E → Open selected file(s) in Notepad++ (x86)
+; Ctrl + Alt + E → Open selected file(s) in Notepad++ (auto-detects 64-bit or 32-bit installation)
 ^!e:: {
-	local npp := "C:\Program Files (x86)\Notepad++\notepad++.exe"
+	local npp64 := "C:\Program Files\Notepad++\notepad++.exe"
+	local npp32 := "C:\Program Files (x86)\Notepad++\notepad++.exe"
+	local npp := FileExist(npp64) ? npp64 : npp32
 	local ClipSaved := ClipboardAll()
 	A_Clipboard := ""
 	Send("^c")
@@ -384,7 +387,7 @@ ShowHotkeys() {
 		"Ctrl + Shift + X`tCopy selected file path(s)`n"
 		"Ctrl + Shift + Z`tCopy selected filename(s) only (no path)`n"
 		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n"
-		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++ (x86)`n"
+		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++`n"
 		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n`n"
 		"Tip: Use pwsh-user in PowerShell to open a non-admin shell"
 	)

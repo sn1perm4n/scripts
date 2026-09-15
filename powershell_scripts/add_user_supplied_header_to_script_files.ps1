@@ -1,17 +1,18 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script prepends a user-supplied line of text as a comment to the top of various script files
+# This script adds a user-supplied line of text as a comment to the top of various script files
 
-# NOTE: .reg files must keep "Windows Registry Editor Version 5.00" as the first line, so the comment is inserted as the second line instead. The same second-line placement applies to .sh files that begin with a shebang (i.e. #!/bin/bash) and to .ahk files.
+# NOTE: .reg files must keep "Windows Registry Editor Version 5.00" as the first line, so the comment targets the second line instead. The same second-line targeting applies to .sh files that begin with a shebang (i.e. #!/bin/bash) and to .ahk files (which always begin with #Requires).
 
-# NOTE2: To support additional file types or comment formats, add an entry to the alphabetized $commentMap below. If a new file type also needs second-line placement, add its extension to the check further down in the script.
+# NOTE2: To support additional file types or comment formats, add an entry to the alphabetized $commentMap below. If a new file type also needs second-line targeting, add its extension to the check further down in the script.
 
-# NOTE3: Files that already contain the exact comment line anywhere in their content are skipped
+# NOTE3: Each file's target line is checked directly (not "anywhere in the file"). An exact match is skipped. A line that starts with that file type's comment character but doesn't match is flagged for review and left alone unless -Force is specified, in which case it is overwritten. A target line that isn't already a comment is never overwritten regardless of -Force; a new line is inserted instead.
 
 # Optional flags:
 #     -Backup:             Automatically create backups before modifying files (skips interactive prompt)
+#     -Force:              Overwrite an existing mismatched header line (never overwrites a line that is not already a comment)
 #     -NoConsoleOutput:    Suppress console output (requires -Path, -Text, -SaveResults, and one of -Backup/-Preview)
 #     -Path <PATH>:        Path to the folder to process (prompts if not specified)
-#     -Preview:            Show which files would be modified or skipped without changing anything
+#     -Preview:            Show which files would be modified, overwritten, or flagged without changing anything
 #     -Recurse:            Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -Text <TEXT>:        The text to add as a header comment (prompts if not specified)
@@ -20,6 +21,7 @@
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Backup,
+	[switch]$Force,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
 	[switch]$Preview,
@@ -34,12 +36,13 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-SaveResults <PATH>] [-Text <TEXT>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Force] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-SaveResults <PATH>] [-Text <TEXT>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before modifying files (skips interactive prompt)" -ForegroundColor Cyan
+	Write-Host "  -Force               Overwrite an existing mismatched header line (never overwrites a line that is not already a comment)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -Path, -Text, -SaveResults, and one of -Backup/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to the folder to process (prompts if not specified)" -ForegroundColor Cyan
-	Write-Host "  -Preview             Show which files would be modified or skipped without changing anything" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show which files would be modified, overwritten, or flagged without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Text <TEXT>         The text to add as a header comment (prompts if not specified)" -ForegroundColor Cyan
@@ -126,7 +129,8 @@ if (-not $files) {
 
 $FileOutputLines = @()
 $processedCount = 0
-$skippedCount = 0
+$alreadyCorrectCount = 0
+$mismatchCount = 0
 
 foreach ($file in $files) {
 	try {
@@ -163,42 +167,53 @@ foreach ($file in $files) {
 
 	$commentChar = $commentMap[$file.Extension]
 	$lineToAdd = "$commentChar $Text"
+	$lines = @($content -split "`r?`n")
 
-	# Skip if the line already exists anywhere in the file
-	if ($content -match [regex]::Escape($lineToAdd)) {
-		$line = "Line already exists in $($file.Name), skipping"
+	# Determine the target line index (0-based) for this file type
+	if ($file.Extension -eq '.sh') {
+		$firstLine = if ($lines.Count -gt 0) { $lines[0] } else { '' }
+		$targetLineIndex = if ($firstLine -like '#!*') { 1 } else { 0 }
+	}
+	elseif ($file.Extension -in '.ahk', '.reg') {
+		$targetLineIndex = 1
+	}
+	else {
+		$targetLineIndex = 0
+	}
+
+	$existingLine = if ($lines.Count -gt $targetLineIndex) { $lines[$targetLineIndex] } else { $null }
+
+	# Already correct: skip
+	if ($existingLine -eq $lineToAdd) {
+		$line = "Already correct: $($file.Name)"
 		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
 		if ($SaveResults) { $FileOutputLines += $line }
-		$skippedCount++
+		$alreadyCorrectCount++
 		continue
 	}
 
-	if ($file.Extension -eq '.sh') {
-		# Preserve the shebang line if present; otherwise the comment goes on the first line
-		$firstLine = ($content -split "`r?`n", 2)[0]
+	# A target line that already looks like a comment (right or wrong) is only overwritten with -Force;
+	# a target line that doesn't look like a comment is never overwritten, regardless of -Force
+	$looksLikeExistingHeader = $existingLine -and $existingLine.TrimStart().StartsWith($commentChar)
 
-		if ($firstLine -like '#!*') {
-			$lines = $content -split "`r?`n", 2
-			$rest = if ($lines.Count -gt 1) { $lines[1] } else { '' }
-			$newContent = $lines[0] + [Environment]::NewLine + $lineToAdd + [Environment]::NewLine + $rest
-		}
-		else {
-			$newContent = $lineToAdd + [Environment]::NewLine + $content
-		}
+	if ($looksLikeExistingHeader -and -not $Force) {
+		$line = "Mismatch on line $($targetLineIndex + 1) of $($file.Name): '$existingLine' (use -Force to overwrite)"
+		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
+		if ($SaveResults) { $FileOutputLines += $line }
+		$mismatchCount++
+		continue
 	}
-	elseif ($file.Extension -in '.ahk', '.reg') {
-		# Always insert the comment as the second line
-		$lines = $content -split "`r?`n", 2
-		$rest = if ($lines.Count -gt 1) { $lines[1] } else { '' }
-		$newContent = $lines[0] + [Environment]::NewLine + $lineToAdd + [Environment]::NewLine + $rest
-	}
-	else {
-		# For other scripts: prepend the comment at the very top
-		$newContent = $lineToAdd + [Environment]::NewLine + $content
-	}
+
+	$action = if ($looksLikeExistingHeader -and $Force) { 'overwrite' } else { 'insert' }
+
+	$before = if ($targetLineIndex -gt 0) { @($lines | Select-Object -First $targetLineIndex) } else { @() }
+	$after = if ($action -eq 'overwrite') { @($lines | Select-Object -Skip ($targetLineIndex + 1)) } else { @($lines | Select-Object -Skip $targetLineIndex) }
+	$newLines = @($before) + @($lineToAdd) + @($after)
+	$newContent = $newLines -join [Environment]::NewLine
 
 	if ($Preview) {
-		$line = "Would add line to $($file.Name)"
+		$verb = if ($action -eq 'overwrite') { "Would overwrite line $($targetLineIndex + 1) of" } else { "Would add line to" }
+		$line = "$verb $($file.Name)"
 		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
 		if ($SaveResults) { $FileOutputLines += $line }
 		$processedCount++
@@ -214,7 +229,8 @@ foreach ($file in $files) {
 		}
 
 		[System.IO.File]::WriteAllText($file.FullName, $newContent, $fileEncoding)
-		$line = "Added line to $($file.Name)"
+		$verb = if ($action -eq 'overwrite') { "Overwrote line $($targetLineIndex + 1) of" } else { "Added line to" }
+		$line = "$verb $($file.Name)"
 		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Green }
 		if ($SaveResults) { $FileOutputLines += $line }
 		$processedCount++
@@ -230,10 +246,10 @@ foreach ($file in $files) {
 
 # Summary
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $processedCount file(s) would be modified, $skippedCount already up to date. No files were modified."
+	$summaryLine = "$ScriptName`: Preview complete. $processedCount file(s) would be modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite). No files were modified."
 }
 else {
-	$summaryLine = "$ScriptName`: Complete. $processedCount file(s) modified, $skippedCount already up to date."
+	$summaryLine = "$ScriptName`: Complete. $processedCount file(s) modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite)."
 }
 if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 

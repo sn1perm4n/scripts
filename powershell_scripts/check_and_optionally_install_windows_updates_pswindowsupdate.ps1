@@ -13,7 +13,7 @@
 #     -CheckOnly:          Check for updates without prompting to install (mutually exclusive with -InstallAll)
 #     -InstallAll:         Automatically install all available updates without prompting (mutually exclusive with -CheckOnly)
 #     -NoConsoleOutput:    Suppress console output (requires -CheckOnly or -InstallAll, and -SaveResults)
-#     -Reboot:             Automatically reboot after installing updates if required (default: no reboot)
+#     -Restart:            Automatically restart after installing updates if required (default: no restart)
 #     -SaveResults <PATH>: Save results to a text file (appends if file exists)
 #     -Help / -?:          Display this help message
 
@@ -24,7 +24,7 @@ param (
 	[switch]$CheckOnly,
 	[switch]$InstallAll,
 	[switch]$NoConsoleOutput,
-	[switch]$Reboot,
+	[switch]$Restart,
 	[string]$SaveResults,
 	[switch]$Help
 )
@@ -34,12 +34,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CheckOnly] [-InstallAll] [-NoConsoleOutput] [-Reboot] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CheckOnly] [-InstallAll] [-NoConsoleOutput] [-Restart] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CheckOnly           Check for updates without prompting to install (mutually exclusive with -InstallAll)" -ForegroundColor Cyan
 	Write-Host "  -InstallAll          Automatically install all available updates without prompting (mutually exclusive with -CheckOnly)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -CheckOnly or -InstallAll, and -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -Reboot              Automatically reboot after installing updates if required (default: no reboot)" -ForegroundColor Cyan
+	Write-Host "  -Restart             Automatically restart after installing updates if required (default: no restart)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
@@ -53,10 +53,10 @@ if ($CheckOnly -and $InstallAll) {
 	exit 1
 }
 
-# -Reboot has no effect with -CheckOnly, since -CheckOnly never installs anything
-if ($Reboot -and $CheckOnly) {
+# -Restart has no effect with -CheckOnly, since -CheckOnly never installs anything
+if ($Restart -and $CheckOnly) {
 	Write-Host ""
-	Write-Warning "-Reboot has no effect with -CheckOnly."
+	Write-Warning "-Restart has no effect with -CheckOnly."
 }
 
 # -NoConsoleOutput requires -CheckOnly or -InstallAll, since without one of them the interactive install confirmation prompt would hang with no visible prompt
@@ -228,7 +228,7 @@ try {
 
 		# Install Windows/Microsoft updates
 		if ($windowsUpdates.Count -gt 0) {
-			Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -Install -IgnoreUserInput -AutoReboot:$Reboot -ErrorAction Stop | Out-Null
+			Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -Install -IgnoreUserInput -AutoReboot:$Restart -ErrorAction Stop | Out-Null
 		}
 
 		# Install Defender update

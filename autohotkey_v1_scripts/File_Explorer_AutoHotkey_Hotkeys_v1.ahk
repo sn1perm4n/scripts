@@ -26,7 +26,7 @@
 ; 1. Open Task Scheduler and click "Create Task" (NOT "Create Basic Task")
 ;
 ; 2. General tab:
-;       Name: AutoHotKey Startup Script
+;       Name: AutoHotkey Startup Script
 ;       Select "Run only when user is logged on"
 ;       Check "Run with highest privileges"
 ;       Configure for: Windows 10

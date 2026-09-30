@@ -47,9 +47,9 @@
 ;
 ; 6. Settings tab (all defaults, listed for reference):
 ;       Check "Allow task to be run on demand"
-;       "Stop the task if it runs longer than" set to 3 days
+;       Stop the task if it runs longer than: 3 days
 ;       Check "If the running task does not end when requested, force it to stop"
-;       "If the task is already running": Do not start a new instance
+;       If the task is already running: Do not start a new instance
 ;
 ; 7. Click OK
 ;

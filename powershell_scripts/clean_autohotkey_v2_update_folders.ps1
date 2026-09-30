@@ -5,7 +5,7 @@
 
 # NOTE2: Both the 64-bit (C:\Program Files\AutoHotkey) and 32-bit (C:\Program Files (x86)\AutoHotkey) install locations are checked, 64-bit first since it's the more common install, since a GitHub user may have either
 
-# NOTE3: Only folders matching the pattern v2.X.Y (i.e. v2.0.26, v2.0.27) are removed; the "v2" and "UX" folders, and all files (license.txt, WindowSpy.ahk), are left untouched
+# NOTE3: Only folders matching the pattern v2.x.x (i.e. v2.0.26, v2.0.27) are removed; the "v2" and "UX" folders, and all files (license.txt, WindowSpy.ahk), are left untouched
 
 # NOTE4: These leftover version folders are created each time AutoHotkey self-updates and serve no purpose once the "v2" folder itself reflects the current version
 

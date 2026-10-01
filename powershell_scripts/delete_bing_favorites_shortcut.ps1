@@ -3,6 +3,8 @@
 
 # NOTE: Matches any file containing "Bing" in its name regardless of extension (i.e. Internet Shortcut .url files, not just .lnk shortcuts), since Explorer's "hide extensions" setting only affects display, not the real on-disk filename, and the recreation mechanism may not stay consistent over time
 
+# NOTE2: This script must be run as a Group Policy Object (GPO) User Logon script (User Configuration -> Windows Settings -> Scripts (Logon/Logoff) -> Logon), not a Computer Startup script, since it relies on $env:USERPROFILE resolving to the actual logged-in user rather than SYSTEM's own profile.
+
 # Optional flags:
 #     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
 #     -Preview:            Show which Bing shortcut(s) would be deleted without deleting anything
@@ -87,7 +89,7 @@ $bingShortcuts = Get-ChildItem -Path $favoritesPath -Filter "*Bing*" -File -Erro
 
 if (-not $bingShortcuts) {
 	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] No Bing shortcut(s) found."
-	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
+	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 	if ($SaveResults) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$summaryLine`n")

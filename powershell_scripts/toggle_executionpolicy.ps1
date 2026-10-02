@@ -217,7 +217,7 @@ foreach ($target in $targets) {
 
 	if ($Preview) {
 		$summaryLine = "$ScriptName`: [$target] [$Scope] Current = $currentPolicy, Proposed = $Policy"
-		if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
+		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Cyan }
 		$resultLines += $summaryLine
 		if ($dcomSession) { Remove-CimSession -CimSession $dcomSession }
 		continue

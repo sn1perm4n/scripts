@@ -150,7 +150,7 @@ if ($Credential) {
 if (-not $Policy) {
 	$validPolicies = @('Restricted', 'AllSigned', 'RemoteSigned', 'Unrestricted', 'Bypass', 'Undefined')
 
-	Write-Host "`nSelect a new ExecutionPolicy:`n" -ForegroundColor Cyan
+	Write-Host "Select a new ExecutionPolicy:`n" -ForegroundColor Cyan
 	for ($i = 0; $i -lt $validPolicies.Count; $i++) {
 		Write-Host "$($i + 1). $($validPolicies[$i])"
 	}
@@ -225,7 +225,21 @@ foreach ($target in $targets) {
 
 	try {
 		if ($isLocal) {
-			Set-ExecutionPolicy -ExecutionPolicy $Policy -Scope $Scope -Force -ErrorAction Stop
+			Set-ExecutionPolicy -ExecutionPolicy $Policy -Scope $Scope -Force -ErrorAction SilentlyContinue -ErrorVariable setPolicyError
+
+			# Verify the scope we actually targeted took the new value - this is the real measure of success, independent of any more-specific scope overriding the *effective* policy
+			$verifiedPolicy = (Get-ExecutionPolicy -Scope $Scope).ToString()
+			if ($verifiedPolicy -ne $Policy) {
+				throw "Value did not take (now reads '$verifiedPolicy'). $($setPolicyError[0].Exception.Message)"
+			}
+
+			# A more specific scope (CurrentUser, UserPolicy, or MachinePolicy) can still override what was just set here -
+			# the write above succeeded regardless, but new sessions may not actually use $Policy as their effective policy
+			$effectivePolicy = (Get-ExecutionPolicy).ToString()
+			if ($effectivePolicy -ne $Policy) {
+				Write-Host ""
+				Write-Warning "The $Scope scope was set to $Policy successfully, but a more specific scope is overriding it - the effective policy is currently $effectivePolicy. Run Get-ExecutionPolicy -List to see all scopes."
+			}
 		}
 		else {
 			if ($Policy -eq 'Undefined') {

@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script deletes all but the most recent file and folder in a specific folder:
+# This script deletes all folders and all files except the *.aiu file in:
 # C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates
 
 #Requires -RunAsAdministrator
@@ -30,38 +30,38 @@ try {
 	$deletedFilesCount = 0
 	$deletedFoldersCount = 0
 
-	# Keep only the most recent file
+	# Keep only the *.aiu file (the update-check metadata the program actually needs); everything else here is disposable installer/artifact content
 	$files = Get-ChildItem -Path $programdataPatchmypcFolder -File
 	if ($files.Count -gt 0) {
-		$latestFile = $files | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-		Write-Host "`nKeeping file: $($latestFile.FullName)" -ForegroundColor Green
+		$aiuFiles = @($files | Where-Object { $_.Extension -eq '.aiu' })
+		$latestAiuFile = $null
 
-		if ($files.Count -gt 1) {
-			$files | Sort-Object LastWriteTime -Descending | Select-Object -Skip 1 | ForEach-Object {
-				$totalBytesFreed += $_.Length
-				Write-Host "Deleting file: $($_.FullName)" -ForegroundColor Yellow
-				Remove-Item $_.FullName -Force
-				$deletedFilesCount++
-			}
+		if ($aiuFiles.Count -eq 0) {
+			Write-Host ""
+			Write-Warning "No .aiu file found in '$programdataPatchmypcFolder' - nothing will be kept."
+		}
+		else {
+			$latestAiuFile = $aiuFiles | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+			Write-Host "`nKeeping file: $($latestAiuFile.FullName)" -ForegroundColor Green
+		}
+
+		$files | Where-Object { -not $latestAiuFile -or $_.FullName -ne $latestAiuFile.FullName } | ForEach-Object {
+			$totalBytesFreed += $_.Length
+			Write-Host "Deleting file: $($_.FullName)" -ForegroundColor Yellow
+			Remove-Item $_.FullName -Force
+			$deletedFilesCount++
 		}
 	}
 
-	# Keep only the most recent folder
+	# Delete all folders - the most recent one historically only ever contained a redownloadable installer (i.e. PatchMyPC-HomeUpdater.msi), with no reason to keep it locally
 	$folders = Get-ChildItem -Path $programdataPatchmypcFolder -Directory
-	if ($folders.Count -gt 0) {
-		$latestFolder = $folders | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-		Write-Host "`nKeeping folder: $($latestFolder.FullName)" -ForegroundColor Green
-
-		if ($folders.Count -gt 1) {
-			$folders | Sort-Object LastWriteTime -Descending | Select-Object -Skip 1 | ForEach-Object {
-				$folderSize = (Get-ChildItem -Path $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
-				if (-not $folderSize) { $folderSize = 0 }
-				$totalBytesFreed += $folderSize
-				Write-Host "Deleting folder: $($_.FullName)" -ForegroundColor Yellow
-				Remove-Item $_.FullName -Recurse -Force
-				$deletedFoldersCount++
-			}
-		}
+	foreach ($folder in $folders) {
+		$folderSize = (Get-ChildItem -Path $folder.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+		if (-not $folderSize) { $folderSize = 0 }
+		$totalBytesFreed += $folderSize
+		Write-Host "Deleting folder: $($folder.FullName)" -ForegroundColor Yellow
+		Remove-Item $folder.FullName -Recurse -Force
+		$deletedFoldersCount++
 	}
 
 	# Summary

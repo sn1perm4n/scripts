@@ -115,10 +115,31 @@ else {
 		$freeDisplay = if ($bytesToFree -ge 1GB) { "$freeGB GB" }
 		else { "$freeMB MB" }
 
-		$keepLine = if ($latestAiuFile) { "Would keep: $($latestAiuFile.FullName)" } else { "No .aiu file found - nothing would be kept." }
+		# The console gets a readable multi-line breakdown; $summaryLine stays a single compact line for -SaveResults, matching every other script's one-line-per-log-entry convention
+		$keepLine = if ($latestAiuFile) { "Would keep: $($latestAiuFile.FullName)." } else { "No .aiu file found - nothing would be kept." }
 		$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $keepLine Would delete $($filesToDelete.Count) file(s) and $($folders.Count) folder(s) ($freeDisplay). No changes were made."
 
-		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
+		if (-not $NoConsoleOutput) {
+			# Name lists are capped at 3 with an "and N more" suffix, so this stays readable even when deleting hundreds or thousands of items
+			$fileNamesPreview = ''
+			if ($filesToDelete.Count -gt 0) {
+				$fileNamesList = ($filesToDelete | Select-Object -First 3 -ExpandProperty Name) -join ', '
+				if ($filesToDelete.Count -gt 3) { $fileNamesList += ", and $($filesToDelete.Count - 3) more" }
+				$fileNamesPreview = ": $fileNamesList"
+			}
+			$folderNamesPreview = ''
+			if ($folders.Count -gt 0) {
+				$folderNamesList = ($folders | Select-Object -First 3 -ExpandProperty Name) -join ', '
+				if ($folders.Count -gt 3) { $folderNamesList += ", and $($folders.Count - 3) more" }
+				$folderNamesPreview = ": $folderNamesList"
+			}
+
+			Write-Host "`nPreview complete:" -ForegroundColor Yellow
+			Write-Host "  Keep:   $(if ($latestAiuFile) { $latestAiuFile.Name } else { '(no .aiu file found)' })" -ForegroundColor Yellow
+			Write-Host "  Delete: $($filesToDelete.Count) file(s)$fileNamesPreview" -ForegroundColor Yellow
+			Write-Host "  Delete: $($folders.Count) folder(s)$folderNamesPreview" -ForegroundColor Yellow
+			Write-Host "  Total:  $freeDisplay" -ForegroundColor Yellow
+		}
 		$resultLines += $summaryLine
 	}
 	else {
@@ -126,7 +147,26 @@ else {
 
 		$proceedWithDelete = $true
 		if ($totalToDelete -gt 0 -and -not $DeleteAll) {
-			$response = Read-Host "`nFound $($filesToDelete.Count) file(s) and $($folders.Count) folder(s) to delete in '$programdataPatchmypcFolder'. Delete them now? (Y/N)"
+			if (-not $NoConsoleOutput) {
+				# Name lists are capped at 3 with an "and N more" suffix, so this stays readable even when deleting hundreds or thousands of items
+				$fileNamesPreview = ''
+				if ($filesToDelete.Count -gt 0) {
+					$fileNamesList = ($filesToDelete | Select-Object -First 3 -ExpandProperty Name) -join ', '
+					if ($filesToDelete.Count -gt 3) { $fileNamesList += ", and $($filesToDelete.Count - 3) more" }
+					$fileNamesPreview = ": $fileNamesList"
+				}
+				$folderNamesPreview = ''
+				if ($folders.Count -gt 0) {
+					$folderNamesList = ($folders | Select-Object -First 3 -ExpandProperty Name) -join ', '
+					if ($folders.Count -gt 3) { $folderNamesList += ", and $($folders.Count - 3) more" }
+					$folderNamesPreview = ": $folderNamesList"
+				}
+
+				Write-Host "`nFound:" -ForegroundColor Cyan
+				Write-Host "  $($filesToDelete.Count) file(s)$fileNamesPreview" -ForegroundColor Cyan
+				Write-Host "  $($folders.Count) folder(s)$folderNamesPreview" -ForegroundColor Cyan
+			}
+			$response = Read-Host "`nDelete them now? (Y/N)"
 			if ($response -notmatch '^[Yy]$') {
 				$proceedWithDelete = $false
 				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Deletion skipped by user."

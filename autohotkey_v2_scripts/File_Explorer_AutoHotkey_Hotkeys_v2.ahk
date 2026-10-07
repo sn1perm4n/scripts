@@ -9,9 +9,10 @@
 ; Ctrl + Shift + C   Copy current folder path
 ; Ctrl + Shift + X   Copy selected file path(s)
 ; Ctrl + Shift + Z   Copy selected filename(s) only (no path)
-; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
+; Ctrl + Alt + I     Open IrfanView with blank canvas and Paint dialog
+; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
 ;
@@ -48,6 +49,8 @@
 ; - Ctrl + Alt + E automatically detects whether the 64-bit or 32-bit version of Notepad++ is installed
 ; - Ctrl + Alt + V opens selected files in VSCode (per-user install path by default)
 ;   If you have a system-wide install, update the path in the script accordingly
+; - Ctrl + Alt + I automatically detects whether the 64-bit or 32-bit version of IrfanView is installed
+;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
 ;
 ; ==========================
 ; PowerShell non-admin helper
@@ -102,9 +105,10 @@ TooltipGui.Add("Text",,
 	"Ctrl + Shift + C   Copy current folder path`n"
 	"Ctrl + Shift + X   Copy selected file path(s)`n"
 	"Ctrl + Shift + Z   Copy selected filename(s) only (no path)`n"
-	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
 	"Ctrl + Alt + E     Open selected file(s) in Notepad++`n"
 	"Ctrl + Alt + V     Open selected file(s) in VSCode`n"
+	"Ctrl + Alt + I     Open IrfanView with blank canvas and Paint dialog`n"
+	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
 	"Ctrl + Shift + H   Show all hotkeys in a popup`n`n"
 	"pwsh-user          Open non-admin PowerShell from an Admin shell"
 )
@@ -260,46 +264,6 @@ GetTrayIconRECT(hwnd) {
 	A_Clipboard := joined
 }
 
-; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
-; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
-^!t:: {
-	local currentFolder := ""
-
-	; Check if the Desktop is the active/focused window first
-	if WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman") {
-		currentFolder := A_Desktop
-	} else {
-		; Check for an open File Explorer window
-		hwndExplorer := WinExist("ahk_class CabinetWClass")
-		if hwndExplorer {
-			WinActivate("ahk_id " hwndExplorer)
-			WinWaitActive("ahk_id " hwndExplorer,, 1)
-			local ClipSaved := ClipboardAll()
-			A_Clipboard := ""
-			Send("^l")
-			Sleep(100)
-			Send("^a")
-			Sleep(50)
-			Send("^c")
-			ClipWait(2)
-			currentFolder := A_Clipboard
-			Send("{Escape}")
-			if (!FileExist(currentFolder))
-				currentFolder := A_Desktop
-			A_Clipboard := ClipSaved
-		} else {
-			MsgBox("No File Explorer/Desktop window detected.")
-			Return
-		}
-	}
-
-	; Open PowerShell as Administrator (falls back to PowerShell 5 if 7 is not installed)
-	local psExe := "C:\Program Files\PowerShell\7\pwsh.exe"
-	if (!FileExist(psExe))
-		psExe := "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-	Run(psExe " -NoExit -Command Set-Location '" currentFolder "'",, "RunAs")
-}
-
 ; Ctrl + Alt + E → Open selected file(s) in Notepad++ (auto-detects 64-bit or 32-bit installation)
 ^!e:: {
 	local npp64 := "C:\Program Files\Notepad++\notepad++.exe"
@@ -370,6 +334,92 @@ GetTrayIconRECT(hwnd) {
 	A_Clipboard := ClipSaved
 }
 
+; Ctrl + Alt + I → Open IrfanView with blank canvas and Paint dialog
+^!i:: {
+	local path64 := "C:\Program Files\IrfanView\i_view64.exe"
+	local path32 := "C:\Program Files (x86)\IrfanView\i_view32.exe"
+	local exePath := FileExist(path64) ? path64 : path32
+	local exeName := FileExist(path64) ? "i_view64.exe" : "i_view32.exe"
+	local tempImg := A_Temp "\ahk_blank_canvas.png"
+
+	; Check for IrfanPaint plugin (Paint.dll) — required for F12 Paint dialog
+	local pluginPath := (FileExist(path64) ? "C:\Program Files\IrfanView" : "C:\Program Files (x86)\IrfanView") "\Plugins\Paint.dll"
+	if !FileExist(pluginPath) {
+		MsgBox("IrfanPaint plugin (Paint.dll) not found.`nPlease install IrfanView plugins from https://www.irfanview.com")
+		Return
+	}
+
+	; Create a blank white PNG canvas
+	RunWait('powershell -NoProfile -WindowStyle Hidden -Command "Add-Type -AssemblyName System.Drawing; $bmp = New-Object System.Drawing.Bitmap(800,600); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::White); $bmp.Save(\"' tempImg '\", [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose()"')
+	if !FileExist(tempImg) {
+		MsgBox("Failed to create blank canvas. Please check PowerShell is available.")
+		Return
+	}
+
+	; Launch IrfanView with the blank canvas
+	Run('"' exePath '" "' tempImg '"')
+
+	; Wait for IrfanView to exist by executable name
+	if !WinWait("ahk_exe " exeName,, 10) {
+		MsgBox("IrfanView failed to open.")
+		Return
+	}
+
+	; Force focus
+	WinActivate("ahk_exe " exeName)
+	WinWaitActive("ahk_exe " exeName,, 5)
+
+	; Give IrfanView time to fully load the image and plugins before sending F12
+	; Lower values (i.e. 125 or 250) may work on faster machines — increase if Paint dialog fails to appear
+	Sleep(500)
+
+	; Send F12 directly to IrfanView without stealing focus
+	local hwnd := WinExist("ahk_exe " exeName)
+	PostMessage(0x100, 0x7B, 0,, "ahk_id " hwnd)  ; WM_KEYDOWN, VK_F12
+	Sleep(50)
+	PostMessage(0x101, 0x7B, 0,, "ahk_id " hwnd)  ; WM_KEYUP, VK_F12
+}
+
+; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
+; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
+^!t:: {
+	local currentFolder := ""
+
+	; Check if the Desktop is the active/focused window first
+	if WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman") {
+		currentFolder := A_Desktop
+	} else {
+		; Check for an open File Explorer window
+		hwndExplorer := WinExist("ahk_class CabinetWClass")
+		if hwndExplorer {
+			WinActivate("ahk_id " hwndExplorer)
+			WinWaitActive("ahk_id " hwndExplorer,, 1)
+			local ClipSaved := ClipboardAll()
+			A_Clipboard := ""
+			Send("^l")
+			Sleep(100)
+			Send("^a")
+			Sleep(50)
+			Send("^c")
+			ClipWait(2)
+			currentFolder := A_Clipboard
+			Send("{Escape}")
+			if (!FileExist(currentFolder))
+				currentFolder := A_Desktop
+			A_Clipboard := ClipSaved
+		} else {
+			MsgBox("No File Explorer/Desktop window detected.")
+			Return
+		}
+	}
+
+	; Open PowerShell as Administrator (falls back to PowerShell 5 if 7 is not installed)
+	local psExe := "C:\Program Files\PowerShell\7\pwsh.exe"
+	if (!FileExist(psExe))
+		psExe := "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+	Run(psExe " -NoExit -Command Set-Location '" currentFolder "'",, "RunAs")
+}
+
 ; Ctrl + Shift + H → Show hotkeys popup
 ^+h:: {
 	ShowHotkeys()
@@ -386,9 +436,10 @@ ShowHotkeys() {
 		"Ctrl + Shift + C`tCopy current folder path`n"
 		"Ctrl + Shift + X`tCopy selected file path(s)`n"
 		"Ctrl + Shift + Z`tCopy selected filename(s) only (no path)`n"
-		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n"
 		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++`n"
-		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n`n"
+		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n"
+		"Ctrl + Alt + I`tOpen IrfanView with blank canvas and Paint dialog`n"
+		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n`n"
 		"Tip: Use pwsh-user in PowerShell to open a non-admin shell"
 	)
 }

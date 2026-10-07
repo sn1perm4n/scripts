@@ -1,5 +1,10 @@
-﻿#Requires AutoHotkey v2.0
-; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
+﻿#Requires AutoHotkey v2
+; GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
+
+; NOTE: The Sleep value below controls how long the script waits for IrfanView to fully load before
+; sending the F12 keystroke to open the Paint dialog. The default is 500ms for broad compatibility.
+; If the Paint dialog fails to appear, increase the value. On faster machines you may find lower
+; values (i.e. 125 or 250) work reliably and result in a snappier experience.
 
 ; Press Ctrl + Alt + I to open IrfanView with a blank canvas and Paint dialog
 ^!i:: {

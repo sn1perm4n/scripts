@@ -51,6 +51,8 @@
 ;   If you have a system-wide install, update the path in the script accordingly
 ; - Ctrl + Alt + I automatically detects whether the 64-bit or 32-bit version of IrfanView is installed
 ;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
+;   Sleep value defaults to 500ms for broad compatibility — lower values (i.e. 125 or 250) may work
+;   on faster machines if the Paint dialog appears too slowly
 ;
 ; ==========================
 ; PowerShell non-admin helper

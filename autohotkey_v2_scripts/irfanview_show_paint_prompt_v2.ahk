@@ -1,8 +1,8 @@
 ﻿#Requires AutoHotkey v2.0
 ; Github repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/autohotkey_v2_scripts
 
-; Press Ctrl + Alt + P to open IrfanView with a blank canvas and Paint dialog
-^!p:: {
+; Press Ctrl + Alt + I to open IrfanView with a blank canvas and Paint dialog
+^!i:: {
 	local path64 := "C:\Program Files\IrfanView\i_view64.exe"
 	local path32 := "C:\Program Files (x86)\IrfanView\i_view32.exe"
 	local exePath := FileExist(path64) ? path64 : path32

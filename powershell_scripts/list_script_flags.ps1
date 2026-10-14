@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script scans PowerShell scripts and lists all flags defined in their param blocks
+# This script scans PowerShell scripts and lists all flags defined in their param blocks (or, with -NoFlags, the scripts that define none)
 
 # Optional flags:
 #     -Align:                 Align flag descriptions into two columns when used with -Description (console output only)
@@ -9,6 +9,7 @@
 #     -Filenames:             Print only script names with no flag details or blank lines between entries
 #     -FlagFilter <NAME,...>: Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter "-SaveResults,-NoConsoleOutput")
 #     -NoConsoleOutput:       Suppress console output (requires -SaveResults)
+#     -NoFlags:               List scripts that declare no flags, plus any with an # Optional flags comment block but no param block flags, instead of listing flags (not supported with -Unique or -FlagFilter)
 #     -Path <PATH>:           Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse:               Search subdirectories recursively
 #     -SaveResults <PATH>:    Save results to a .csv file (appends if file exists)
@@ -24,6 +25,7 @@ param (
 	[switch]$Filenames,
 	[string[]]$FlagFilter,
 	[switch]$NoConsoleOutput,
+	[switch]$NoFlags,
 	[string]$Path,
 	[switch]$Recurse,
 	[string]$SaveResults,
@@ -35,7 +37,7 @@ param (
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Exclude] [-Filenames] [-FlagFilter <NAME,...>] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Exclude] [-Filenames] [-FlagFilter <NAME,...>] [-NoConsoleOutput] [-NoFlags] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Align                  Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count                  Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
@@ -44,6 +46,7 @@ if ($Help) {
 	Write-Host "  -Filenames              Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
 	Write-Host "  -FlagFilter <NAME,...>  Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter `"-SaveResults,-NoConsoleOutput`")" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput        Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoFlags                List scripts that declare no flags, plus any with an # Optional flags comment block but no param block flags, instead of listing flags (not supported with -Unique or -FlagFilter)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>            Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse                Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>     Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
@@ -84,6 +87,23 @@ if ($Align -and -not $Description) {
 if ($Exclude -and -not $FlagFilter) {
 	Write-Host ""
 	Write-Warning "-Exclude has no effect without -FlagFilter."
+}
+
+if ($NoFlags -and $Unique) {
+	Write-Host ""
+	Write-Warning "-NoFlags is not supported with -Unique."
+	exit 1
+}
+
+if ($NoFlags -and $FlagFilter) {
+	Write-Host ""
+	Write-Warning "-NoFlags is not supported with -FlagFilter, since it lists scripts that have no flags to filter."
+	exit 1
+}
+
+if ($NoFlags -and ($Align -or $Count -or $Description -or $Exclude -or $Filenames)) {
+	Write-Host ""
+	Write-Warning "-Align, -Count, -Description, -Exclude, and -Filenames have no effect with -NoFlags."
 }
 
 # Validate -SaveResults path if specified
@@ -177,6 +197,93 @@ $CsvOutputLines = @()
 $allFlags = @{}
 $flagCounts = @{}
 $totalFlags = 0
+
+# -NoFlags lists scripts that declare no flags instead of listing flags, using the same param block detection as the main loop below; the main loop is never reached in this mode
+if ($NoFlags) {
+	$isFolder = (Get-Item $Path).PSIsContainer
+	$rootPath = if ($isFolder) { (Resolve-Path -LiteralPath $Path).ProviderPath.TrimEnd('\') } else { '' }
+	$noFlagsScripts = @()
+	$commentOnlyScripts = @()
+
+	foreach ($script in $scripts) {
+		$content = @(Get-Content -Path $script.FullName -ErrorAction SilentlyContinue)
+		$relativePath = if ($isFolder) { $script.FullName.Substring($rootPath.Length + 1) } else { $script.Name }
+
+		$paramStart = -1
+		for ($i = 0; $i -lt $content.Count; $i++) {
+			if ($content[$i] -match '^\s*param\s*\(') {
+				$paramStart = $i
+				break
+			}
+		}
+
+		$parsedFlagCount = 0
+		if ($paramStart -ne -1) {
+			$depth = 1
+			for ($i = $paramStart + 1; $i -lt $content.Count; $i++) {
+				$line = $content[$i]
+				foreach ($char in $line.ToCharArray()) {
+					if ($char -eq '(') { $depth++ }
+					elseif ($char -eq ')') { $depth-- }
+				}
+				if ($depth -le 0) { break }
+				if ($line -match '^\s*\[(switch|string|int|bool|double)\]\$(\w+)') { $parsedFlagCount++ }
+			}
+		}
+
+		if ($parsedFlagCount -gt 0) { continue }
+
+		# A script with an # Optional flags comment block but no param block flags is inconsistent, so it's listed separately instead of as a plain script with no flags
+		$hasCommentBlock = $false
+		foreach ($line in $content) {
+			if ($line -match '^\s*#\s*Optional flags\s*:?\s*$') {
+				$hasCommentBlock = $true
+				break
+			}
+		}
+
+		if ($hasCommentBlock) { $commentOnlyScripts += $relativePath }
+		else { $noFlagsScripts += $relativePath }
+	}
+
+	if (-not $NoConsoleOutput) {
+		$noFlagsColor = if ($noFlagsScripts.Count -gt 0) { 'Yellow' } else { 'Green' }
+		Write-Host "`nNo flags: $($noFlagsScripts.Count)" -ForegroundColor $noFlagsColor
+		foreach ($item in $noFlagsScripts) { Write-Host "  $item" }
+
+		if ($commentOnlyScripts.Count -gt 0) {
+			Write-Host "`nOptional flags comment block but no param block flags: $($commentOnlyScripts.Count)" -ForegroundColor Yellow
+			foreach ($item in $commentOnlyScripts) { Write-Host "  $item" }
+		}
+	}
+
+	if ($SaveResults) {
+		foreach ($item in $noFlagsScripts) { $CsvOutputLines += "$item,No flags" }
+		foreach ($item in $commentOnlyScripts) { $CsvOutputLines += "$item,Optional flags comment block but no param block flags" }
+	}
+
+	$summaryLine = "$ScriptName`: Scanned $($scripts.Count) script(s): $($noFlagsScripts.Count) with no flags, $($commentOnlyScripts.Count) with an Optional flags comment block but no param block flags."
+	if (-not $NoConsoleOutput) {
+		$summaryColor = if ($noFlagsScripts.Count -gt 0 -or $commentOnlyScripts.Count -gt 0) { 'Yellow' } else { 'Green' }
+		Write-Host "`n$summaryLine" -ForegroundColor $summaryColor
+	}
+
+	# Save results
+	if ($SaveResults) {
+		try {
+			$outputString = ($CsvOutputLines -join "`n") + "`n"
+			[System.IO.File]::AppendAllText($SaveResults, $outputString)
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
+		}
+		catch {
+			# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
+			Write-Host ""
+			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
+		}
+	}
+
+	exit 0
+}
 
 foreach ($script in $scripts) {
 	$content = Get-Content -Path $script.FullName -ErrorAction SilentlyContinue

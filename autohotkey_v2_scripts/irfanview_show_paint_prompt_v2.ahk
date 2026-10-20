@@ -21,7 +21,7 @@
 		Return
 	}
 
-	; Create a blank white PNG canvas
+	; Create a blank black PNG canvas
 	RunWait('powershell -NoProfile -WindowStyle Hidden -Command "Add-Type -AssemblyName System.Drawing; $bmp = New-Object System.Drawing.Bitmap(800,600); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::Black); $bmp.Save(\"' tempImg '\", [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose()"',, "Hide")
 	if !FileExist(tempImg) {
 		MsgBox("Failed to create blank canvas. Please check PowerShell is available.")

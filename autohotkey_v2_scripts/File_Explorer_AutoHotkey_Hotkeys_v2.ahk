@@ -11,7 +11,7 @@
 ; Ctrl + Shift + Z   Copy selected filename(s) only (no path)
 ; Ctrl + Alt + E     Open selected file(s) in Notepad++
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
-; Ctrl + Alt + I     Open IrfanView with blank canvas and Paint dialog
+; Ctrl + Alt + I     Open IrfanView with blank black canvas and Paint dialog
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
 ; Ctrl + Shift + H   Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)

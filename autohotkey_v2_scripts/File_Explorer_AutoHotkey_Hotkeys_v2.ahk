@@ -336,7 +336,7 @@ GetTrayIconRECT(hwnd) {
 	A_Clipboard := ClipSaved
 }
 
-; Ctrl + Alt + I → Open IrfanView with blank canvas and Paint dialog
+; Ctrl + Alt + I → Open IrfanView with blank black canvas and Paint dialog
 ^!i:: {
 	local path64 := "C:\Program Files\IrfanView\i_view64.exe"
 	local path32 := "C:\Program Files (x86)\IrfanView\i_view32.exe"

@@ -297,3 +297,93 @@ Return
 	; Force focus
 	WinActivate, ahk_exe %exeName%
 	WinWaitActive, ahk_exe %exeName%,, 5
+
+	; Give IrfanView time to fully load the image and plugins before sending F12
+	; Lower values (i.e. 125 or 250) may work on faster machines — increase if Paint dialog fails to appear
+	Sleep, 500
+
+	; Send F12 directly to IrfanView without stealing focus
+	hwnd := WinExist("ahk_exe " exeName)
+	PostMessage, 0x100, 0x7B, 0,, ahk_id %hwnd%  ; WM_KEYDOWN, VK_F12
+	Sleep, 50
+	PostMessage, 0x101, 0x7B, 0,, ahk_id %hwnd%  ; WM_KEYUP, VK_F12
+Return
+
+; Ctrl + Alt + T → Open PowerShell (Admin) in current folder or Desktop
+; NOTE: If you want a non-admin PowerShell 5 or 7 window instead, use the pwsh-user function (documented above)
+^!t::
+	; Check if the Desktop is the active/focused window first
+	if WinActive("ahk_class WorkerW") or WinActive("ahk_class Progman")
+	{
+		currentFolder := A_Desktop
+	}
+	else
+	{
+		; Check for an open File Explorer window
+		WinGet, id, ID, ahk_class CabinetWClass
+		if !id
+		{
+			MsgBox, No File Explorer/Desktop window detected.
+			Return
+		}
+		WinActivate, ahk_id %id%
+
+		; Wait until the window is active instead of using a fixed Sleep
+		WinWaitActive, ahk_id %id%, , 0.5  ; wait up to 0.5 seconds
+
+		; Copy current folder from address bar
+		ClipSaved := ClipboardAll
+		Clipboard := ""
+		Send ^l
+		Sleep, 100  ; let Explorer register selection
+		Send ^c
+		ClipWait, 0.5
+		currentFolder := Clipboard
+		if !FileExist(currentFolder)
+			currentFolder := A_Desktop  ; fallback
+		Clipboard := ClipSaved
+	}
+
+	; Open PowerShell 7 as Administrator (falls back to PowerShell 5 if 7 is not installed)
+	psExe := "C:\Program Files\PowerShell\7\pwsh.exe"
+	if !FileExist(psExe)
+		psExe := "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+	Run, %psExe%, %currentFolder%, RunAs
+Return
+
+; Ctrl + Shift + H → Show hotkeys popup
+^+h::
+	Gosub, ShowHotkeys
+Return
+
+; ==========================
+; Show Hotkeys label for tray menu
+; ==========================
+ShowHotkeys:
+MsgBox,
+(
+File Explorer Hotkeys v1
+
+Ctrl + =`t`tAuto-resize Details View columns
+Ctrl + Shift + C`tCopy current folder path
+Ctrl + Shift + X`tCopy selected file path(s)
+Ctrl + Shift + Z`tCopy selected filename(s) only (no path)
+Ctrl + Alt + E`tOpen selected file(s) in Notepad++
+Ctrl + Alt + V`tOpen selected file(s) in VSCode
+Ctrl + Alt + I`tOpen IrfanView with blank black canvas and Paint dialog
+Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop
+Ctrl + Shift + H`tShow all hotkeys in a popup
+
+Tip:
+Use "pwsh-user" in PowerShell to open a non-admin shell.
+)
+Return
+
+; ==========================
+; Exit label for tray menu
+; ==========================
+ExitScript:
+	ExitApp
+Return
+
+; End.

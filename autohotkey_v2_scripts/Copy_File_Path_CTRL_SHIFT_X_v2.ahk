@@ -3,6 +3,9 @@
 
 ; Creates the keyboard shortcut Ctrl + Shift + X to copy the full path(s) of selected file(s) to the clipboard
 ; File Explorer and Desktop are supported
+; Only active when File Explorer or the Desktop is the active window, so it doesn't override Ctrl + Shift + X in other apps
+
+#HotIf IsExplorerOrDesktop()
 
 ; Ctrl + Shift + X → Copy selected file path(s)
 ^+x:: {
@@ -30,6 +33,12 @@
 	}
 	joined := RTrim(joined, "`n")
 	A_Clipboard := joined
+}
+#HotIf
+
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop() {
+	return WinActive("ahk_class CabinetWClass") || WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman")
 }
 
 ; End.

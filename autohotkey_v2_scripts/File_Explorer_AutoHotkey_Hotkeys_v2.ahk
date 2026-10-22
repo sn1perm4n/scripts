@@ -53,6 +53,8 @@
 ;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
 ;   Sleep value defaults to 500ms for broad compatibility — lower values (i.e. 125 or 250) may work
 ;   on faster machines if the Paint dialog appears too slowly
+; - Ctrl + Shift + C/X/Z and Ctrl + Alt + E/V only fire when File Explorer or the Desktop is active,
+;   so they don't override shortcuts in other apps
 ;
 ; ==========================
 ; PowerShell non-admin helper
@@ -181,6 +183,9 @@ GetTrayIconRECT(hwnd) {
 	Send("{LCtrl down}{NumpadAdd}{LCtrl up}")
 }
 #HotIf
+
+; Ctrl + Shift + C/X/Z and Ctrl + Alt + E/V → restricted to File Explorer and Desktop only
+#HotIf IsExplorerOrDesktop()
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c:: {
@@ -335,6 +340,7 @@ GetTrayIconRECT(hwnd) {
 	RunWait(A_ComSpec ' /c code ' Trim(args),, "Hide")
 	A_Clipboard := ClipSaved
 }
+#HotIf
 
 ; Ctrl + Alt + I → Open IrfanView with blank black canvas and Paint dialog
 ^!i:: {
@@ -351,7 +357,7 @@ GetTrayIconRECT(hwnd) {
 		Return
 	}
 
-	; Create a blank white PNG canvas
+	; Create a blank black PNG canvas
 	RunWait('powershell -NoProfile -WindowStyle Hidden -Command "Add-Type -AssemblyName System.Drawing; $bmp = New-Object System.Drawing.Bitmap(800,600); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::Black); $bmp.Save(\"' tempImg '\", [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose()"',, "Hide")
 	if !FileExist(tempImg) {
 		MsgBox("Failed to create blank canvas. Please check PowerShell is available.")
@@ -431,6 +437,11 @@ GetTrayIconRECT(hwnd) {
 ; Functions
 ; ==========================
 
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop() {
+	return WinActive("ahk_class CabinetWClass") || WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman")
+}
+
 ShowHotkeys() {
 	MsgBox(
 		"File Explorer Hotkeys v2`n`n"
@@ -440,7 +451,7 @@ ShowHotkeys() {
 		"Ctrl + Shift + Z`tCopy selected filename(s) only (no path)`n"
 		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++`n"
 		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n"
-		"Ctrl + Alt + I`tOpen IrfanView with blank canvas and Paint dialog`n"
+		"Ctrl + Alt + I`tOpen IrfanView with blank black canvas and Paint dialog`n"
 		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n`n"
 		"Tip: Use pwsh-user in PowerShell to open a non-admin shell"
 	)

@@ -4,6 +4,9 @@
 ; Creates the keyboard shortcut Ctrl + Shift + C to copy the current folder path to the clipboard
 ; File Explorer and Desktop are supported
 ; Desktop path is copied directly via A_Desktop when the Desktop is the active window
+; Only active when File Explorer or the Desktop is the active window, so it doesn't override Ctrl + Shift + C in other apps
+
+#HotIf IsExplorerOrDesktop()
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c:: {
@@ -28,6 +31,12 @@
 	} else {
 		A_Clipboard := path
 	}
+}
+#HotIf
+
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop() {
+	return WinActive("ahk_class CabinetWClass") || WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman")
 }
 
 ; End.

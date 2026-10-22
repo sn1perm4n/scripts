@@ -13,7 +13,7 @@
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
 ; Ctrl + Alt + I     Open IrfanView with blank black canvas and Paint dialog
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
-; Ctrl + Shift + H   Show all hotkeys in a popup
+; Ctrl + Alt + H     Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
 ;
 ; ==========================
@@ -113,7 +113,7 @@ TooltipGui.Add("Text",,
 	"Ctrl + Alt + V     Open selected file(s) in VSCode`n"
 	"Ctrl + Alt + I     Open IrfanView with blank canvas and Paint dialog`n"
 	"Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop`n"
-	"Ctrl + Shift + H   Show all hotkeys in a popup`n`n"
+	"Ctrl + Alt + H     Show all hotkeys in a popup`n`n"
 	"pwsh-user          Open non-admin PowerShell from an Admin shell"
 )
 TooltipGui.Show("Hide")
@@ -428,8 +428,8 @@ GetTrayIconRECT(hwnd) {
 	Run(psExe " -NoExit -Command Set-Location '" currentFolder "'",, "RunAs")
 }
 
-; Ctrl + Shift + H → Show hotkeys popup
-^+h:: {
+; Ctrl + Alt + H → Show hotkeys popup
+^!h:: {
 	ShowHotkeys()
 }
 

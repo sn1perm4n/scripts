@@ -4,8 +4,11 @@
 ; Creates the keyboard shortcut Ctrl + Alt + E to open any selected file(s) in Notepad++
 ; Files in File Explorer and on the Desktop are supported, and multiple files can be selected and opened simultaneously
 ; The script automatically detects whether the 64-bit or 32-bit version of Notepad++ is installed
+; Only active when File Explorer or the Desktop is the active window, so it doesn't override Ctrl + Alt + E in other apps
 ; NOTE: If you want this to function in Remote Desktop sessions, make the following change in Remote Desktop:
 ;		Show Options button -> Local Resources tab -> Keyboard section -> Apply Windows key combinations -> On the remote computer
+
+#HotIf IsExplorerOrDesktop()
 
 ; Ctrl + Alt + E → Open selected file(s) in Notepad++ (auto-detects 64-bit or 32-bit installation)
 ^!e:: {
@@ -39,6 +42,12 @@
 	}
 	Run('"' npp '" ' Trim(args))
 	A_Clipboard := ClipSaved
+}
+#HotIf
+
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop() {
+	return WinActive("ahk_class CabinetWClass") || WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman")
 }
 
 ; End.

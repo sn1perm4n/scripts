@@ -451,7 +451,8 @@ ShowHotkeys() {
 		"Ctrl + Alt + E`tOpen selected file(s) in Notepad++`n"
 		"Ctrl + Alt + V`tOpen selected file(s) in VSCode`n"
 		"Ctrl + Alt + I`tOpen IrfanView with blank black canvas and Paint dialog`n"
-		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n`n"
+		"Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop`n"
+		"Ctrl + Alt + H`tShow all hotkeys in a popup`n`n"
 		"Tip: Use pwsh-user in PowerShell to open a non-admin shell"
 	)
 }

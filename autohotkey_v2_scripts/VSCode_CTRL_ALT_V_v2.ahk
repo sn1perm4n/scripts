@@ -13,7 +13,7 @@
 
 ; Ctrl + Alt + V → Open selected file(s) in VSCode
 ^!v:: {
-	; Uses 'code' via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
+	; Uses "code" via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
 	local ClipSaved := ClipboardAll()
 	A_Clipboard := ""
 	Send("^c")
@@ -41,7 +41,7 @@
 		if (file != "")
 			args .= '"' file '" '
 	}
-	; Run via cmd.exe using 'code' from PATH — correctly reuses existing VSCode window
+	; Run via cmd.exe using "code" from PATH — correctly reuses existing VSCode window
 	RunWait(A_ComSpec ' /c code ' Trim(args),, "Hide")
 	A_Clipboard := ClipSaved
 }

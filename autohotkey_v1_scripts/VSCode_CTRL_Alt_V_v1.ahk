@@ -5,12 +5,15 @@
 ; File Explorer and Desktop are supported, and multiple files can be selected and opened simultaneously
 ; Uses "code" via cmd.exe to handle multiple files and reuse the existing VSCode window correctly
 ; Requires the "code" command to be in your PATH (the VSCode installer adds it by default)
+; Only active when File Explorer or the Desktop is the active window, so it doesn't override Ctrl + Alt + V in other apps
 ; NOTE: Tab/open order depends on Windows clipboard reporting order and may not always match click order
 ;	Desktop selections tend to be most reliable for ordered multi-file selection
 
 #NoEnv
 SendMode Input
 SetWorkingDir %A_ScriptDir%
+
+#If IsExplorerOrDesktop()
 
 ; Ctrl + Alt + V → Open selected file(s) in VSCode
 ^!v::
@@ -43,5 +46,12 @@ SetWorkingDir %A_ScriptDir%
 	RunWait, %ComSpec% /c code %args%,, Hide
 	Clipboard := ClipSaved
 Return
+#If
+
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop()
+{
+	return WinActive("ahk_class CabinetWClass") or WinActive("ahk_class WorkerW") or WinActive("ahk_class Progman")
+}
 
 ; End.

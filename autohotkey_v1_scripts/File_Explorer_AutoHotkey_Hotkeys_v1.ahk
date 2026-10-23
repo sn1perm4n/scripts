@@ -13,7 +13,7 @@
 ; Ctrl + Alt + V     Open selected file(s) in VSCode
 ; Ctrl + Alt + I     Open IrfanView with blank black canvas and Paint dialog
 ; Ctrl + Alt + T     Open PowerShell (Admin) in current folder or Desktop
-; Ctrl + Shift + H   Show all hotkeys in a popup
+; Ctrl + Alt + H     Show all hotkeys in a popup
 ; pwsh-user          Open non-admin PowerShell window from an Admin shell (defined in PowerShell profile)
 
 ; ==========================
@@ -88,6 +88,8 @@
 ;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
 ;   Sleep value defaults to 500ms for broad compatibility — lower values (i.e. 125 or 250) may work
 ;   on faster machines if the Paint dialog appears too slowly
+; - Ctrl + Shift + C/X/Z and Ctrl + Alt + E/V only fire when File Explorer or the Desktop is active,
+;   so they don't override shortcuts in other apps
 ;
 ; ==========================
 ; PowerShell non-admin helper
@@ -135,6 +137,9 @@ Menu, Tray, Add, Exit, ExitScript  ; working exit menu item
 	Send {LCtrl down}{NumpadAdd}{LCtrl up}
 Return
 #If
+
+; Ctrl + Shift + C/X/Z and Ctrl + Alt + E/V → restricted to File Explorer and Desktop only
+#If IsExplorerOrDesktop()
 
 ; Ctrl + Shift + C → Copy current folder path
 ^+c::
@@ -257,6 +262,7 @@ Return
 	RunWait, %ComSpec% /c code %args%,, Hide
 	Clipboard := ClipSaved
 Return
+#If
 
 ; Ctrl + Alt + I → Open IrfanView with blank black canvas and Paint dialog
 ^!i::
@@ -350,8 +356,8 @@ Return
 	Run, %psExe%, %currentFolder%, RunAs
 Return
 
-; Ctrl + Shift + H → Show hotkeys popup
-^+h::
+; Ctrl + Alt + H → Show hotkeys popup
+^!h::
 	Gosub, ShowHotkeys
 Return
 
@@ -371,7 +377,7 @@ Ctrl + Alt + E`tOpen selected file(s) in Notepad++
 Ctrl + Alt + V`tOpen selected file(s) in VSCode
 Ctrl + Alt + I`tOpen IrfanView with blank black canvas and Paint dialog
 Ctrl + Alt + T`tOpen PowerShell (Admin) in current folder or Desktop
-Ctrl + Shift + H`tShow all hotkeys in a popup
+Ctrl + Alt + H`tShow all hotkeys in a popup
 
 Tip:
 Use "pwsh-user" in PowerShell to open a non-admin shell.
@@ -384,5 +390,11 @@ Return
 ExitScript:
 	ExitApp
 Return
+
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop()
+{
+	return WinActive("ahk_class CabinetWClass") or WinActive("ahk_class WorkerW") or WinActive("ahk_class Progman")
+}
 
 ; End.

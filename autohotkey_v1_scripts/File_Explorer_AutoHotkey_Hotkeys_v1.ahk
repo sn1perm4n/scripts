@@ -82,8 +82,8 @@
 ; - If you run File_Explorer_AutoHotkey_Hotkeys_v1.ahk using "Run as administrator," PowerShell will open as Admin
 ; - pwsh-user ensures you can still test scripts in a non-admin environment without closing elevated windows
 ; - Ctrl + Alt + E automatically detects whether the 64-bit or 32-bit version of Notepad++ is installed
-; - Ctrl + Alt + V opens selected files in VSCode (per-user install path by default)
-;   If you have a system-wide install, update the path in the script accordingly
+; - Ctrl + Alt + V opens selected files in VSCode using the 'code' command
+;   Requires 'code' to be in your PATH (the VSCode installer adds it by default)
 ; - Ctrl + Alt + I automatically detects whether the 64-bit or 32-bit version of IrfanView is installed
 ;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
 ;   Sleep value defaults to 500ms for broad compatibility — lower values (i.e. 125 or 250) may work
@@ -229,7 +229,6 @@ Return
 ; Ctrl + Alt + V → Open selected file(s) in VSCode
 ^!v::
 	; Uses 'code' via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
-	; A_UserName dynamically resolves to the current Windows username at runtime (per-user install path)
 	ClipSaved := ClipboardAll
 	Clipboard := ""
 	Send ^c

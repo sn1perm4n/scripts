@@ -55,3 +55,5 @@
 	Sleep, 50
 	PostMessage, 0x101, 0x7B, 0,, ahk_id %hwnd%  ; WM_KEYUP, VK_F12
 Return
+
+; End.

@@ -47,8 +47,8 @@
 ; - If you run File_Explorer_AutoHotkey_Hotkeys_v2.ahk using "Run as administrator," PowerShell will open as Admin
 ; - pwsh-user ensures you can still test scripts in a non-admin environment without closing elevated windows
 ; - Ctrl + Alt + E automatically detects whether the 64-bit or 32-bit version of Notepad++ is installed
-; - Ctrl + Alt + V opens selected files in VSCode using the 'code' command
-;   Requires 'code' to be in your PATH (the VSCode installer adds it by default)
+; - Ctrl + Alt + V opens selected files in VSCode using the "code" command
+;   Requires "code" to be in your PATH (the VSCode installer adds it by default)
 ; - Ctrl + Alt + I automatically detects whether the 64-bit or 32-bit version of IrfanView is installed
 ;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
 ;   Sleep value defaults to 500ms for broad compatibility — lower values (i.e. 125 or 250) may work
@@ -307,7 +307,7 @@ GetTrayIconRECT(hwnd) {
 
 ; Ctrl + Alt + V → Open selected file(s) in VSCode
 ^!v:: {
-	; Uses 'code' via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
+	; Uses "code" via cmd.exe rather than Code.exe directly — handles multiple files and reuses existing window correctly
 	local ClipSaved := ClipboardAll()
 	A_Clipboard := ""
 	Send("^c")
@@ -335,7 +335,7 @@ GetTrayIconRECT(hwnd) {
 		if (file != "")
 			args .= '"' file '" '
 	}
-	; Run via cmd.exe using 'code' from PATH — correctly reuses existing VSCode window
+	; Run via cmd.exe using "code" from PATH — correctly reuses existing VSCode window
 	RunWait(A_ComSpec ' /c code ' Trim(args),, "Hide")
 	A_Clipboard := ClipSaved
 }

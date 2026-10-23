@@ -3,8 +3,8 @@
 
 ; Creates the keyboard shortcut Ctrl + Alt + V to open selected file(s) in VSCode
 ; File Explorer and Desktop are supported, and multiple files can be selected and opened simultaneously
-; Uses 'code' via cmd.exe to handle multiple files and reuse the existing VSCode window correctly
-; Requires the 'code' command to be in your PATH (the VSCode installer adds it by default)
+; Uses "code" via cmd.exe to handle multiple files and reuse the existing VSCode window correctly
+; Requires the "code" command to be in your PATH (the VSCode installer adds it by default)
 ; NOTE: Tab/open order depends on Windows clipboard reporting order and may not always match click order
 ;	Desktop selections tend to be most reliable for ordered multi-file selection
 

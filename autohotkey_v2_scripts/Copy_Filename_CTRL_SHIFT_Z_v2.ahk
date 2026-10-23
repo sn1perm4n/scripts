@@ -4,6 +4,9 @@
 ; Creates the keyboard shortcut Ctrl + Shift + Z to copy the filename(s) of selected file(s) to the clipboard without the full path
 ; File Explorer and Desktop are supported, and multiple files can be selected simultaneously
 ; Filenames are sorted alphabetically (case-insensitive)
+; Only active when File Explorer or the Desktop is the active window, so it doesn't override Ctrl + Shift + Z (Redo) in other apps
+
+#HotIf IsExplorerOrDesktop()
 
 ; Ctrl + Shift + Z → Copy selected filename(s) only (no path)
 ^+z:: {
@@ -34,6 +37,12 @@
 	; Sort filenames case-insensitively (default Sort behavior)
 	joined := Sort(joined)
 	A_Clipboard := joined
+}
+#HotIf
+
+; Returns true when File Explorer or the Desktop is the active window
+IsExplorerOrDesktop() {
+	return WinActive("ahk_class CabinetWClass") || WinActive("ahk_class WorkerW") || WinActive("ahk_class Progman")
 }
 
 ; End.

@@ -6,6 +6,9 @@
 ; If the Paint dialog fails to appear, increase the value. On faster machines you may find lower
 ; values (i.e. 125 or 250) work reliably and result in a snappier experience.
 
+; NOTE2: The blank canvas is black. To use a different color, search the script for "black" (case-insensitive)
+; and replace each match with any System.Drawing color name (i.e. White, Gray or DarkBlue)
+
 ; Press Ctrl + Alt + I to open IrfanView with a blank black canvas and Paint dialog
 ^!i::
 	path64 := "C:\Program Files\IrfanView\i_view64.exe"

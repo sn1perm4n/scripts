@@ -88,6 +88,8 @@
 ;   Requires IrfanPaint plugin (Paint.dll) — install IrfanView plugins from https://www.irfanview.com
 ;   Sleep value defaults to 500ms for broad compatibility — lower values (i.e. 125 or 250) may work
 ;   on faster machines if the Paint dialog appears too slowly
+;   Canvas color defaults to black. To change it, search the script for "black" (case-insensitive) and
+;   replace each match with any System.Drawing color name (i.e. White, Gray or DarkBlue)
 ; - Ctrl + Shift + C/X/Z and Ctrl + Alt + E/V only fire when File Explorer or the Desktop is active,
 ;   so they don't override shortcuts in other apps
 ;

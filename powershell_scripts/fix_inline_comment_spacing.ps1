@@ -201,7 +201,7 @@ if ($issueCount -eq 0) {
 
 # Determine whether to fix
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $issueCount instance(s) found. No fixes applied."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $issueCount instance(s) found. No fixes applied."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 
 	if ($SaveResults) {

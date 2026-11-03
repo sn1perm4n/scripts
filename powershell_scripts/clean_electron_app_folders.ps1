@@ -215,7 +215,7 @@ else { "$totalFreedMB MB" }
 
 # Summary
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $deletedCount folder(s) would be deleted, freeing approximately $freedDisplay."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $deletedCount folder(s) would be deleted, freeing approximately $freedDisplay."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Cyan }
 }
 else {

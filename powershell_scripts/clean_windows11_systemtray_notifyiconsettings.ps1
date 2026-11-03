@@ -382,7 +382,7 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 
 if (-not $NoConsoleOutput) { Write-Host "" }
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $deletedCount of $totalFlaggedCount key(s) would be deleted."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $deletedCount of $totalFlaggedCount key(s) would be deleted."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 else {

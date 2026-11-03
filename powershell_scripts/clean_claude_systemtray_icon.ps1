@@ -225,7 +225,7 @@ if (-not $Preview) {
 
 Write-Host ""
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $deletedCount stale entry/entries would be deleted."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $deletedCount stale entry/entries would be deleted."
 	Write-Host $summaryLine -ForegroundColor Cyan
 }
 else {

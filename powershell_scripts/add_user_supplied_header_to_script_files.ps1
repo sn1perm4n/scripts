@@ -246,7 +246,7 @@ foreach ($file in $files) {
 
 # Summary
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $processedCount file(s) would be modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite). No files were modified."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $processedCount file(s) would be modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite). No files were modified."
 }
 else {
 	$summaryLine = "$ScriptName`: Complete. $processedCount file(s) modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite)."

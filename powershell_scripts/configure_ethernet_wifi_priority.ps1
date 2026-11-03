@@ -356,7 +356,7 @@ if ($wifiAdapters) {
 
 if (-not $NoConsoleOutput) { Write-Host "" }
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $changedCount adapter(s) would be configured."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $changedCount adapter(s) would be configured."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 elseif ($RestoreDefaults) {

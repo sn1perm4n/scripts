@@ -185,7 +185,7 @@ if ($checkErrors.Count -gt 0) {
 
 # Preview mode: stop here without ever prompting to unblock
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $($blockedFiles.Count) blocked file(s) found. No files were modified."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $($blockedFiles.Count) blocked file(s) found. No files were modified."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 	if ($SaveResults) {
 		$FileOutputLines += ""

@@ -178,7 +178,7 @@ if ($Preview) {
 		$lines += $line
 	}
 
-	$summaryLine = "$ScriptName`: Preview complete. Analyzed $TotalFiles file(s): $MissingBOM missing BOM. No changes were made."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. Analyzed $TotalFiles file(s): $MissingBOM missing BOM. No changes were made."
 	if (-not $NoConsoleOutput) {
 		Write-Host ""
 		Write-Host $summaryLine -ForegroundColor Cyan

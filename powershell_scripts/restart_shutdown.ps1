@@ -9,6 +9,8 @@
 
 # NOTE4: Every remote host is tested for connectivity (via ICMP ping) before any operation is attempted or previewed; unreachable hosts are recorded as failures and skipped. This check is skipped for the local machine. Caution: some environments block ICMP by firewall even when the host is otherwise reachable via WinRM/WMI, which could cause a reachable host to be incorrectly skipped here.
 
+# NOTE5: A -Delay greater than 0 (and -Abort) uses shutdown.exe, since Restart-Computer's -Delay is only a polling interval for -Wait and Stop-Computer has no delay parameter. Delayed and aborted remote operations therefore require PowerShell remoting on the target, and shutdown.exe force-closes applications when the delay expires even without -Force.
+
 # Optional flags:
 #     -Abort:                           Cancel a pending restart or shutdown on the target(s)
 #     -Delay <N>:                       Seconds before the operation executes (default: 0)
@@ -217,7 +219,6 @@ $processHost = {
 		$params = @{
 			ComputerName = $targetHost
 			Force = $forceOp
-			Delay = $delayOp
 			ErrorAction = "Stop"
 		}
 
@@ -225,26 +226,75 @@ $processHost = {
 			$params.Credential = $credOp
 		}
 
-		switch ($op) {
-			"Restart" {
-				Restart-Computer @params
-				$result.Success = $true
-				$result.Message = "Restart initiated successfully."
+		# shutdown.exe handles -Abort and any delayed operation, since Restart-Computer's -Delay is only a polling interval for -Wait and Stop-Computer has no delay parameter
+		if ($op -eq "Abort" -or $delayOp -gt 0) {
+			$shutdownArgs = @("/a")
+			if ($op -eq "Restart") {
+				$shutdownArgs = @("/r", "/t", "$delayOp")
 			}
-			"Shutdown" {
-				Stop-Computer @params
-				$result.Success = $true
-				$result.Message = "Shutdown initiated successfully."
+			elseif ($op -eq "Shutdown") {
+				$shutdownArgs = @("/s", "/t", "$delayOp")
 			}
-			"Abort" {
-				if ($isLocalOp) {
-					& shutdown.exe /a | Out-Null
+
+			if ($forceOp -and $op -ne "Abort") {
+				$shutdownArgs += "/f"
+			}
+
+			if ($isLocalOp) {
+				$shutdownOutput = (& shutdown.exe @shutdownArgs 2>&1 | ForEach-Object { "$_" }) -join " "
+				$shutdownExitCode = $LASTEXITCODE
+			}
+			else {
+				$invokeParams = @{
+					ComputerName = $targetHost
+					ErrorAction = "Stop"
 				}
-				else {
-					Invoke-Command -ComputerName $targetHost -Credential $credOp -ScriptBlock { & shutdown.exe /a } -ErrorAction Stop
+
+				if ($credOp) {
+					$invokeParams.Credential = $credOp
 				}
+
+				$remoteResult = Invoke-Command @invokeParams -ArgumentList (, $shutdownArgs) -ScriptBlock {
+					param($remoteArgs)
+					$remoteOutput = (& shutdown.exe @remoteArgs 2>&1 | ForEach-Object { "$_" }) -join " "
+					[PSCustomObject]@{
+						ExitCode = $LASTEXITCODE
+						Output = $remoteOutput
+					}
+				}
+				$shutdownExitCode = $remoteResult.ExitCode
+				$shutdownOutput = $remoteResult.Output
+			}
+
+			# Exit code 1116 means no shutdown was in progress, so there was nothing for -Abort to cancel
+			if ($op -eq "Abort" -and $shutdownExitCode -eq 1116) {
+				$result.Success = $true
+				$result.Message = "No pending restart or shutdown was found, so nothing was cancelled."
+			}
+			elseif ($shutdownExitCode -ne 0) {
+				throw "shutdown.exe exited with code $shutdownExitCode`: $shutdownOutput"
+			}
+			elseif ($op -eq "Abort") {
 				$result.Success = $true
 				$result.Message = "Pending operation aborted successfully."
+			}
+			else {
+				$result.Success = $true
+				$result.Message = "$op scheduled in $delayOp second(s). Use -Abort to cancel it."
+			}
+		}
+		else {
+			switch ($op) {
+				"Restart" {
+					Restart-Computer @params
+					$result.Success = $true
+					$result.Message = "Restart initiated successfully."
+				}
+				"Shutdown" {
+					Stop-Computer @params
+					$result.Success = $true
+					$result.Message = "Shutdown initiated successfully."
+				}
 			}
 		}
 	}
@@ -329,7 +379,7 @@ if ($SaveResults) {
 			$OutputLines = @($OutputLines | Select-Object -First ($OutputLines.Count - 1))
 		}
 		$outputString = ($OutputLines -join "`n")
-		[System.IO.File]::AppendAllText($SaveResults, $outputString)
+		[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
 		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}
 	catch {

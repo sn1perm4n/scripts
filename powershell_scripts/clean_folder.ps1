@@ -126,7 +126,7 @@ try {
 	}
 
 	if ($Preview) {
-		$summaryLine = "$ScriptName`: Preview complete. $freedDisplay would be freed."
+		$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $freedDisplay would be freed."
 		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Cyan }
 		if ($SaveResults) { $FileOutputLines += ""; $FileOutputLines += $summaryLine }
 	}

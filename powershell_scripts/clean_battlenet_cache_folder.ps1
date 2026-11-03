@@ -41,7 +41,7 @@ if (Test-Path -Path $battlenetCacheFolder) {
 		$totalFreedGB = [math]::Round($totalBytesFreed / 1GB, 2)
 		$freedDisplay = if ($totalBytesFreed -ge 1GB) { "$totalFreedGB GB" }
 else { "$totalFreedMB MB" }
-		Write-Host "`n$ScriptName`: Cleanup complete, $freedDisplay freed." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Cleanup complete, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Host ""

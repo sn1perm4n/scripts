@@ -160,7 +160,7 @@ try {
 		# Delete all files and folders
 		$items | Remove-Item -Recurse -Force
 
-		$summaryLine = "$ScriptName`: Cleanup complete, $freedDisplay freed."
+		$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Cleanup complete, $freedDisplay freed."
 		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 		if ($SaveResults) { $FileOutputLines += ""; $FileOutputLines += $summaryLine }
 	}

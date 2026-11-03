@@ -5,9 +5,15 @@
 
 # NOTE2: Each file's original encoding (UTF-8 BOM, UTF-8 no BOM, UTF-16 LE, UTF-16 BE) is detected and preserved on write, rather than forcing UTF-8 BOM on every file
 
+# NOTE3: Files that are not valid UTF-8 or UTF-16 (i.e. ANSI text or binary files) are skipped with a warning rather than risk corrupting them
+
+# NOTE4: -Filter and -Exclude use case-insensitive wildcard matching against file and folder names only (not full paths), and -Exclude also skips everything inside a matching folder below -Path
+
 # Optional flags:
 #     -Backup:               Automatically create backups before modifying files (skips interactive prompt)
 #     -CaseSensitive:        Perform a case-sensitive search (default is case-insensitive)
+#     -Exclude <TEXT>:       Skip files or folders whose names match these wildcard patterns (comma-separated, i.e. -Exclude powershell_scripts_archive,*.log)
+#     -Filter <TEXT>:        Only process files whose names match this wildcard pattern (i.e. -Filter *.ps1)
 #     -NoConsoleOutput:      Suppress console output (requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup/-Preview)
 #     -Path <PATH>:          Path to a file or a folder (prompts if not specified)
 #     -Preview:              Show matched files and occurrence counts without modifying anything
@@ -15,12 +21,15 @@
 #     -ReplaceString <TEXT>: The replacement text (prompts if not specified)
 #     -SaveResults <PATH>:   Save results to a text file (i.e. -SaveResults "C:\output.txt")
 #     -SearchString <TEXT>:  The text to search for (prompts if not specified)
+#     -ShowLines:            Show each matching line with its line number and how it would look after the replacement
 #     -Help / -?:            Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
 	[switch]$Backup,
 	[switch]$CaseSensitive,
+	[string[]]$Exclude,
+	[string]$Filter,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
 	[switch]$Preview,
@@ -28,6 +37,7 @@ param (
 	[string]$ReplaceString,
 	[string]$SaveResults,
 	[string]$SearchString,
+	[switch]$ShowLines,
 	[switch]$Help
 )
 
@@ -36,10 +46,12 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-CaseSensitive] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-ReplaceString <TEXT>] [-SaveResults <PATH>] [-SearchString <TEXT>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-CaseSensitive] [-Exclude <TEXT>] [-Filter <TEXT>] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-ReplaceString <TEXT>] [-SaveResults <PATH>] [-SearchString <TEXT>] [-ShowLines] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup                Automatically create backups before modifying files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive         Perform a case-sensitive search (default is case-insensitive)" -ForegroundColor Cyan
+	Write-Host "  -Exclude <TEXT>        Skip files or folders whose names match these wildcard patterns (comma-separated, i.e. -Exclude powershell_scripts_archive,*.log)" -ForegroundColor Cyan
+	Write-Host "  -Filter <TEXT>         Only process files whose names match this wildcard pattern (i.e. -Filter *.ps1)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput       Suppress console output (requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>           Path to a file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Preview               Show matched files and occurrence counts without modifying anything" -ForegroundColor Cyan
@@ -47,6 +59,7 @@ if ($Help) {
 	Write-Host "  -ReplaceString <TEXT>  The replacement text (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>    Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -SearchString <TEXT>   The text to search for (prompts if not specified)" -ForegroundColor Cyan
+	Write-Host "  -ShowLines             Show each matching line with its line number and how it would look after the replacement" -ForegroundColor Cyan
 	Write-Host "  -Help                  Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0
@@ -55,15 +68,23 @@ if ($Help) {
 # Validate -SaveResults path if specified
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
-	if ($saveDir -and -not (Test-Path $saveDir)) {
+	if ($saveDir -and -not (Test-Path -LiteralPath $saveDir)) {
 		Write-Host ""
 		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
 }
 
+# -NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview, since without
+# all of these this script can still block on interactive prompts with no visible context if output is suppressed
+if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $PSBoundParameters.ContainsKey('ReplaceString') -or -not $SaveResults -or -not ($Backup -or $Preview))) {
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview."
+	exit 1
+}
+
 # Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
-if ($SaveResults -and -not (Test-Path $SaveResults)) {
+if ($SaveResults -and -not (Test-Path -LiteralPath $SaveResults)) {
 	try {
 		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
 	}
@@ -73,20 +94,12 @@ if ($SaveResults -and -not (Test-Path $SaveResults)) {
 	}
 }
 
-# -NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview, since without
-# all of these this script can still block on interactive prompts with no visible context if output is suppressed
-if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $ReplaceString -or -not $SaveResults -or -not ($Backup -or $Preview))) {
-	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -Path, -SearchString, -ReplaceString, -SaveResults, and one of -Backup or -Preview."
-	exit 1
-}
-
 # Prompt user for file or folder path, search string, and replacement string if not specified
 if (-not $Path) {
 	$Path = Read-Host "`nEnter the full path to a file or a folder"
 }
 
-if (-not (Test-Path $Path)) {
+if (-not (Test-Path -LiteralPath $Path)) {
 	$errorMessage = "Path not found: $Path"
 	if ($NoConsoleOutput) {
 		try {
@@ -108,18 +121,54 @@ if (-not $SearchString) {
 	$SearchString = Read-Host "`nEnter the text to search for"
 }
 
-if (-not $ReplaceString) {
+# An empty search string would match between every character and corrupt every file it touches
+if (-not $SearchString) {
+	Write-Host ""
+	Write-Error "The search string cannot be empty."
+	exit 1
+}
+
+# Checked via $PSBoundParameters so an explicitly empty -ReplaceString "" (i.e. to delete the matched text) is honored instead of prompting
+if (-not $PSBoundParameters.ContainsKey('ReplaceString')) {
 	$ReplaceString = Read-Host "`nEnter the replacement text"
 }
 
-$item = Get-Item $Path
+$item = Get-Item -LiteralPath $Path
 
 # Collect files
+$resolvedSaveResults = $null
+if ($SaveResults) {
+	$resolvedSaveResults = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SaveResults)
+}
+
 $files = if ($item.PSIsContainer) {
-	Get-ChildItem -Path $Path -File -Recurse:$Recurse
+	# Skip .bak files (i.e. backups from earlier runs) and the -SaveResults file itself, since both can contain the search string
+	Get-ChildItem -LiteralPath $item.FullName -File -Recurse:$Recurse | Where-Object { $_.Extension -ne '.bak' -and $_.FullName -ne $resolvedSaveResults }
 }
 else {
 	@($item)
+}
+
+# Apply -Filter (wildcard on file names) and -Exclude (wildcards on file or folder names below -Path, i.e. powershell_scripts_archive)
+if ($Filter) {
+	$files = @($files | Where-Object { $_.Name -like $Filter })
+}
+
+if ($Exclude) {
+	$rootPath = $item.DirectoryName
+	if ($item.PSIsContainer) {
+		$rootPath = $item.FullName
+	}
+
+	$files = @($files | Where-Object {
+		$isExcluded = $false
+		foreach ($namePart in ($_.FullName.Substring($rootPath.Length) -split '\\')) {
+			foreach ($excludePattern in $Exclude) {
+				if ($namePart -and $namePart -like $excludePattern) { $isExcluded = $true }
+			}
+		}
+		-not $isExcluded
+	})
 }
 
 if (-not $files -or $files.Count -eq 0) {
@@ -130,7 +179,7 @@ if (-not $files -or $files.Count -eq 0) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			[System.IO.File]::AppendAllText($SaveResults, "$warningMessage`n")
 		}
 		catch {
 			Write-Host ""
@@ -148,9 +197,9 @@ $replacementEvaluator = [System.Text.RegularExpressions.MatchEvaluator]{ param($
 # Initialize counters and output lines
 $matchedFileCount = 0
 $totalOccurrences = 0
-$FileOutputLines = @()
+$FileOutputLines = @("Search for:   '$SearchString'", "Replace with: '$ReplaceString'", "")
 
-if (-not $NoConsoleOutput) { Write-Host "`nScanning for '$SearchString'...`n" -ForegroundColor Cyan }
+if (-not $NoConsoleOutput) { Write-Host "`nSearch for:   '$SearchString'`nReplace with: '$ReplaceString'`n" -ForegroundColor Cyan }
 
 # First pass: scan all files, detect each file's encoding, and count occurrences
 $fileMatchMap = @{}
@@ -161,9 +210,10 @@ foreach ($file in $files) {
 	try {
 		$bytes = [System.IO.File]::ReadAllBytes($file.FullName)
 
+		# Strict UTF-8 decoding throws on invalid bytes, so ANSI text and binary files are skipped with a warning instead of being corrupted on write
 		$bomLength = 0
 		if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
-			$fileEncoding = New-Object System.Text.UTF8Encoding $true
+			$fileEncoding = New-Object System.Text.UTF8Encoding $true, $true
 			$bomLength = 3
 		}
 		elseif ($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE) {
@@ -175,7 +225,7 @@ foreach ($file in $files) {
 			$bomLength = 2
 		}
 		else {
-			$fileEncoding = New-Object System.Text.UTF8Encoding $false
+			$fileEncoding = New-Object System.Text.UTF8Encoding $false, $true
 			$bomLength = 0
 		}
 
@@ -201,11 +251,38 @@ foreach ($file in $files) {
 		$line = "Found $occurrenceCount occurrence(s) in: $($file.FullName)"
 		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
 		if ($SaveResults) { $FileOutputLines += $line }
+
+		# Show each matching line with its line number, plus how it would look after the replacement
+		if ($ShowLines) {
+			$contentLines = $content -split '\r\n|\n|\r'
+			$shownLineCount = 0
+			for ($lineIndex = 0; $lineIndex -lt $contentLines.Count; $lineIndex++) {
+				if ($searchRegex.IsMatch($contentLines[$lineIndex])) {
+					$lineNumber = $lineIndex + 1
+					$beforeLine = "    Line $lineNumber, before: $($contentLines[$lineIndex].Trim())"
+					$afterLine = "    Line $lineNumber, after:  $($searchRegex.Replace($contentLines[$lineIndex], $replacementEvaluator).Trim())"
+					if (-not $NoConsoleOutput) {
+						Write-Host $beforeLine -ForegroundColor Gray
+						Write-Host $afterLine -ForegroundColor Gray
+					}
+					if ($SaveResults) {
+						$FileOutputLines += $beforeLine
+						$FileOutputLines += $afterLine
+					}
+					$shownLineCount++
+				}
+			}
+			if ($shownLineCount -eq 0) {
+				$spanLine = "    (matches span multiple lines, so no single line can be shown)"
+				if (-not $NoConsoleOutput) { Write-Host $spanLine -ForegroundColor Gray }
+				if ($SaveResults) { $FileOutputLines += $spanLine }
+			}
+		}
 	}
 }
 
 if ($matchedFileCount -eq 0) {
-	$summaryLine = "$ScriptName`: Scan complete. No matches found for '$SearchString'."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Scan complete. No matches found."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 
 	if ($SaveResults) {
@@ -213,7 +290,7 @@ if ($matchedFileCount -eq 0) {
 
 		try {
 			$outputString = ($FileOutputLines -join "`n")
-			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
 			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
@@ -227,7 +304,7 @@ if ($matchedFileCount -eq 0) {
 
 # Preview mode: report matches without modifying anything
 if ($Preview) {
-	$summaryLine = "$ScriptName`: Preview complete. $matchedFileCount file(s) contain $totalOccurrences total occurrence(s) of '$SearchString'. Would replace with: '$ReplaceString'. No files were modified."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $matchedFileCount file(s) contain $totalOccurrences total occurrence(s). No files were modified."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 
 	if ($SaveResults) {
@@ -240,7 +317,7 @@ if ($Preview) {
 
 		try {
 			$outputString = ($FileOutputLines -join "`n")
-			[System.IO.File]::WriteAllText($SaveResults, $outputString)
+			[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
 			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
@@ -281,6 +358,9 @@ foreach ($file in $files) {
 
 		if ($doBackup) {
 			$backupPath = $file.FullName + ".bak"
+			if (Test-Path -LiteralPath $backupPath) {
+				$backupPath = $file.FullName + "." + (Get-Date -Format "yyyyMMdd_HHmmss") + ".bak"
+			}
 			Copy-Item -Path $file.FullName -Destination $backupPath -Force -ErrorAction Stop
 			if (-not $NoConsoleOutput) { Write-Host "Backup created: $backupPath" -ForegroundColor Cyan }
 			if ($SaveResults) { $FileOutputLines += "Backup created: $backupPath" }
@@ -289,8 +369,8 @@ foreach ($file in $files) {
 		$newContent = $searchRegex.Replace($content, $replacementEvaluator)
 
 		[System.IO.File]::WriteAllText($file.FullName, $newContent, $fileEncoding)
-		if (-not $NoConsoleOutput) { Write-Host "Replaced $($fileMatchMap[$file.FullName]) occurrence(s) in: $($file.Name)" -ForegroundColor Green }
-		if ($SaveResults) { $FileOutputLines += "Replaced $($fileMatchMap[$file.FullName]) occurrence(s) in: $($file.Name)" }
+		if (-not $NoConsoleOutput) { Write-Host "Replaced $($fileMatchMap[$file.FullName]) occurrence(s) in: $($file.FullName)" -ForegroundColor Green }
+		if ($SaveResults) { $FileOutputLines += "Replaced $($fileMatchMap[$file.FullName]) occurrence(s) in: $($file.FullName)" }
 		$replacedCount++
 	}
 	catch {
@@ -303,7 +383,7 @@ foreach ($file in $files) {
 }
 
 # Summary
-$summaryLine = "$ScriptName`: Complete. $matchedFileCount file(s) contained matches, $replacedCount file(s) updated."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Complete. $matchedFileCount file(s) contained matches, $replacedCount file(s) updated."
 if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 
 # Save results to text file if requested
@@ -317,7 +397,7 @@ if ($SaveResults) {
 
 	try {
 		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::WriteAllText($SaveResults, $outputString)
+		[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
 		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {

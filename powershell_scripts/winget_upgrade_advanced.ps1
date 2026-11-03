@@ -112,16 +112,21 @@ try {
 
 	# Priming step for first-run initialization
 	if (-not $NoConsoleOutput) { Write-Host "`nPriming winget (first-run initialization)..." -ForegroundColor Cyan }
-	winget source update --disable-interactivity
+	if ($NoConsoleOutput) {
+		winget source update --disable-interactivity | Out-Null
+	}
+	else {
+		winget source update --disable-interactivity
+	}
 	winget upgrade --accept-source-agreements --disable-interactivity >$null 2>&1
 
 	# Collect pinned apps
 	$pinnedApps = @()
 	$pinnedAppsRaw = winget pin list 2>$null
 	if ($pinnedAppsRaw) {
-		$pinnedApps = $pinnedAppsRaw | Select-Object -Skip 1 | ForEach-Object {
+		$pinnedApps = @($pinnedAppsRaw | Select-Object -Skip 1 | ForEach-Object {
 			if ($_ -match '^\S') { ($_ -split '\s{2,}')[1] }
-		} | Where-Object { $_ }
+		} | Where-Object { $_ })
 	}
 
 	# Pre-check upgrades using winget native table
@@ -135,7 +140,7 @@ try {
 	$upgradeable = $allUpgrades | Where-Object {
 		$appId = ($_ -split '\s{2,}')[1]
 		# Require the ID column to look like a real winget package ID (i.e. Publisher.Package), which excludes the header row, separator line, and summary line ("N upgrades available.")
-		$appId -match '^\S+\.\S+' -and -not $pinnedApps.Contains($appId)
+		$appId -match '^\S+\.\S+' -and $pinnedApps -notcontains $appId
 	}
 
 	# Display native table to console
@@ -144,7 +149,12 @@ try {
 	# Upgrade all if requested
 	if ($UpgradeAll -and $upgradeable) {
 		if (-not $NoConsoleOutput) { Write-Host "`nUpgrading all available packages..." -ForegroundColor Cyan }
-		winget upgrade --all --accept-source-agreements --accept-package-agreements --disable-interactivity
+		if ($NoConsoleOutput) {
+			winget upgrade --all --accept-source-agreements --accept-package-agreements --disable-interactivity | Out-Null
+		}
+		else {
+			winget upgrade --all --accept-source-agreements --accept-package-agreements --disable-interactivity
+		}
 		if ($LASTEXITCODE -ne 0) {
 			throw "winget exited with code $LASTEXITCODE while upgrading packages."
 		}
@@ -193,11 +203,11 @@ try {
 		}
 	}
 
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Completed successfully." -ForegroundColor Green }
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Completed successfully." -ForegroundColor Green }
 	exit 0
 }
 catch {
-	$errorMessage = "$ScriptName`: An error occurred: $($_.Exception.Message)"
+	$errorMessage = "$ScriptName`: [$env:COMPUTERNAME] An error occurred: $($_.Exception.Message)"
 	if ($NoConsoleOutput) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")

@@ -261,7 +261,7 @@ try {
 				}
 
 				while ($outputLines[-1] -eq '') {
-					$outputLines = $outputLines[0..($outputLines.Count - 2)]
+					$outputLines = @($outputLines | Select-Object -First ($outputLines.Count - 1))
 				}
 
 				$outputLines += ""

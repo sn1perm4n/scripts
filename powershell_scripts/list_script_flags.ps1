@@ -498,7 +498,7 @@ if (-not $NoConsoleOutput) {
 # Save results
 if ($SaveResults) {
 	while ($CsvOutputLines.Count -gt 0 -and $CsvOutputLines[-1] -eq '') {
-		$CsvOutputLines = $CsvOutputLines[0..($CsvOutputLines.Count - 2)]
+		$CsvOutputLines = @($CsvOutputLines | Select-Object -First ($CsvOutputLines.Count - 1))
 	}
 	try {
 		$outputString = ($CsvOutputLines -join "`n") + "`n"

@@ -303,7 +303,7 @@ if ($Summary) {
 if ($SaveResults) {
 	# Remove trailing blank lines
 	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	# Append summary line if requested

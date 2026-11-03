@@ -326,7 +326,7 @@ else {
 # Save results to text file if requested
 if ($SaveResults) {
 	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	try {

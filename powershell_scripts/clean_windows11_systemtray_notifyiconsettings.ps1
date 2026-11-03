@@ -228,7 +228,7 @@ if ($List) {
 	if ($SaveResults) {
 		$FileOutputLines += $summaryLine
 		while ($FileOutputLines[-1] -eq '') {
-			$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+			$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 		}
 		try {
 			$outputString = ($FileOutputLines -join "`n")
@@ -406,7 +406,7 @@ if ($SaveResults) {
 	$FileOutputLines += "Settings -> Personalization -> Taskbar -> Other system tray icons"
 
 	while ($FileOutputLines[-1] -eq '') {
-		$FileOutputLines = $FileOutputLines[0..($FileOutputLines.Count - 2)]
+		$FileOutputLines = @($FileOutputLines | Select-Object -First ($FileOutputLines.Count - 1))
 	}
 
 	try {

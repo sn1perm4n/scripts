@@ -219,7 +219,7 @@ if ($Preview) {
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Cyan }
 }
 else {
-	$summaryLine = "$ScriptName`: $deletedCount folder(s) deleted, $freedDisplay freed."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $deletedCount folder(s) deleted, $freedDisplay freed."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 }
 

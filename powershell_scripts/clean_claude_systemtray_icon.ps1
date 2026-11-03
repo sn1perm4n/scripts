@@ -229,7 +229,7 @@ if ($Preview) {
 	Write-Host $summaryLine -ForegroundColor Cyan
 }
 else {
-	$summaryLine = "$ScriptName`: $deletedCount stale entry/entries deleted. Claude system tray icon cleaned and promoted successfully."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $deletedCount stale entry/entries deleted. Claude system tray icon cleaned and promoted successfully."
 	Write-Host $summaryLine -ForegroundColor Green
 }
 

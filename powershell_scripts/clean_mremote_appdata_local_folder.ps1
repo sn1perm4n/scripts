@@ -49,7 +49,7 @@ if (Test-Path -Path $appdataLocalMremotengFolder) {
 else { "$totalFreedMB MB" }
 		$folderWord = if ($deletedCount -eq 1) { "folder" }
 else { "folders" }
-		Write-Host "`n$ScriptName`: $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Host ""

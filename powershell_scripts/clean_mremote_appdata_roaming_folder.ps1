@@ -46,7 +46,7 @@ if (Test-Path -Path $appdataRoamingMremoteng) {
 else { "$totalFreedMB MB" }
 		$fileWord = if ($deletedCount -eq 1) { "file" }
 else { "files" }
-		Write-Host "`n$ScriptName`: $deletedCount $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $deletedCount $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Host ""

@@ -386,7 +386,7 @@ if ($Preview) {
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 else {
-	$summaryLine = "$ScriptName`: $deletedCount of $totalFlaggedCount key(s) deleted."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $deletedCount of $totalFlaggedCount key(s) deleted."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 }
 

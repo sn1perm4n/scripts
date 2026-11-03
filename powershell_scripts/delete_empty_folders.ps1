@@ -123,21 +123,21 @@ foreach ($folder in $folders) {
 }
 
 if ($Preview) {
-	$summaryLine = "$ScriptName`: $($foldersDeleted.Count) empty folder(s) would be deleted from '$Path'."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($foldersDeleted.Count) empty folder(s) would be deleted from '$Path'."
 	if (-not $NoConsoleOutput) {
 		Write-Host ""
 		Write-Host $summaryLine -ForegroundColor Cyan
 	}
 }
 elseif ($foldersDeleted.Count -gt 0) {
-	$summaryLine = "$ScriptName`: Successfully deleted $($foldersDeleted.Count) empty folder(s) from '$Path'."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Successfully deleted $($foldersDeleted.Count) empty folder(s) from '$Path'."
 	if (-not $NoConsoleOutput) {
 		Write-Host ""
 		Write-Host $summaryLine -ForegroundColor Green
 	}
 }
 else {
-	$summaryLine = "$ScriptName`: No folders were deleted from '$Path'."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] No folders were deleted from '$Path'."
 	if (-not $NoConsoleOutput) {
 		Write-Host ""
 		Write-Warning $summaryLine

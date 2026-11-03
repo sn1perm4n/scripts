@@ -65,10 +65,10 @@ if ($directoriesProcessed -gt 0) {
 else { "$totalFreedMB MB" }
 	$dirWord = if ($directoriesProcessed -eq 1) { "directory" }
 else { "directories" }
-	Write-Host "`n$ScriptName`: Cleanup complete. $freedDisplay freed across $directoriesProcessed $dirWord." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Cleanup complete. $freedDisplay freed across $directoriesProcessed $dirWord." -ForegroundColor Green
 }
 else {
-	Write-Host "`n$ScriptName`: No cleanup was necessary." -ForegroundColor Yellow
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] No cleanup was necessary." -ForegroundColor Yellow
 }
 
 exit 0

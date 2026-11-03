@@ -114,9 +114,11 @@ if ($NoLog -and -not $Sftp) {
 	Write-Warning "-NoLog is only relevant when -Sftp is specified."
 }
 
-# Warn if -NoConsoleOutput is used without -SaveResults
+# -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
 if ($NoConsoleOutput -and -not $SaveResults) {
-	Write-Warning "-NoConsoleOutput has no effect without -SaveResults. Output would be suppressed entirely."
+	Write-Host ""
+	Write-Error "-NoConsoleOutput requires -SaveResults."
+	exit 1
 }
 
 # Validate -SaveResults path if specified
@@ -135,6 +137,17 @@ if ($Backup) {
 		Write-Host ""
 		Write-Error "The directory for -Backup does not exist: '$Backup'"
 		exit 1
+	}
+}
+
+# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
+if ($SaveResults -and -not (Test-Path $SaveResults)) {
+	try {
+		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
 	}
 }
 
@@ -180,8 +193,8 @@ if ($Preview) {
 			$OutputLines += "Would save WinSCP session log to: $logPath"
 		}
 	}
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Preview complete." -ForegroundColor Cyan }
-	$OutputLines += "$ScriptName`: Preview complete."
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Preview complete." -ForegroundColor Cyan }
+	$OutputLines += "$ScriptName`: [$env:COMPUTERNAME] Preview complete."
 }
 else {
 	# Delete existing backup file if it exists
@@ -200,7 +213,10 @@ else {
 	# Export the Windows Firewall configuration
 	$backupSuccess = $false
 	try {
-		netsh advfirewall export "$fullBackupFilePath" > $null
+		$netshOutput = (netsh advfirewall export "$fullBackupFilePath" 2>&1 | ForEach-Object { "$_" }) -join " "
+		if ($LASTEXITCODE -ne 0) {
+			throw "netsh exited with code $LASTEXITCODE`: $netshOutput"
+		}
 		if (-not $NoConsoleOutput) { Write-Host "`nWindows Firewall configuration successfully backed up to: $fullBackupFilePath." -ForegroundColor Green }
 		$OutputLines += "Windows Firewall configuration successfully backed up to: $fullBackupFilePath."
 		$backupSuccess = $true
@@ -277,16 +293,16 @@ else {
 	}
 
 	$summaryLine = if ($Sftp -and $backupSuccess -and $uploadSuccess) {
-		"$ScriptName`: Backup and SFTP upload completed successfully."
+		"$ScriptName`: [$env:COMPUTERNAME] Backup and SFTP upload completed successfully."
 	}
 	elseif ($Sftp -and $backupSuccess -and -not $uploadSuccess) {
-		"$ScriptName`: Backup completed successfully but SFTP upload failed."
+		"$ScriptName`: [$env:COMPUTERNAME] Backup completed successfully but SFTP upload failed."
 	}
 	elseif ($backupSuccess) {
-		"$ScriptName`: Backup completed successfully."
+		"$ScriptName`: [$env:COMPUTERNAME] Backup completed successfully."
 	}
 	else {
-		"$ScriptName`: Backup failed."
+		"$ScriptName`: [$env:COMPUTERNAME] Backup failed."
 	}
 
 	$summaryColor = if ($backupSuccess -and (-not $Sftp -or $uploadSuccess)) { 'Green' } else { 'Red' }
@@ -298,7 +314,7 @@ else {
 if ($SaveResults) {
 	try {
 		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
-			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+			$OutputLines = @($OutputLines | Select-Object -First ($OutputLines.Count - 1))
 		}
 		$outputString = ($OutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)

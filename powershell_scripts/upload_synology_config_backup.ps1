@@ -163,7 +163,7 @@ if (-not $localFile) {
 		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
 			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
 		}
-		$outputString = ($OutputLines -join "`n")
+		$outputString = ($OutputLines -join "`n") + "`n"
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		}
@@ -332,7 +332,7 @@ if ($SaveResults) {
 		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
 			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
 		}
-		$outputString = ($OutputLines -join "`n")
+		$outputString = ($OutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}

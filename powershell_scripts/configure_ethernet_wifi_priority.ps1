@@ -115,7 +115,7 @@ if (-not $ethernetAdapters -and -not $wifiAdapters) {
 	if ($SaveResults) {
 		$FileOutputLines += $warningMessage
 		try {
-			$outputString = ($FileOutputLines -join "`n")
+			$outputString = ($FileOutputLines -join "`n") + "`n"
 			[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		}
 		catch {
@@ -381,7 +381,7 @@ if ($SaveResults) {
 	}
 
 	try {
-		$outputString = ($FileOutputLines -join "`n")
+		$outputString = ($FileOutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)
 		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to: $SaveResults" -ForegroundColor Green }
 	}

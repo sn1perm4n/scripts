@@ -83,17 +83,6 @@ if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $PSBoundPa
 	exit 1
 }
 
-# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
-if ($SaveResults -and -not (Test-Path -LiteralPath $SaveResults)) {
-	try {
-		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
-	}
-	catch {
-		Write-Host ""
-		Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
-	}
-}
-
 # Prompt user for file or folder path, search string, and replacement string if not specified
 if (-not $Path) {
 	$Path = Read-Host "`nEnter the full path to a file or a folder"
@@ -103,7 +92,7 @@ if (-not (Test-Path -LiteralPath $Path)) {
 	$errorMessage = "Path not found: $Path"
 	if ($NoConsoleOutput) {
 		try {
-			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$errorMessage")
 		}
 		catch {
 			Write-Host ""
@@ -179,7 +168,7 @@ if (-not $files -or $files.Count -eq 0) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::AppendAllText($SaveResults, "$warningMessage`n")
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 		}
 		catch {
 			Write-Host ""
@@ -197,7 +186,8 @@ $replacementEvaluator = [System.Text.RegularExpressions.MatchEvaluator]{ param($
 # Initialize counters and output lines
 $matchedFileCount = 0
 $totalOccurrences = 0
-$FileOutputLines = @("Search for:   '$SearchString'", "Replace with: '$ReplaceString'", "")
+# Seed the output with the hostname as its first line, so a fleet of per-machine files can be identified at a glance
+$FileOutputLines = @("$env:COMPUTERNAME`:", "Search for:   '$SearchString'", "Replace with: '$ReplaceString'", "")
 
 if (-not $NoConsoleOutput) { Write-Host "`nSearch for:   '$SearchString'`nReplace with: '$ReplaceString'`n" -ForegroundColor Cyan }
 
@@ -290,7 +280,7 @@ if ($matchedFileCount -eq 0) {
 
 		try {
 			$outputString = ($FileOutputLines -join "`n")
-			[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
 			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
@@ -317,7 +307,7 @@ if ($Preview) {
 
 		try {
 			$outputString = ($FileOutputLines -join "`n")
-			[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
+			[System.IO.File]::WriteAllText($SaveResults, $outputString)
 			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
@@ -397,7 +387,7 @@ if ($SaveResults) {
 
 	try {
 		$outputString = ($FileOutputLines -join "`n")
-		[System.IO.File]::AppendAllText($SaveResults, "$outputString`n")
+		[System.IO.File]::WriteAllText($SaveResults, $outputString)
 		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {

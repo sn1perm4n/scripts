@@ -129,6 +129,17 @@ if (-not (Test-Path $Backup)) {
 	exit 1
 }
 
+# Write the hostname as a header line the first time this file is created, so a fleet of per-machine files can be identified at a glance
+if ($SaveResults -and -not (Test-Path $SaveResults)) {
+	try {
+		[System.IO.File]::AppendAllText($SaveResults, "$env:COMPUTERNAME`:`n")
+	}
+	catch {
+		Write-Host ""
+		Write-Warning "Could not write hostname header to '$SaveResults': $($_.Exception.Message)"
+	}
+}
+
 # Set local backup source folder
 $localFolder = $Backup
 $logPath = Join-Path -Path $localFolder -ChildPath "WinSCP.log"
@@ -138,7 +149,7 @@ $remoteFolder = "/mnt/path/to/remote/Synology Config Backup"
 $sftpHost = "HOSTNAME"
 $sftpUser = "USERNAME"
 $sftpPassword = "PASSWORD"
-$sftpFingerprint = "ssh-ed25519 256 44:29:e2:b6:ff:45:55:a8:f9:15:36:4a:40:8b:1a:86"
+$sftpFingerprint = "ssh-ed25519 256 YOUR_FINGERPRINT_HERE"
 
 # Prompt for credentials if -Interactive is specified
 if ($Interactive) {
@@ -161,7 +172,7 @@ if (-not $localFile) {
 	$OutputLines += "Error: No file found matching Synology_* in '$localFolder'"
 	if ($SaveResults) {
 		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
-			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+			$OutputLines = @($OutputLines | Select-Object -First ($OutputLines.Count - 1))
 		}
 		$outputString = ($OutputLines -join "`n") + "`n"
 		try {
@@ -202,8 +213,8 @@ if ($Preview) {
 		if (-not $NoConsoleOutput) { Write-Host "`nNo old local Synology_* files found to delete." -ForegroundColor Cyan }
 		$OutputLines += "No old local Synology_* files found to delete."
 	}
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Preview completed successfully." -ForegroundColor Cyan }
-	$OutputLines += "$ScriptName`: Preview completed successfully."
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Preview completed successfully." -ForegroundColor Cyan }
+	$OutputLines += "$ScriptName`: [$env:COMPUTERNAME] Preview completed successfully."
 }
 else {
 	# Check WinSCP is installed
@@ -227,7 +238,7 @@ else {
 	}
 
 	Add-Type -Path $winScpDll
-	
+
 	if ($NoLog) {
 		if (-not $NoConsoleOutput) { Write-Host "`nWinSCP session logging is disabled." -ForegroundColor Yellow }
 		$OutputLines += "WinSCP session logging is disabled."
@@ -289,7 +300,12 @@ else {
 	}
 
 	# Delete old local Synology_* files
-	if ($oldLocalFiles) {
+	# Skipped when the upload failed, since the old remote files were already deleted and the older local backups would then be the only copies left
+	if (-not $uploadSuccess) {
+		if (-not $NoConsoleOutput) { Write-Host "`nSkipping deletion of old local Synology_* files because the upload failed." -ForegroundColor Yellow }
+		$OutputLines += "Skipping deletion of old local Synology_* files because the upload failed."
+	}
+	elseif ($oldLocalFiles) {
 		try {
 			if (-not $NoConsoleOutput) { Write-Host "`nDeleting old local Synology_* files..." -ForegroundColor Yellow }
 			$OutputLines += "Deleting old local Synology_* files..."
@@ -312,12 +328,12 @@ else {
 	}
 
 	if ($uploadSuccess) {
-		$summaryLine = "$ScriptName`: Synology config backup uploaded and cleanup completed successfully."
+		$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Synology config backup uploaded and cleanup completed successfully."
 		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 		$OutputLines += $summaryLine
 	}
 	else {
-		$summaryLine = "$ScriptName`: Synology config backup upload failed."
+		$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Synology config backup upload failed."
 		if (-not $NoConsoleOutput) {
 			Write-Host ""
 			Write-Error $summaryLine
@@ -330,7 +346,7 @@ else {
 if ($SaveResults) {
 	try {
 		while ($OutputLines.Count -gt 0 -and $OutputLines[-1] -eq '') {
-			$OutputLines = $OutputLines[0..($OutputLines.Count - 2)]
+			$OutputLines = @($OutputLines | Select-Object -First ($OutputLines.Count - 1))
 		}
 		$outputString = ($OutputLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $outputString)

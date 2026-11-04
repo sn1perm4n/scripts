@@ -238,6 +238,11 @@ foreach ($file in $files) {
 		$fileBomLengthMap[$file.FullName] = $bomLength
 		$matchedFileCount++
 		$totalOccurrences += $occurrenceCount
+		# Separate each file's block with a blank line when -ShowLines is used (the header already ends with one before the first file)
+		if ($ShowLines -and $matchedFileCount -gt 1) {
+			if (-not $NoConsoleOutput) { Write-Host "" }
+			if ($SaveResults) { $FileOutputLines += "" }
+		}
 		$line = "Found $occurrenceCount occurrence(s) in: $($file.FullName)"
 		if (-not $NoConsoleOutput) { Write-Host $line -ForegroundColor Yellow }
 		if ($SaveResults) { $FileOutputLines += $line }

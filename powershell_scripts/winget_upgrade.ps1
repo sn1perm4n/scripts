@@ -44,11 +44,11 @@ catch {
 
 if ($hadWarnings) {
 	Write-Host ""
-	Write-Warning "$ScriptName`: Completed with warnings."
+	Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Completed with warnings."
 	exit 1
 }
 else {
-	Write-Host "`n$ScriptName`: Completed successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Completed successfully." -ForegroundColor Green
 	exit 0
 }
 

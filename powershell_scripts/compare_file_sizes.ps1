@@ -308,7 +308,7 @@ else {
 	}
 
 	# Summary
-	$summaryLine = "$ScriptName`: Comparison complete. Identical: $identicalCount, Different: $differentCount, Only in 1st: $onlyIn1stCount, Only in 2nd: $onlyIn2ndCount."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Comparison complete. Identical: $identicalCount, Different: $differentCount, Only in 1st: $onlyIn1stCount, Only in 2nd: $onlyIn2ndCount."
 	if (-not $NoConsoleOutput) {
 		if ($Different -and $differentCount -eq 0 -and $onlyIn1stCount -eq 0 -and $onlyIn2ndCount -eq 0) {
 			Write-Host $summaryLine -ForegroundColor Cyan

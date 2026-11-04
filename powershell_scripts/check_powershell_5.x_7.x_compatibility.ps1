@@ -336,7 +336,7 @@ if ($Failures -and $AllResults.Count -eq 0 -and -not $NoConsoleOutput) {
 }
 
 # Unconditional completion line
-$completionLine = "$ScriptName`: Completed successfully."
+$completionLine = "$ScriptName`: [$env:COMPUTERNAME] Completed successfully."
 if (-not $NoConsoleOutput) { Write-Host "`n$completionLine" -ForegroundColor Green }
 if ($SaveResults) {
 	try {

@@ -249,7 +249,7 @@ if ($Preview) {
 	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Preview complete. $processedCount file(s) would be modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite). No files were modified."
 }
 else {
-	$summaryLine = "$ScriptName`: Complete. $processedCount file(s) modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite)."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Complete. $processedCount file(s) modified, $alreadyCorrectCount already correct, $mismatchCount flagged for review (use -Force to overwrite)."
 }
 if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 

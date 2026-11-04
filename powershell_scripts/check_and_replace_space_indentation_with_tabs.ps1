@@ -248,7 +248,7 @@ foreach ($fileObj in $files) {
 
 # Summary
 $verb = if ($Preview) { "would be" } else { "were" }
-$summaryLine = "$ScriptName`: Complete. $modifiedCount file(s) $verb modified."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Complete. $modifiedCount file(s) $verb modified."
 if (-not $NoConsoleOutput) {
 	if ($modifiedCount -gt 0) {
 		Write-Host "`n$summaryLine" -ForegroundColor Green

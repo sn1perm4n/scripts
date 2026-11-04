@@ -177,7 +177,7 @@ foreach ($file in $files) {
 }
 
 if ($issueCount -eq 0) {
-	$summaryLine = "$ScriptName`: Scan complete. No trailing periods found."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Scan complete. No trailing periods found."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 
 	if ($SaveResults) {
@@ -236,7 +236,7 @@ else {
 }
 
 if (-not $doFix) {
-	$summaryLine = "$ScriptName`: Scan complete. $issueCount instance(s) found. No fixes applied."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Scan complete. $issueCount instance(s) found. No fixes applied."
 	if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
 
 	if ($SaveResults) {
@@ -336,7 +336,7 @@ foreach ($file in $files) {
 }
 
 # Summary
-$summaryLine = "$ScriptName`: Scan complete. $issueCount instance(s) found, $fixedCount fixed."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Scan complete. $issueCount instance(s) found, $fixedCount fixed."
 if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 
 # Save results to text file if requested

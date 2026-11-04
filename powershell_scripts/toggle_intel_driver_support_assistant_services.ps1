@@ -238,7 +238,7 @@ if ($enabling) {
 	}
 	else {
 		Write-Host ""
-		Write-Warning "$ScriptName`: Intel DSA services were already enabled. No changes made."
+		Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Intel DSA services were already enabled. No changes made."
 	}
 }
 else {
@@ -247,7 +247,7 @@ else {
 	}
 	else {
 		Write-Host ""
-		Write-Warning "$ScriptName`: Intel DSA services were already disabled. No changes made."
+		Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Intel DSA services were already disabled. No changes made."
 	}
 }
 

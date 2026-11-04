@@ -59,7 +59,7 @@ if ($serviceChanged) {
 }
 else {
 	Write-Host ""
-	Write-Warning "$ScriptName`: RemoteRegistry service was already disabled and stopped. No changes made."
+	Write-Warning "$ScriptName`: [$env:COMPUTERNAME] RemoteRegistry service was already disabled and stopped. No changes made."
 }
 
 exit 0

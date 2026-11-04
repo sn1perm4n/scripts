@@ -64,7 +64,7 @@ if ($registryChanged -or $firewallChanged) {
 }
 else {
 	Write-Host ""
-	Write-Warning "$ScriptName`: Remote Assistance was already disabled. No changes made."
+	Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Remote Assistance was already disabled. No changes made."
 }
 
 exit 0

@@ -34,7 +34,7 @@ catch {
 # Summary
 if ($hadErrors) {
 	Write-Host ""
-	Write-Error "$ScriptName`: Windows Recall disabled with errors — some settings may not have taken effect. A reboot is required."
+	Write-Error "$ScriptName`: [$env:COMPUTERNAME] Windows Recall disabled with errors — some settings may not have taken effect. A reboot is required."
 	exit 1
 }
 else {

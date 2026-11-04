@@ -101,7 +101,7 @@ if ($changesMade) {
 }
 else {
 	Write-Host ""
-	Write-Warning "$ScriptName`: Intel DSA services were already enabled and running. No changes made."
+	Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Intel DSA services were already enabled and running. No changes made."
 }
 
 exit 0

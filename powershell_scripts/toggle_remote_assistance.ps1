@@ -175,7 +175,7 @@ if ($enabling) {
 	}
 	else {
 		Write-Host ""
-		Write-Warning "$ScriptName`: Remote Assistance was already enabled. No changes made."
+		Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Remote Assistance was already enabled. No changes made."
 	}
 }
 else {
@@ -184,7 +184,7 @@ else {
 	}
 	else {
 		Write-Host ""
-		Write-Warning "$ScriptName`: Remote Assistance was already disabled. No changes made."
+		Write-Warning "$ScriptName`: [$env:COMPUTERNAME] Remote Assistance was already disabled. No changes made."
 	}
 }
 

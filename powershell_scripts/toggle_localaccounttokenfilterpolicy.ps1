@@ -99,7 +99,7 @@ try {
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 1 -Force -ErrorAction Stop
-		Write-Host "`n$ScriptName`: LocalAccountTokenFilterPolicy enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] LocalAccountTokenFilterPolicy enabled successfully." -ForegroundColor Green
 	}
 	else {
 		if ($currentValue -eq 0 -or $null -eq $currentValue) {
@@ -108,7 +108,7 @@ try {
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 0 -Force -ErrorAction Stop
-		Write-Host "`n$ScriptName`: LocalAccountTokenFilterPolicy disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] LocalAccountTokenFilterPolicy disabled successfully." -ForegroundColor Green
 	}
 }
 catch {

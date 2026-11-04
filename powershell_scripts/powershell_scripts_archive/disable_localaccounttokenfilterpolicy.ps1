@@ -24,7 +24,7 @@ try {
 	}
 
 	Set-ItemProperty -Path $regPath -Name "LocalAccountTokenFilterPolicy" -Type DWord -Value 0 -Force -ErrorAction Stop
-	Write-Host "`n$ScriptName`: LocalAccountTokenFilterPolicy disabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] LocalAccountTokenFilterPolicy disabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""

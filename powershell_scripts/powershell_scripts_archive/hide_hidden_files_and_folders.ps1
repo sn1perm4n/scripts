@@ -26,7 +26,7 @@ try {
 	$shell = New-Object -ComObject Shell.Application
 	$shell.Windows() | ForEach-Object { $_.Refresh() }
 
-	Write-Host "`n$ScriptName`: Hidden files and folders hidden successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hidden files and folders hidden successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""

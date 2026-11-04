@@ -119,10 +119,10 @@ try {
 	Set-ItemProperty -Path $regPath -Name "SystemUsesLightTheme" -Type DWord -Value $value -Force -ErrorAction Stop
 
 	if ($enabling) {
-		Write-Host "`n$ScriptName`: Dark mode enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Dark mode enabled successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: Dark mode disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Dark mode disabled successfully." -ForegroundColor Green
 	}
 }
 catch {

@@ -102,7 +102,7 @@ try {
 		# Refresh File Explorer to apply changes immediately
 		$shell = New-Object -ComObject Shell.Application
 		$shell.Windows() | ForEach-Object { $_.Refresh() }
-		Write-Host "`n$ScriptName`: Hidden files and folders made visible successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hidden files and folders made visible successfully." -ForegroundColor Green
 	}
 	else {
 		if ($hidden -eq 0 -and $showSuperHidden -eq 0) {
@@ -115,7 +115,7 @@ try {
 		# Refresh File Explorer to apply changes immediately
 		$shell = New-Object -ComObject Shell.Application
 		$shell.Windows() | ForEach-Object { $_.Refresh() }
-		Write-Host "`n$ScriptName`: Hidden files and folders hidden successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hidden files and folders hidden successfully." -ForegroundColor Green
 	}
 }
 catch {

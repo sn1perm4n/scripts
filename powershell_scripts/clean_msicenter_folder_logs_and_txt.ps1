@@ -48,7 +48,7 @@ if (Test-Path -Path $programdataMSIMSICenterFolder) {
 else { "$totalFreedMB MB" }
 	$fileWord = if ($files.Count -eq 1) { "file" }
 else { "files" }
-	Write-Host "`n$ScriptName`: $($files.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $($files.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 }
 else {
 	Write-Host ""

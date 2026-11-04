@@ -71,10 +71,10 @@ $appFolders = Get-ChildItem -Path $env:LOCALAPPDATA -Directory -Filter "app-*" -
 	Where-Object { $_.Name -match '^app-(\d+(?:\.\d+)*)$' }
 
 if (-not $appFolders -or $appFolders.Count -eq 0) {
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: No app-* folders found." -ForegroundColor Green }
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] No app-* folders found." -ForegroundColor Green }
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: No app-* folders found.")
+			[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: [$env:COMPUTERNAME] No app-* folders found.")
 		}
 		catch {
 			Write-Host ""

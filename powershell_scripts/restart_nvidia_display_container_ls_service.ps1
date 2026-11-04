@@ -52,10 +52,10 @@ if ($stopSuccess) {
 }
 
 if ($startSuccess) {
-	Write-Host "`n$ScriptName`: $displayName restarted successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $displayName restarted successfully." -ForegroundColor Green
 }
 else {
-	Write-Host "`n$ScriptName`: $displayName restart failed." -ForegroundColor Yellow
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $displayName restart failed." -ForegroundColor Yellow
 }
 
 exit 0

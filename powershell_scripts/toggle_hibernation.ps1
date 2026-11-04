@@ -99,7 +99,7 @@ try {
 		powercfg.exe /hibernate on
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if ($hibernationEnabled) {
-			Write-Host "`n$ScriptName`: Hibernation enabled successfully." -ForegroundColor Green
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation enabled successfully." -ForegroundColor Green
 		}
 		else {
 			Write-Host ""
@@ -117,7 +117,7 @@ try {
 		powercfg.exe /hibernate off
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if (-not $hibernationEnabled) {
-			Write-Host "`n$ScriptName`: Hibernation disabled successfully." -ForegroundColor Green
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation disabled successfully." -ForegroundColor Green
 		}
 		else {
 			Write-Host ""

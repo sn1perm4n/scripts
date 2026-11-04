@@ -19,7 +19,7 @@ try {
 	}
 
 	Disable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-	Write-Host "`n$ScriptName`: Wi-Fi disabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Wi-Fi disabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""

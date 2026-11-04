@@ -67,7 +67,7 @@ if ($deletedCount -gt 0) {
 	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $deletedCount $folderWord deleted, $freedDisplay freed." -ForegroundColor Green
 }
 else {
-	Write-Host "`n$ScriptName`: No folders deleted." -ForegroundColor Yellow
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] No folders deleted." -ForegroundColor Yellow
 }
 
 exit 0

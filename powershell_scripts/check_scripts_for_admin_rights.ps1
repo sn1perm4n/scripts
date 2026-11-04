@@ -179,7 +179,7 @@ Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.Fu
 $totalScripts = $Results.Count
 $likelyNeedsAdmin = ($Results | Where-Object { $_.NeedsAdmin -eq 'Likely' }).Count
 $actionableCount = ($Results | Where-Object { $_.NeedsAdmin -eq 'Likely' -and $_.AlreadyContainsAdminRights -eq 'No' }).Count
-$summaryLine = "$ScriptName`: $totalScripts script(s) checked, $likelyNeedsAdmin likely need(s) admin rights, $actionableCount missing admin check."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $totalScripts script(s) checked, $likelyNeedsAdmin likely need(s) admin rights, $actionableCount missing admin check."
 
 # Display results
 if (-not $NoConsoleOutput) {

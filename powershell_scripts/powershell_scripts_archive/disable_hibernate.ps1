@@ -30,7 +30,7 @@ try {
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
 
 		if (-not $hibernationEnabled) {
-			Write-Host "`n$ScriptName`: Hibernation disabled successfully." -ForegroundColor Green
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation disabled successfully." -ForegroundColor Green
 		}
 		else {
 			Write-Host ""

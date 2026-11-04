@@ -236,11 +236,11 @@ try {
 			Update-MpSignature -ErrorAction Stop
 		}
 
-		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Updates successfully installed." -ForegroundColor Green }
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Updates successfully installed." -ForegroundColor Green }
 		$statusLine = (@("$ScriptName`: [$timestamp] [$env:COMPUTERNAME] Updates installed:") + $updateLines) -join "`n"
 	}
 	else {
-		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Updates were not installed." -ForegroundColor Yellow }
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Updates were not installed." -ForegroundColor Yellow }
 		$statusLine = (@("$ScriptName`: [$timestamp] [$env:COMPUTERNAME] Updates available but not installed (declined):") + $updateLines) -join "`n"
 	}
 

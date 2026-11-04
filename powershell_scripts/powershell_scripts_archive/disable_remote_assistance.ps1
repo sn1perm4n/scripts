@@ -60,7 +60,7 @@ catch {
 }
 
 if ($registryChanged -or $firewallChanged) {
-	Write-Host "`n$ScriptName`: Remote Assistance disabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Remote Assistance disabled successfully." -ForegroundColor Green
 }
 else {
 	Write-Host ""

@@ -108,10 +108,10 @@ try {
 	Set-ItemProperty -Path $regPath -Name $regName -Value $targetValue -Type DWord -Force -ErrorAction Stop
 
 	if ($usingLeft) {
-		Write-Host "`n$ScriptName`: Switched to left Start button position successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Switched to left Start button position successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: Switched to center Start button position successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Switched to center Start button position successfully." -ForegroundColor Green
 	}
 }
 catch {

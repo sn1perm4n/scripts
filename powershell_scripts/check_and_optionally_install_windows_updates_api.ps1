@@ -214,7 +214,7 @@ try {
 		$installResult = $installer.Install()
 
 		if ($installResult.ResultCode -eq 2) {
-			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Updates successfully installed." -ForegroundColor Green }
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Updates successfully installed." -ForegroundColor Green }
 			$installOutcomeNote = "Updates successfully installed."
 		}
 		else {
@@ -249,7 +249,7 @@ try {
 		$statusLine = (@("$ScriptName`: [$timestamp] [$env:COMPUTERNAME] $installOutcomeNote") + $updateLines) -join "`n"
 	}
 	else {
-		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Updates were not installed." -ForegroundColor Yellow }
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Updates were not installed." -ForegroundColor Yellow }
 		$statusLine = (@("$ScriptName`: [$timestamp] [$env:COMPUTERNAME] Updates available but not installed (declined):") + $updateLines) -join "`n"
 	}
 

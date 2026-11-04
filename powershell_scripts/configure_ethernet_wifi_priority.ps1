@@ -360,15 +360,15 @@ if ($Preview) {
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 elseif ($RestoreDefaults) {
-	$summaryLine = "$ScriptName`: Automatic metric restored for $changedCount adapter(s)."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Automatic metric restored for $changedCount adapter(s)."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 }
 elseif ($changedCount -eq 0) {
-	$summaryLine = "$ScriptName`: All adapters already configured, no changes made."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] All adapters already configured, no changes made."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 }
 else {
-	$summaryLine = "$ScriptName`: $changedCount adapter(s) configured successfully."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $changedCount adapter(s) configured successfully."
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 }
 

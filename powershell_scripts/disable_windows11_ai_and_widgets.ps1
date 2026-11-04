@@ -265,7 +265,7 @@ if ($hadErrors) {
 	exit 1
 }
 else {
-	Write-Host "`n$ScriptName`: AI features disabled successfully. A reboot is required." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] AI features disabled successfully. A reboot is required." -ForegroundColor Green
 	exit 0
 }
 

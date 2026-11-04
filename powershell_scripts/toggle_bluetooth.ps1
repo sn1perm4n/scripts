@@ -101,7 +101,7 @@ try {
 			exit 0
 		}
 		$targetDevices | Enable-PnpDevice -Confirm:$false -ErrorAction Stop
-		Write-Host "`n$ScriptName`: Bluetooth enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Bluetooth enabled successfully." -ForegroundColor Green
 	}
 	else {
 		$targetDevices = $devices | Where-Object { $_.Status -eq 'OK' }
@@ -111,7 +111,7 @@ try {
 			exit 0
 		}
 		$targetDevices | Disable-PnpDevice -Confirm:$false -ErrorAction Stop
-		Write-Host "`n$ScriptName`: Bluetooth disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Bluetooth disabled successfully." -ForegroundColor Green
 	}
 }
 catch {

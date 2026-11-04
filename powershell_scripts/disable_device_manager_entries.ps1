@@ -142,7 +142,7 @@ else {
 	$notFoundCount++
 }
 
-$summaryLine = "$ScriptName`: $disabledCount device(s) disabled/deleted, $alreadyDisabledCount already disabled, $notFoundCount not found."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $disabledCount device(s) disabled/deleted, $alreadyDisabledCount already disabled, $notFoundCount not found."
 Write-Host "`n$summaryLine" -ForegroundColor $(if ($disabledCount -gt 0) { 'Green' } else { 'Yellow' })
 
 exit 0

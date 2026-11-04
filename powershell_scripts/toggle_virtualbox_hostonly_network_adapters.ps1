@@ -122,7 +122,7 @@ foreach ($adapter in $adapters) {
 }
 
 $action = if ($Enable) { "enabled" } else { "disabled" }
-$summaryLine = "$ScriptName`: $changedCount adapter(s) $action, $alreadyCount already $action."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $changedCount adapter(s) $action, $alreadyCount already $action."
 if ($changedCount -gt 0) {
 	Write-Host "`n$summaryLine" -ForegroundColor Green
 }

@@ -34,7 +34,7 @@ $newValue = Read-Host -Prompt "`nEnter the new value for '$propertyName'"
 # Change the Registry value
 try {
 	Set-ItemProperty -Path $registryPath -Name $propertyName -Value $newValue -Force -ErrorAction Stop
-	Write-Host "`n$ScriptName`: Registry value '$propertyName' updated successfully to '$newValue'." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Registry value '$propertyName' updated successfully to '$newValue'." -ForegroundColor Green
 }
 catch {
 	Write-Host ""

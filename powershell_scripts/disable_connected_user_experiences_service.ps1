@@ -53,10 +53,10 @@ else {
 }
 
 if ($changesMade) {
-	Write-Host "`n$ScriptName`: $displayName service successfully disabled and stopped." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $displayName service successfully disabled and stopped." -ForegroundColor Green
 }
 else {
-	Write-Host "`n$ScriptName`: $displayName service was already disabled and stopped. No changes made." -ForegroundColor Yellow
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $displayName service was already disabled and stopped. No changes made." -ForegroundColor Yellow
 }
 
 exit 0

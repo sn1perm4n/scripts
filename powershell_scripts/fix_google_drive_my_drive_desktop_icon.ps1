@@ -58,7 +58,7 @@ try {
 	$shortcut = $shell.CreateShortcut($shortcutPath)
 	$shortcut.IconLocation = "$exePath,128"
 	$shortcut.Save()
-	Write-Host "`n$ScriptName`: Icon updated using $exePath" -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Icon updated using $exePath" -ForegroundColor Green
 }
 catch {
 	Write-Host ""

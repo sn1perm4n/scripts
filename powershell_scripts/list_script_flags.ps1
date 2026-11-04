@@ -262,7 +262,7 @@ if ($NoFlags) {
 		foreach ($item in $commentOnlyScripts) { $CsvOutputLines += "$item,Optional flags comment block but no param block flags" }
 	}
 
-	$summaryLine = "$ScriptName`: Scanned $($scripts.Count) script(s): $($noFlagsScripts.Count) with no flags, $($commentOnlyScripts.Count) with an Optional flags comment block but no param block flags."
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Scanned $($scripts.Count) script(s): $($noFlagsScripts.Count) with no flags, $($commentOnlyScripts.Count) with an Optional flags comment block but no param block flags."
 	if (-not $NoConsoleOutput) {
 		$summaryColor = if ($noFlagsScripts.Count -gt 0 -or $commentOnlyScripts.Count -gt 0) { 'Yellow' } else { 'Green' }
 		Write-Host "`n$summaryLine" -ForegroundColor $summaryColor
@@ -475,13 +475,13 @@ if ($Unique) {
 }
 
 $summaryLine = if ($Filenames) {
-	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags script(s) matched."
+	"$ScriptName`: [$env:COMPUTERNAME] Scanned $($scripts.Count) script(s): $totalFlags script(s) matched."
 }
 elseif ($Unique) {
-	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags unique flag(s) found."
+	"$ScriptName`: [$env:COMPUTERNAME] Scanned $($scripts.Count) script(s): $totalFlags unique flag(s) found."
 }
 else {
-	"$ScriptName`: Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
+	"$ScriptName`: [$env:COMPUTERNAME] Scanned $($scripts.Count) script(s): $totalFlags flag(s) found."
 }
 
 if (-not $NoConsoleOutput) {

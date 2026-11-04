@@ -136,10 +136,10 @@ foreach ($file in $files) {
 }
 
 if ($blockedFiles.Count -eq 0) {
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: No blocked files found." -ForegroundColor Green }
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] No blocked files found." -ForegroundColor Green }
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: No blocked files found.")
+			[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: [$env:COMPUTERNAME] No blocked files found.")
 		}
 		catch {
 			Write-Host ""
@@ -263,10 +263,10 @@ if ($response -match '^[Yy]$') {
 		}
 	}
 
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Unblock operation complete. $($blockedFiles.Count) file(s) unblocked." -ForegroundColor Green }
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Unblock operation complete. $($blockedFiles.Count) file(s) unblocked." -ForegroundColor Green }
 	if ($SaveResults) {
 		$FileOutputLines += ""
-		$FileOutputLines += "$ScriptName`: Unblock operation complete. $($blockedFiles.Count) file(s) unblocked."
+		$FileOutputLines += "$ScriptName`: [$env:COMPUTERNAME] Unblock operation complete. $($blockedFiles.Count) file(s) unblocked."
 	}
 
 	if ($unblockErrors.Count -gt 0) {

@@ -41,7 +41,7 @@ if (Test-Path -Path $appdataLocalDiscordLogsFolder) {
 else { "$totalFreedMB MB" }
 		$fileWord = if ($logFiles.Count -eq 1) { "file" }
 else { "files" }
-		Write-Host "`n$ScriptName`: $($logFiles.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] $($logFiles.Count) $fileWord deleted, $freedDisplay freed." -ForegroundColor Green
 	}
 	catch {
 		Write-Host ""

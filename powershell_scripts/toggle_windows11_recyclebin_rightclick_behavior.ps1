@@ -84,7 +84,7 @@ try {
 			exit 0
 		}
 		New-Item -Path $regPath -Value "" -Force | Out-Null
-		Write-Host "`n$ScriptName`: Switched to Windows 10 style right-click menu successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Switched to Windows 10 style right-click menu successfully." -ForegroundColor Green
 	}
 	else {
 		if (-not (Test-Path $regParent)) {
@@ -93,7 +93,7 @@ try {
 			exit 0
 		}
 		Remove-Item -Path $regParent -Recurse -Force -ErrorAction Stop
-		Write-Host "`n$ScriptName`: Switched to Windows 11 style right-click menu successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Switched to Windows 11 style right-click menu successfully." -ForegroundColor Green
 	}
 }
 catch {

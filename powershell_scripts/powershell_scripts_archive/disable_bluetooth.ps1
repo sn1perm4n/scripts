@@ -26,7 +26,7 @@ try {
 	}
 
 	$enabledDevices | Disable-PnpDevice -Confirm:$false -ErrorAction Stop
-	Write-Host "`n$ScriptName`: Bluetooth disabled successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Bluetooth disabled successfully." -ForegroundColor Green
 }
 catch {
 	Write-Host ""

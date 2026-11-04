@@ -132,7 +132,7 @@ try {
 				$uniqueFiles | ForEach-Object { Write-Host $_ -ForegroundColor Cyan }
 			}
 
-			$summaryLine = "$ScriptName`: $($uniqueFiles.Count) file(s) found containing '$SearchString'."
+			$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($uniqueFiles.Count) file(s) found containing '$SearchString'."
 			if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 
 			if ($SaveResults) {
@@ -184,7 +184,7 @@ try {
 				}
 
 				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
-				$summaryLine = "$ScriptName`: $($Results.Count) match(es) found across $fileCount file(s)."
+				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s)."
 				if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 			}
 			elseif ($ShowLines) {
@@ -201,7 +201,7 @@ try {
 				}
 
 				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
-				$summaryLine = "$ScriptName`: $($Results.Count) match(es) found across $fileCount file(s)."
+				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s)."
 				if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 			}
 			else {
@@ -210,7 +210,7 @@ try {
 				}
 
 				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
-				$summaryLine = "$ScriptName`: $($Results.Count) match(es) found across $fileCount file(s)."
+				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s)."
 				if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 			}
 

@@ -109,10 +109,10 @@ try {
 	Set-ItemProperty -Path $regPath -Name "Enabled" -Value $targetValue -Type DWord -Force -ErrorAction Stop
 
 	if ($enabling) {
-		Write-Host "`n$ScriptName`: Memory Integrity enabled successfully. A reboot is required for this change to take effect." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Memory Integrity enabled successfully. A reboot is required for this change to take effect." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: Memory Integrity disabled successfully. A reboot is required for this change to take effect." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Memory Integrity disabled successfully. A reboot is required for this change to take effect." -ForegroundColor Green
 	}
 }
 catch {

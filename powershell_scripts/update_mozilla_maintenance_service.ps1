@@ -27,10 +27,10 @@ Write-Host "Running Mozilla Maintenance Service installer..." -ForegroundColor C
 try {
 	$process = Start-Process -FilePath $installerPath -Wait -PassThru -ErrorAction Stop
 	if ($process.ExitCode -eq 0) {
-		Write-Host "`n$ScriptName`: Mozilla Maintenance Service updated successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Mozilla Maintenance Service updated successfully." -ForegroundColor Green
 	}
 	else {
-		Write-Host "`n$ScriptName`: Installer exited with code $($process.ExitCode)." -ForegroundColor Yellow
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Installer exited with code $($process.ExitCode)." -ForegroundColor Yellow
 	}
 }
 catch {

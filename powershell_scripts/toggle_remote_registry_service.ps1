@@ -153,7 +153,7 @@ else {
 
 if ($enabling) {
 	if ($serviceChanged) {
-		Write-Host "`n$ScriptName`: RemoteRegistry service enabled and started successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] RemoteRegistry service enabled and started successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host ""
@@ -162,7 +162,7 @@ if ($enabling) {
 }
 else {
 	if ($serviceChanged) {
-		Write-Host "`n$ScriptName`: RemoteRegistry service disabled and stopped successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] RemoteRegistry service disabled and stopped successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host ""

@@ -55,7 +55,7 @@ else {
 }
 
 if ($serviceChanged) {
-	Write-Host "`n$ScriptName`: RemoteRegistry service disabled and stopped successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] RemoteRegistry service disabled and stopped successfully." -ForegroundColor Green
 }
 else {
 	Write-Host ""

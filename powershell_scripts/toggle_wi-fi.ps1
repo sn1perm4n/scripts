@@ -86,7 +86,7 @@ try {
 			exit 0
 		}
 		Enable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-		Write-Host "`n$ScriptName`: Wi-Fi enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Wi-Fi enabled successfully." -ForegroundColor Green
 	}
 	else {
 		if ($adapter.Status -eq 'Disabled') {
@@ -95,7 +95,7 @@ try {
 			exit 0
 		}
 		Disable-NetAdapter -Name "Wi-Fi" -Confirm:$false -ErrorAction Stop
-		Write-Host "`n$ScriptName`: Wi-Fi disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Wi-Fi disabled successfully." -ForegroundColor Green
 	}
 }
 catch {

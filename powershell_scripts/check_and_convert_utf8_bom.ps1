@@ -360,7 +360,7 @@ foreach ($filePath in $FailureFiles) {
 }
 
 # Summary line
-$summaryLine = "$ScriptName`: Analyzed $TotalFiles files: $MissingBOM missing BOM, $Converted converted."
+$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Analyzed $TotalFiles files: $MissingBOM missing BOM, $Converted converted."
 
 # Display summary
 if (-not $NoConsoleOutput) {

@@ -97,7 +97,7 @@ else {
 }
 
 if ($changesMade) {
-	Write-Host "`n$ScriptName`: Intel DSA services enabled and started successfully." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Intel DSA services enabled and started successfully." -ForegroundColor Green
 }
 else {
 	Write-Host ""

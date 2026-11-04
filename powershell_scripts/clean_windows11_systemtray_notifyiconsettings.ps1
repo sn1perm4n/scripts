@@ -222,7 +222,7 @@ if ($List) {
 		}
 	}
 
-	$summaryLine = "$ScriptName`: Total keys: $($entries.Count)"
+	$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Total keys: $($entries.Count)"
 	if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Cyan }
 
 	if ($SaveResults) {
@@ -251,7 +251,7 @@ $groups = $entries | Group-Object -Property NormalizedPath
 $duplicateGroups = $groups | Where-Object { $_.Count -ge 2 }
 
 if (-not $duplicateGroups) {
-	$messageLine = "$ScriptName`: No duplicate groups found."
+	$messageLine = "$ScriptName`: [$env:COMPUTERNAME] No duplicate groups found."
 	if (-not $NoConsoleOutput) { Write-Host $messageLine -ForegroundColor Green }
 	if ($SaveResults) {
 		try {

@@ -234,7 +234,7 @@ else {
 
 if ($enabling) {
 	if ($changesMade) {
-		Write-Host "`n$ScriptName`: Intel DSA services enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Intel DSA services enabled successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host ""
@@ -243,7 +243,7 @@ if ($enabling) {
 }
 else {
 	if ($changesMade) {
-		Write-Host "`n$ScriptName`: Intel DSA services disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Intel DSA services disabled successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host ""

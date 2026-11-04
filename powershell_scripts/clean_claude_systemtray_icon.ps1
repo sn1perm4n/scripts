@@ -135,7 +135,7 @@ if (-not $activeEntry) {
 $staleEntries = $claudeEntries | Where-Object { $_.KeyName -ne $activeEntry.KeyName }
 
 if ($staleEntries.Count -eq 0 -and $activeEntry.IsPromoted -eq 1) {
-	Write-Host "`n$ScriptName`: Claude system tray entry is already clean and promoted. No changes needed." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Claude system tray entry is already clean and promoted. No changes needed." -ForegroundColor Green
 	exit 0
 }
 

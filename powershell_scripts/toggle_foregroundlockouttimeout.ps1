@@ -109,7 +109,7 @@ try {
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name $regName -Type DWord -Value 0 -Force -ErrorAction Stop
-		Write-Host "`n$ScriptName`: ForegroundLockTimeout set to 0 successfully. Please reboot for the change to take effect." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] ForegroundLockTimeout set to 0 successfully. Please reboot for the change to take effect." -ForegroundColor Green
 	}
 	else {
 		if ($currentValue -eq $defaultValue) {
@@ -118,7 +118,7 @@ try {
 			exit 0
 		}
 		Set-ItemProperty -Path $regPath -Name $regName -Type DWord -Value $defaultValue -Force -ErrorAction Stop
-		Write-Host "`n$ScriptName`: ForegroundLockTimeout restored to default (0x30d40 / 200000ms) successfully. Please reboot for the change to take effect." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] ForegroundLockTimeout restored to default (0x30d40 / 200000ms) successfully. Please reboot for the change to take effect." -ForegroundColor Green
 	}
 }
 catch {

@@ -38,7 +38,7 @@ if ($hadErrors) {
 	exit 1
 }
 else {
-	Write-Host "`n$ScriptName`: Windows Recall disabled successfully. A reboot is required." -ForegroundColor Green
+	Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Windows Recall disabled successfully. A reboot is required." -ForegroundColor Green
 	exit 0
 }
 

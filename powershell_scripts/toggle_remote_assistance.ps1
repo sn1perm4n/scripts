@@ -171,7 +171,7 @@ catch {
 
 if ($enabling) {
 	if ($registryChanged -or $firewallChanged) {
-		Write-Host "`n$ScriptName`: Remote Assistance enabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Remote Assistance enabled successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host ""
@@ -180,7 +180,7 @@ if ($enabling) {
 }
 else {
 	if ($registryChanged -or $firewallChanged) {
-		Write-Host "`n$ScriptName`: Remote Assistance disabled successfully." -ForegroundColor Green
+		Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Remote Assistance disabled successfully." -ForegroundColor Green
 	}
 	else {
 		Write-Host ""

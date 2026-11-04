@@ -162,7 +162,7 @@ try {
 		}
 	}
 
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Installed program query completed successfully." -ForegroundColor Green }
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Installed program query completed successfully." -ForegroundColor Green }
 }
 catch {
 	Write-Host ""

@@ -181,7 +181,7 @@ if (-not $files -or $files.Count -eq 0) {
 # Build the search regex once, reused for both counting and (via MatchEvaluator) literal replacement
 $regexOptions = if ($CaseSensitive) { [System.Text.RegularExpressions.RegexOptions]::None } else { [System.Text.RegularExpressions.RegexOptions]::IgnoreCase }
 $searchRegex = New-Object System.Text.RegularExpressions.Regex([regex]::Escape($SearchString), $regexOptions)
-$replacementEvaluator = [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $ReplaceString }
+$replacementEvaluator = [System.Text.RegularExpressions.MatchEvaluator]{ $ReplaceString }
 
 # Initialize counters and output lines
 $matchedFileCount = 0

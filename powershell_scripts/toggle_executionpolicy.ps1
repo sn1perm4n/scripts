@@ -3,7 +3,7 @@
 
 # NOTE: This script requires elevation for every run via #Requires -RunAsAdministrator, consistent with toggle_ps-remoting.ps1 and other scripts that modify system-level configuration
 
-# NOTE2: Local and remote targeting (-Hostname, -HostFile, -Credential, defaulting to the local machine when neither is given) mirrors toggle_ps-remoting.ps1 exactly, including using CIM over DCOM for remote targets so this works even if PS-Remoting itself isn't enabled yet on the target
+# NOTE2: Local and remote targeting (-Hostname, -HostFile, -Interactive, defaulting to the local machine when neither is given) mirrors toggle_ps-remoting.ps1 exactly, including using CIM over DCOM for remote targets so this works even if PS-Remoting itself isn't enabled yet on the target
 
 # NOTE3: Remote changes are made by writing directly to the registry via the StdRegProv CIM class (SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell, value name ExecutionPolicy), which is the same location Set-ExecutionPolicy itself writes to locally for the LocalMachine and CurrentUser scopes
 
@@ -20,9 +20,9 @@
 # NOTE9: A failure on one target is logged as a warning and does not stop the remaining targets in -HostFile from being processed
 
 # Optional flags:
-#     -Credential:                                 Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context
 #     -HostFile <PATH>:                             Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)
 #     -Hostname <PATH>:                             A single remote hostname to target (mutually exclusive with -HostFile)
+#     -Interactive:                                 Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context
 #     -NoConsoleOutput:                             Suppress console output (requires -Policy)
 #     -Policy <PATH>:                               The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu
 #     -Preview:                                     Report the current and proposed ExecutionPolicy for each target without making changes (requires -Policy)
@@ -34,9 +34,9 @@
 
 [CmdletBinding(PositionalBinding=$false)]
 param (
-	[switch]$Credential,
 	[string]$HostFile,
 	[string]$Hostname,
+	[switch]$Interactive,
 	[switch]$NoConsoleOutput,
 	[ValidateSet('Restricted', 'AllSigned', 'RemoteSigned', 'Unrestricted', 'Bypass', 'Undefined')]
 	[string]$Policy,
@@ -52,11 +52,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Credential] [-HostFile <PATH>] [-Hostname <PATH>] [-NoConsoleOutput] [-Policy <PATH>] [-Preview] [-SaveResults <PATH>] [-Scope <Process|CurrentUser|LocalMachine>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-HostFile <PATH>] [-Hostname <PATH>] [-Interactive] [-NoConsoleOutput] [-Policy <PATH>] [-Preview] [-SaveResults <PATH>] [-Scope <Process|CurrentUser|LocalMachine>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Credential                                 Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context" -ForegroundColor Cyan
 	Write-Host "  -HostFile <PATH>                             Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)" -ForegroundColor Cyan
 	Write-Host "  -Hostname <PATH>                             A single remote hostname to target (mutually exclusive with -HostFile)" -ForegroundColor Cyan
+	Write-Host "  -Interactive                                 Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput                             Suppress console output (requires -Policy)" -ForegroundColor Cyan
 	Write-Host "  -Policy <PATH>                               The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu" -ForegroundColor Cyan
 	Write-Host "  -Preview                                     Report the current and proposed ExecutionPolicy for each target without making changes (requires -Policy)" -ForegroundColor Cyan
@@ -136,7 +136,7 @@ else {
 
 # Prompt for alternate credentials if requested; Get-Credential always masks the password input
 $credParam = @{}
-if ($Credential) {
+if ($Interactive) {
 	$remoteCredential = Get-Credential -Message "Enter credentials for remote ExecutionPolicy management"
 	if (-not $remoteCredential) {
 		Write-Host ""

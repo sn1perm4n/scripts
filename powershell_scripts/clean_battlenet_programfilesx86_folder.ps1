@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script deletes all but the most recent folder that starts with the character 'B' in a specific directory:
+# This script deletes all but the highest-numbered versioned Battle.net folder (i.e. Battle.net.17986) in a specific directory:
 # C:\Program Files (x86)\Battle.net
 
 #Requires -RunAsAdministrator
@@ -15,27 +15,41 @@ Write-Host "`nChecking '$parentFolder'..." -ForegroundColor Cyan
 # Check if the directory exists
 if (Test-Path -Path $parentFolder) {
 	try {
-		# Get all subfolders starting with the character 'B'
-		$folders = Get-ChildItem -Path $parentFolder -Directory | Where-Object { $_.Name -like 'B*' }
+		# Get all versioned Battle.net subfolders (i.e. Battle.net.17986), each paired with the build number at the end of its name
+		$folders = Get-ChildItem -Path $parentFolder -Directory | Where-Object { $_.Name -match '^Battle\.net\.\d+$' } | ForEach-Object {
+			[PSCustomObject]@{
+				Folder = $_
+				Build = [long]($_.Name -replace '^Battle\.net\.', '')
+			}
+		}
 
 		if (-not $folders) {
 			Write-Host ""
-			Write-Warning "No folders starting with 'B' found in '$parentFolder'."
+			Write-Warning "No versioned Battle.net folders found in '$parentFolder'."
 			exit 0
 		}
 
-		# Sort folders by LastWriteTime descending (most recent first)
-		$sortedFolders = $folders | Sort-Object LastWriteTime -Descending
+		# Sort folders by build number descending (highest first), since LastWriteTime is unreliable here - a folder's LastWriteTime changes whenever its contents are added or removed, so an old folder emptied during an update can look newer than the real one
+		$sortedFolders = $folders | Sort-Object Build -Descending
 
-		# Keep the most recent folder
-		$keep = $sortedFolders | Select-Object -First 1
+		# Keep the folder with the highest build number
+		$keep = ($sortedFolders | Select-Object -First 1).Folder
+
+		# Never delete anything if the folder being kept is empty (i.e. an update is in progress or has failed), since an older folder may still be the only complete copy
+		$keepHasFiles = Get-ChildItem -Path $keep.FullName -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+		if (-not $keepHasFiles) {
+			Write-Host ""
+			Write-Warning "The highest-numbered folder '$($keep.FullName)' is empty, so nothing was deleted."
+			exit 1
+		}
+
 		Write-Host "`nKeeping folder: $($keep.FullName)" -ForegroundColor Green
 
-		# Skip the most recent folder and delete the rest
-		$foldersToDelete = $sortedFolders | Select-Object -Skip 1
+		# Skip the kept folder and delete the rest
+		$foldersToDelete = $sortedFolders | Select-Object -Skip 1 | ForEach-Object { $_.Folder }
 
 		if (-not $foldersToDelete) {
-			Write-Host "`nOnly one 'B' folder exists, nothing to delete." -ForegroundColor Yellow
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Only one versioned Battle.net folder exists, nothing to delete." -ForegroundColor Yellow
 			exit 0
 		}
 

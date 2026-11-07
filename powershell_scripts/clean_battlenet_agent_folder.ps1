@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script deletes all but the most recent folder that starts with the character "A" in a specific directory:
+# This script deletes all but the highest-numbered versioned Agent folder (i.e. Agent.8223) in a specific directory:
 # C:\ProgramData\Battle.net\Agent
 
 #Requires -RunAsAdministrator
@@ -15,26 +15,40 @@ Write-Host "`nChecking '$battlenetAgentFolder'..." -ForegroundColor Cyan
 # Check if the directory exists
 if (Test-Path -Path $battlenetAgentFolder) {
 	try {
-		# Get all folders in the directory that start with "A"
-		$foldersStartingWithA = Get-ChildItem -Path $battlenetAgentFolder -Directory | Where-Object { $_.Name -clike 'A*' }
+		# Get all versioned Agent folders in the directory (i.e. Agent.8223), each paired with the build number at the end of its name
+		$agentFolders = Get-ChildItem -Path $battlenetAgentFolder -Directory | Where-Object { $_.Name -cmatch '^Agent\.\d+$' } | ForEach-Object {
+			[PSCustomObject]@{
+				Folder = $_
+				Build = [long]($_.Name -replace '^Agent\.', '')
+			}
+		}
 
-		# Guard clause that activates and exits if no "A" folders exist
-		if (-not $foldersStartingWithA) {
+		# Guard clause that activates and exits if no versioned Agent folders exist
+		if (-not $agentFolders) {
 			Write-Host ""
-			Write-Warning "No folders starting with 'A' found in '$battlenetAgentFolder'."
+			Write-Warning "No versioned Agent folders found in '$battlenetAgentFolder'."
 			exit 0
 		}
 
-		# Find the most recently modified folder that starts with "A"
-		$latestAFolder = $foldersStartingWithA | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-		Write-Host "`nKeeping folder: $($latestAFolder.Name)" -ForegroundColor Green
+		# Find the folder with the highest build number, since LastWriteTime is unreliable here - a folder's LastWriteTime changes whenever its contents are added or removed, so an old folder emptied during an update can look newer than the real one
+		$latestAgentFolder = ($agentFolders | Sort-Object Build -Descending | Select-Object -First 1).Folder
+
+		# Never delete anything if the folder being kept is empty (i.e. an update is in progress or has failed), since an older folder may still be the only complete copy
+		$keepHasFiles = Get-ChildItem -Path $latestAgentFolder.FullName -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+		if (-not $keepHasFiles) {
+			Write-Host ""
+			Write-Warning "The highest-numbered folder '$($latestAgentFolder.FullName)' is empty, so nothing was deleted."
+			exit 1
+		}
+
+		Write-Host "`nKeeping folder: $($latestAgentFolder.Name)" -ForegroundColor Green
 
 		$totalBytesFreed = 0
 		$deletedCount = 0
 
-		# Delete all "A" folders with the exception of the newest
-		foreach ($folder in $foldersStartingWithA) {
-			if ($folder.FullName -ne $latestAFolder.FullName) {
+		# Delete all versioned Agent folders with the exception of the highest-numbered one
+		foreach ($folder in $agentFolders.Folder) {
+			if ($folder.FullName -ne $latestAgentFolder.FullName) {
 				$folderSize = (Get-ChildItem -Path $folder.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
 				if (-not $folderSize) { $folderSize = 0 }
 				Write-Host "Deleting folder: $($folder.FullName)" -ForegroundColor Yellow
@@ -45,7 +59,7 @@ if (Test-Path -Path $battlenetAgentFolder) {
 		}
 
 		if ($deletedCount -eq 0) {
-			Write-Host "`nOnly one folder starting with 'A' exists. Nothing deleted." -ForegroundColor Yellow
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Only one versioned Agent folder exists. Nothing deleted." -ForegroundColor Yellow
 			exit 0
 		}
 

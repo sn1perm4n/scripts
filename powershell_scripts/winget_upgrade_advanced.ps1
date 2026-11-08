@@ -14,7 +14,7 @@
 #     -LogToDesktop: Save results to a file named winget_<COMPUTERNAME>.txt on the desktop
 #     -NoConsoleOutput: Suppress console output (requires -SaveResults); errors are redirected into the results file instead of being lost
 #     -NoLog: Delete winget's own diagnostic log file(s) created during this run (winget has no native flag to suppress log creation, so this deletes them afterward instead)
-#     -SaveResults <PATH>: Append results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -UpgradeAll: Upgrade all available packages after displaying the upgrade list
 #     -Help / -?: Display this help message
 
@@ -42,7 +42,7 @@ if ($Help) {
 	Write-Host "  -LogToDesktop        Save results to a file named winget_<COMPUTERNAME>.txt on the desktop" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults); errors go to the results file instead" -ForegroundColor Cyan
 	Write-Host "  -NoLog               Delete winget's own diagnostic log file(s) created during this run" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Append results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -UpgradeAll          Upgrade all available packages after displaying the upgrade list" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability

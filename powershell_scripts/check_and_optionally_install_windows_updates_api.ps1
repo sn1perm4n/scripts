@@ -12,7 +12,7 @@
 #     -InstallAll:         Automatically install all available updates without prompting (mutually exclusive with -CheckOnly)
 #     -NoConsoleOutput:    Suppress console output (requires -CheckOnly or -InstallAll, and -SaveResults)
 #     -Restart:            Automatically restart after installing updates if required (default: no restart)
-#     -SaveResults <PATH>: Save results to a text file (appends if file exists)
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
@@ -38,7 +38,7 @@ if ($Help) {
 	Write-Host "  -InstallAll          Automatically install all available updates without prompting (mutually exclusive with -CheckOnly)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -CheckOnly or -InstallAll, and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Restart             Automatically restart after installing updates if required (default: no restart)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0

@@ -22,7 +22,7 @@
 #     -IncludeCache:         Include cache/temp/log files in backup (excluded by default; has no effect with -Extensions)
 #     -NoConsoleOutput:      Suppress console output (requires -SaveResults, and one of -Force/-Preview)
 #     -Preview:              Show what would happen without running the backup
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists)
+#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:            Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -48,7 +48,7 @@ if ($Help) {
 	Write-Host "  -IncludeCache        Include cache/temp/log files in backup (excluded by default; has no effect with -Extensions)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults, and one of -Force/-Preview)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would happen without running the backup" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0

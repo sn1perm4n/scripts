@@ -7,7 +7,7 @@
 #     -Hide:               Hide KB5007651 from Windows Update (mutually exclusive with -Preview and -Show)
 #     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
 #     -Preview:            Report whether KB5007651 is currently hidden, visible, or not applicable, without changing anything
-#     -SaveResults <PATH>: Save results to a text file (appends if file exists)
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -Show:               Show/unhide KB5007651 in Windows Update (mutually exclusive with -Hide and -Preview)
 #     -Help / -?:          Display this help message
 
@@ -35,7 +35,7 @@ if ($Help) {
 	Write-Host "  -Hide                Hide KB5007651 from Windows Update (mutually exclusive with -Preview and -Show)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Report whether KB5007651 is currently hidden, visible, or not applicable, without changing anything" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Show                Show/unhide KB5007651 in Windows Update (mutually exclusive with -Hide and -Preview)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability

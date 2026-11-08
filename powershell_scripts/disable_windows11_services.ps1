@@ -15,7 +15,7 @@
 #     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
 #     -Preview:            Report current status/startup type for every service without making any changes
 #     -Restore <PATH>:     Restore services to the StartType/Status recorded in a -Backup CSV file (mutually exclusive with -Preview)
-#     -SaveResults <PATH>: Save results to a text file (appends if file exists)
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
@@ -43,7 +43,7 @@ if ($Help) {
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Report current status/startup type for every service without making any changes" -ForegroundColor Cyan
 	Write-Host "  -Restore <PATH>      Restore services to the StartType/Status recorded in a -Backup CSV file (mutually exclusive with -Preview)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability
 	exit 0

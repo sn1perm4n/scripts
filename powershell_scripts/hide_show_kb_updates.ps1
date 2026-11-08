@@ -8,7 +8,7 @@
 #     -KB <KBxxxxxxx>:     The KB article ID to hide, show, or check (i.e. -KB "KB5007651")
 #     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
 #     -Preview:            Report whether the specified -KB is currently hidden, visible, or not applicable, without changing anything
-#     -SaveResults <PATH>: Save results to a text file (appends if file exists)
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -Show:               Show/unhide the specified -KB in Windows Update (mutually exclusive with -Hide and -Preview)
 #     -Help / -?:          Display this help message
 
@@ -36,7 +36,7 @@ if ($Help) {
 	Write-Host "  -KB <KBxxxxxxx>      The KB article ID to hide, show, or check (i.e. -KB ""KB5007651"")" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Report whether the specified -KB is currently hidden, visible, or not applicable, without changing anything" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Show                Show/unhide the specified -KB in Windows Update (mutually exclusive with -Hide and -Preview)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""  # extra newline for readability

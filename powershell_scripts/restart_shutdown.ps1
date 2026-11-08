@@ -22,7 +22,7 @@
 #     -Parallel:                        Process all hosts simultaneously instead of sequentially
 #     -Preview:                         Show what would happen for each target without performing the operation (skips credential prompt)
 #     -Restart:                         Restart the target(s)
-#     -SaveResults <PATH>:              Save results to a text file
+#     -SaveResults <PATH>:              Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -Shutdown:                        Shut down the target(s)
 #     -Help / -?:                       Display this help message
 
@@ -60,7 +60,7 @@ if ($Help) {
 	Write-Host "  -Parallel            Process all hosts simultaneously instead of sequentially" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would happen for each target without performing the operation (skips credential prompt)" -ForegroundColor Cyan
 	Write-Host "  -Restart             Restart the target(s)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Shutdown            Shut down the target(s)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""

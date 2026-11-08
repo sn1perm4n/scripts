@@ -17,7 +17,7 @@
 #     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
 #     -NoLog: Suppress the WinSCP session log file
 #     -Preview: Show what would happen without actually uploading or deleting anything
-#     -SaveResults <PATH>: Save console output to a text file
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
 #     -TestCompatibility: Test whether WinSCP works natively under the current PowerShell version
 #     -Help / -?: Display this help message
 
@@ -56,7 +56,7 @@ if ($Help) {
 	Write-Host "  -NoConsoleOutput      Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -NoLog                Suppress the WinSCP session log file" -ForegroundColor Cyan
 	Write-Host "  -Preview              Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>   Save console output to a text file" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -TestCompatibility    Test whether WinSCP works natively under the current PowerShell version" -ForegroundColor Cyan
 	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
 	Write-Host ""

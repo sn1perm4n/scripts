@@ -160,6 +160,9 @@ $folders = Get-ChildItem -LiteralPath $resolvedPath -Directory -Force -Recurse:$
 # Junctions and symbolic links are never followed or deleted; Windows PowerShell 5.1 can recurse into them, so anything reached through one is skipped too
 $linkPaths = @($folders | Where-Object { $_.Attributes -band [System.IO.FileAttributes]::ReparsePoint } | ForEach-Object { $_.FullName })
 
+# Allow -Exclude to be given as one comma-separated string too (i.e. -Exclude ".git,node_modules")
+$Exclude = @($Exclude | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+
 $foldersDeleted = @()
 $foldersSkipped = @()
 $foldersFailed = @()

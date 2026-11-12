@@ -248,7 +248,7 @@ if ($NoFlags) {
 
 	if (-not $NoConsoleOutput) {
 		$noFlagsColor = if ($noFlagsScripts.Count -gt 0) { 'Yellow' } else { 'Green' }
-		Write-Host "`nNo flags: $($noFlagsScripts.Count)" -ForegroundColor $noFlagsColor
+		Write-Host "No flags: $($noFlagsScripts.Count)" -ForegroundColor $noFlagsColor
 		foreach ($item in $noFlagsScripts) { Write-Host "  $item" }
 
 		if ($commentOnlyScripts.Count -gt 0) {

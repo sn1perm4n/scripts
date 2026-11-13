@@ -8,7 +8,7 @@
 #     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
 #     -Preview:            Scan and report issues without fixing anything
 #     -Recurse:            Include files in subdirectories
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -36,7 +36,7 @@ if ($Help) {
 	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Scan and report issues without fixing anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -107,7 +107,7 @@ if (-not $files -or $files.Count -eq 0) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 		}
 		catch {
 			Write-Host ""
@@ -120,7 +120,7 @@ if (-not $files -or $files.Count -eq 0) {
 # Initialize counters and output lines
 $issueCount = 0
 $fixedCount = 0
-$FileOutputLines = @()
+$FileOutputLines = @("$env:COMPUTERNAME`:")
 
 if (-not $NoConsoleOutput) { Write-Host "`nScanning for trailing periods after `$(`$_.Exception.Message)...`n" -ForegroundColor Cyan }
 

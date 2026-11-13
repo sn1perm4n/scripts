@@ -9,7 +9,7 @@
 #     -Path <PATH>:        Path to a .ps1 or .reg file or a folder (prompts if not specified)
 #     -Preview:            Show BOM status for every file without converting anything (mutually exclusive with -ConvertAll, -Failures, -Successes)
 #     -Recurse:            Include all .ps1 and .reg files in subfolders of the specified path
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Successes:          Only show successfully converted filenames
 #     -Help / -?:          Display this help message
 
@@ -41,7 +41,7 @@ if ($Help) {
 	Write-Host "  -Path <PATH>         Path to a .ps1 or .reg file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show BOM status for every file without converting anything (mutually exclusive with -ConvertAll, -Failures, -Successes)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include all .ps1 and .reg files in subfolders of the specified path" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Successes           Only show successfully converted filenames" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""

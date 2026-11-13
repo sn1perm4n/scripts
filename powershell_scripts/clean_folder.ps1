@@ -9,7 +9,7 @@
 #     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
 #     -Preview:            Show what would be deleted without making any changes
 #     -Recurse:            Include files in subdirectories when listing and deleting
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
@@ -39,7 +39,7 @@ if ($Help) {
 	Write-Host "  -NoConsoleOutput      Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview              Show what would be deleted without making any changes" -ForegroundColor Cyan
 	Write-Host "  -Recurse              Include files in subdirectories when listing and deleting" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>   Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>   Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -63,7 +63,7 @@ if ($NoConsoleOutput -and (-not $DeleteAll -or -not $SaveResults)) {
 	exit 1
 }
 
-$FileOutputLines = @()
+$FileOutputLines = @("$env:COMPUTERNAME`:")
 
 if (-not $NoConsoleOutput) { Write-Host "`nChecking '$TargetFolder'..." -ForegroundColor Cyan }
 
@@ -75,7 +75,7 @@ if (-not (Test-Path -Path $TargetFolder)) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 		}
 		catch {
 			Write-Host ""
@@ -96,7 +96,7 @@ try {
 		}
 		if ($SaveResults) {
 			try {
-				[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+				[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 			}
 			catch {
 				Write-Host ""
@@ -147,7 +147,7 @@ try {
 			}
 			if ($SaveResults) {
 				try {
-					[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+					[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 				}
 				catch {
 					Write-Host ""

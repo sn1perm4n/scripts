@@ -7,7 +7,7 @@
 #     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
 #     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
 #     -Recurse:            Include files in subdirectories
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Successes:          Shows only scripts with no issues in output
 #     -Summary:            Shows a summary of analyzed scripts at the end
 #     -Help / -?:          Display this help message
@@ -39,7 +39,7 @@ if ($Help) {
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -Successes           Show only scripts with no compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -156,7 +156,7 @@ if ($scripts.Count -eq 0) {
 	if (-not $NoConsoleOutput) { Write-Host "No PowerShell scripts (.ps1) found." -ForegroundColor Cyan }
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, "No PowerShell scripts (.ps1) found.")
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`nNo PowerShell scripts (.ps1) found.")
 		}
 		catch {
 			Write-Host ""
@@ -189,7 +189,7 @@ $VersionsToCheck = @($PS5Version) + $Detected7Versions
 
 # Initialize collections
 $AllResults = @()
-$FileOutputLines = @()
+$FileOutputLines = @("$env:COMPUTERNAME`:")
 $summaryLine = ""
 
 # Analyze each script

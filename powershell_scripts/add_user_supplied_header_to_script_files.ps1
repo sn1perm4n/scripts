@@ -14,7 +14,7 @@
 #     -Path <PATH>:        Path to the folder to process (prompts if not specified)
 #     -Preview:            Show which files would be modified, overwritten, or flagged without changing anything
 #     -Recurse:            Include files in subdirectories
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Text <TEXT>:        The text to add as a header comment (prompts if not specified)
 #     -Help / -?:          Display this help message
 
@@ -44,7 +44,7 @@ if ($Help) {
 	Write-Host "  -Path <PATH>         Path to the folder to process (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show which files would be modified, overwritten, or flagged without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Text <TEXT>         The text to add as a header comment (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
@@ -117,7 +117,7 @@ if (-not $files) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 		}
 		catch {
 			Write-Host ""
@@ -127,7 +127,7 @@ if (-not $files) {
 	exit 0
 }
 
-$FileOutputLines = @()
+$FileOutputLines = @("$env:COMPUTERNAME`:")
 $processedCount = 0
 $alreadyCorrectCount = 0
 $mismatchCount = 0

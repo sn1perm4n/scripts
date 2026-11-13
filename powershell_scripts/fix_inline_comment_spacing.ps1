@@ -108,7 +108,7 @@ if (-not $files -or $files.Count -eq 0) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 		}
 		catch {
 			Write-Host ""

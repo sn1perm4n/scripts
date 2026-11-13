@@ -9,7 +9,7 @@
 #     -Path1 <PATH>:       Path to the first file or folder (prompts if not specified)
 #     -Path2 <PATH>:       Path to the second file or folder (prompts if not specified)
 #     -Recurse:            Include files in subdirectories (only applicable when comparing directories)
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -39,7 +39,7 @@ if ($Help) {
 	Write-Host "  -Path1 <PATH>        Path to the first file or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Path2 <PATH>        Path to the second file or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories (only applicable when comparing directories)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -112,7 +112,7 @@ $item1st = Get-Item $Path1
 $item2nd = Get-Item $Path2
 
 # Initialize output lines
-$FileOutputLines = @()
+$FileOutputLines = @("$env:COMPUTERNAME`:")
 
 # Handle file vs directory mismatch
 if ($item1st.PSIsContainer -ne $item2nd.PSIsContainer) {
@@ -160,7 +160,7 @@ else {
 		}
 		if ($SaveResults) {
 			try {
-				[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+				[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 			}
 			catch {
 				Write-Host ""
@@ -178,7 +178,7 @@ else {
 		}
 		if ($SaveResults) {
 			try {
-				[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+				[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 			}
 			catch {
 				Write-Host ""

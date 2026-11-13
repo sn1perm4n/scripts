@@ -8,7 +8,7 @@
 #     -List:               Show all app-* folders found without processing
 #     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
 #     -Preview:            Show what would be deleted without making any changes
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Table:              Show all app-* folders in table format (Name, FullName, LastWriteTime)
 #     -Help / -?:          Display this help message
 
@@ -34,7 +34,7 @@ if ($Help) {
 	Write-Host "  -List                Show all app-* folders found without processing" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be deleted without making any changes" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Table               Show all app-* folders in table format (Name, FullName, LastWriteTime)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""

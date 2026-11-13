@@ -11,7 +11,7 @@
 #     -List:               Show all NotifyIconSettings keys without processing
 #     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
 #     -Preview:            Show what would be deleted without making any changes (backup is skipped)
-#     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>: Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -38,7 +38,7 @@ if ($Help) {
 	Write-Host "  -List                Show all NotifyIconSettings keys without processing" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Preview             Show what would be deleted without making any changes (backup is skipped)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -69,7 +69,7 @@ if ($NoConsoleOutput -and (-not $DeleteAll -or -not $SaveResults)) {
 	exit 1
 }
 
-$FileOutputLines = @()
+$FileOutputLines = @("$env:COMPUTERNAME`:")
 $deletedCount = 0
 $totalFlaggedCount = 0
 
@@ -128,7 +128,7 @@ if (-not $subkeys) {
 	}
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 		}
 		catch {
 			Write-Host ""
@@ -256,7 +256,7 @@ if (-not $duplicateGroups) {
 	if (-not $NoConsoleOutput) { Write-Host $messageLine -ForegroundColor Green }
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, $messageLine)
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$messageLine")
 		}
 		catch {
 			Write-Host ""

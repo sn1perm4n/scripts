@@ -19,7 +19,7 @@
 #     -Preview:              Show matched files and occurrence counts without modifying anything
 #     -Recurse:              Include files in subdirectories
 #     -ReplaceString <TEXT>: The replacement text (prompts if not specified)
-#     -SaveResults <PATH>:   Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>:   Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -SearchString <TEXT>:  The text to search for (prompts if not specified)
 #     -ShowLines:            Show each matching line with its line number and how it would look after the replacement
 #     -Help / -?:            Display this help message
@@ -57,7 +57,7 @@ if ($Help) {
 	Write-Host "  -Preview               Show matched files and occurrence counts without modifying anything" -ForegroundColor Cyan
 	Write-Host "  -Recurse               Include files in subdirectories" -ForegroundColor Cyan
 	Write-Host "  -ReplaceString <TEXT>  The replacement text (prompts if not specified)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>    Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>    Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -SearchString <TEXT>   The text to search for (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -ShowLines             Show each matching line with its line number and how it would look after the replacement" -ForegroundColor Cyan
 	Write-Host "  -Help                  Display this help message" -ForegroundColor Cyan

@@ -10,7 +10,7 @@
 #     -NoConsoleOutput:     Suppress console output (requires -Path, -SearchString, and -SaveResults)
 #     -Path <PATH>:         Path to a folder to search (prompts if not specified)
 #     -Recurse:             Search subdirectories recursively
-#     -SaveResults <PATH>:  Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SaveResults <PATH>:  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)
 #     -SearchString <TEXT>: The text to search for (prompts if not specified)
 #     -ShowLines:           Show full line content grouped by file with line numbers (replaces default table output)
 #     -Help / -?:           Display this help message
@@ -46,7 +46,7 @@ if ($Help) {
 	Write-Host "  -NoConsoleOutput      Suppress console output (requires -Path, -SearchString, and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>          Path to a folder to search (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse              Search subdirectories recursively" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>   Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>   Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -SearchString <TEXT>  The text to search for (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -ShowLines            Show full line content grouped by file with line numbers (replaces default table output)" -ForegroundColor Cyan
 	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
@@ -138,7 +138,7 @@ try {
 			if ($SaveResults) {
 				$outputLines = $uniqueFiles + @("", $summaryLine)
 				try {
-					$outputString = ($outputLines -join "`n")
+					$outputString = "$env:COMPUTERNAME`:`n" + ($outputLines -join "`n")
 					[System.IO.File]::WriteAllText($SaveResults, $outputString)
 					if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 				}
@@ -268,7 +268,7 @@ try {
 				$outputLines += $summaryLine
 
 				try {
-					$outputString = ($outputLines -join "`n")
+					$outputString = "$env:COMPUTERNAME`:`n" + ($outputLines -join "`n")
 					[System.IO.File]::WriteAllText($SaveResults, $outputString)
 					if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 				}
@@ -288,7 +288,7 @@ try {
 		}
 		if ($SaveResults) {
 			try {
-				[System.IO.File]::WriteAllText($SaveResults, $warningMessage)
+				[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$warningMessage")
 			}
 			catch {
 				Write-Host ""

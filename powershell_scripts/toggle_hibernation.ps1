@@ -51,10 +51,10 @@ if ($Preview) {
 	try {
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if ($hibernationEnabled) {
-			Write-Host "Hibernation is currently ENABLED."
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation is currently ENABLED."
 		}
 		else {
-			Write-Host "Hibernation is currently DISABLED."
+			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation is currently DISABLED."
 		}
 	}
 	catch {
@@ -97,6 +97,11 @@ try {
 		}
 		Write-Host "`nEnabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate on
+		if ($LASTEXITCODE -ne 0) {
+			Write-Host ""
+			Write-Error "$ScriptName`: powercfg.exe failed to enable Hibernation (exit code $LASTEXITCODE)."
+			exit 1
+		}
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if ($hibernationEnabled) {
 			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation enabled successfully." -ForegroundColor Green
@@ -115,6 +120,11 @@ try {
 		}
 		Write-Host "`nDisabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate off
+		if ($LASTEXITCODE -ne 0) {
+			Write-Host ""
+			Write-Error "$ScriptName`: powercfg.exe failed to disable Hibernation (exit code $LASTEXITCODE)."
+			exit 1
+		}
 		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 		if (-not $hibernationEnabled) {
 			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation disabled successfully." -ForegroundColor Green

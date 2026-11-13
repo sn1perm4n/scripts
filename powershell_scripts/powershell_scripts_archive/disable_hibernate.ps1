@@ -15,7 +15,7 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 try {
 	# Check current Hibernation status
 	Write-Host "`nChecking Hibernation status..." -ForegroundColor Cyan
-	$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
+	$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 
 	if (-not $hibernationEnabled) {
 		Write-Host ""
@@ -25,9 +25,14 @@ try {
 		# Disable Hibernation
 		Write-Host "`nDisabling Hibernation..." -ForegroundColor Cyan
 		powercfg.exe /hibernate off
+		if ($LASTEXITCODE -ne 0) {
+			Write-Host ""
+			Write-Error "$ScriptName`: powercfg.exe failed to disable Hibernation (exit code $LASTEXITCODE)."
+			exit 1
+		}
 
 		# Verify the change
-		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled).HibernateEnabled -eq 1
+		$hibernationEnabled = (Get-ItemProperty HKLM:\SYSTEM\CurrentControlSet\Control\Power -Name HibernateEnabled -ErrorAction Stop).HibernateEnabled -eq 1
 
 		if (-not $hibernationEnabled) {
 			Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Hibernation disabled successfully." -ForegroundColor Green

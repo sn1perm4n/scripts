@@ -5,6 +5,7 @@
 
 # NOTE2: Icon index 128 is assumed to be stable across Drive File Stream versions; if Google ever changes this, the hardcoded ",128" below will need updating
 
+# Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Locate the latest installed Drive File Stream version folder

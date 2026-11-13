@@ -37,7 +37,7 @@ if ($Help) {
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Table               Show all app-* folders in table format (Name, FullName, LastWriteTime)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

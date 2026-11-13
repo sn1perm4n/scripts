@@ -47,7 +47,7 @@ if ($Help) {
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Text <TEXT>         The text to add as a header comment (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

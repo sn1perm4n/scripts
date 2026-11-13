@@ -45,7 +45,7 @@ if ($Help) {
 	Write-Host "  -Restore <PATH>      Restore services to the StartType/Status recorded in a -Backup CSV file (mutually exclusive with -Preview)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

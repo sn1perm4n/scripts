@@ -39,7 +39,7 @@ if ($Help) {
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Show                Show/unhide the specified -KB in Windows Update (mutually exclusive with -Hide and -Preview)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

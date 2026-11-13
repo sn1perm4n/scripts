@@ -50,7 +50,7 @@ if ($Help) {
 	Write-Host "  -SearchString <TEXT>  The text to search for (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -ShowLines            Show full line content grouped by file with line numbers (replaces default table output)" -ForegroundColor Cyan
 	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

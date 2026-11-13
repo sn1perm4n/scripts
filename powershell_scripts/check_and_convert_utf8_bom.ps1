@@ -44,7 +44,7 @@ if ($Help) {
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Successes           Only show successfully converted filenames" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 
@@ -208,7 +208,7 @@ if ($Successes) {
 			foreach ($line in $lines) {
 				Write-Host $line -ForegroundColor Cyan
 			}
-			Write-Host ""  # newline after last file
+			Write-Host ""
 		}
 	}
 	else {
@@ -240,7 +240,7 @@ if ($Failures) {
 			foreach ($line in $lines) {
 				Write-Host $line -ForegroundColor Yellow
 			}
-			Write-Host ""  # newline after last file
+			Write-Host ""
 		}
 	}
 	else {
@@ -274,7 +274,7 @@ if ($SuccessFiles.Count -and (-not $ConvertAll)) {
 			$FileOutputLines += "${fileName}: UTF-8 BOM OK"
 		}
 	}
-	Write-Host ""  # blank line between successes and failures
+	Write-Host ""
 }
 
 # Interactive processing for files missing BOM

@@ -63,7 +63,7 @@ if ($Help) {
 	Write-Host "  -SaveResults <PATH>                          Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Scope <Process|CurrentUser|LocalMachine>    Which scope to target (default: LocalMachine)" -ForegroundColor Cyan
 	Write-Host "  -Help                                        Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

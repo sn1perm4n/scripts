@@ -44,7 +44,7 @@ if ($Help) {
 	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a CSV file (i.e. -SaveResults ""C:\output.csv"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

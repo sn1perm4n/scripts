@@ -41,7 +41,7 @@ if ($Help) {
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a text file (i.e. -SaveResults ""C:\output.txt"")" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 
@@ -102,9 +102,9 @@ catch {
 
 # Prompt user for file or folder path if not specified
 if (-not $Path) {
-	Write-Host ""  # blank line before prompt
+	Write-Host ""
 	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
-	Write-Host ""  # blank line after prompt
+	Write-Host ""
 }
 
 if (-not (Test-Path $Path)) {
@@ -293,7 +293,7 @@ if ($Summary) {
 			Write-Host ""
 		}
 		elseif (-not $Failures) {
-			Write-Host ""  # normal spacing for other flags
+			Write-Host ""
 		}
 		Write-Host $summaryLine -ForegroundColor Cyan
 	}

@@ -61,7 +61,7 @@ if ($Help) {
 	Write-Host "  -SearchString <TEXT>   The text to search for (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -ShowLines             Show each matching line with its line number and how it would look after the replacement" -ForegroundColor Cyan
 	Write-Host "  -Help                  Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

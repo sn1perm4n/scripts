@@ -32,7 +32,7 @@ if ($Help) {
 	Write-Host "  -Enable   Enable Memory Integrity without prompting" -ForegroundColor Cyan
 	Write-Host "  -Preview  Report current Memory Integrity status without changing anything" -ForegroundColor Cyan
 	Write-Host "  -Help     Display this help message" -ForegroundColor Cyan
-	Write-Host ""  # extra newline for readability
+	Write-Host ""
 	exit 0
 }
 

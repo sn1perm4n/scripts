@@ -2,18 +2,18 @@
 # This script searches a user-defined directory for a user-defined text string
 
 # Optional flags:
-#     -CaseSensitive:        Enables case-sensitive search
-#     -Exact:                Match only lines where the entire line equals the search text
-#     -Filenames:            Show unique filenames only instead of full table output
-#     -LinesAbove <N>:       Include N lines of context above each match
-#     -LinesBelow <N>:       Include N lines of context below each match
-#     -NoConsoleOutput:      Suppress console output (requires -Path, -SearchString, and -SaveResults)
-#     -Path <PATH>:          Path to a folder to search (prompts if not specified)
-#     -Recurse:              Search subdirectories recursively
-#     -SaveResults <PATH>:   Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -SearchString <TEXT>:  The text to search for (prompts if not specified)
-#     -ShowLines:            Show full line content grouped by file with line numbers (replaces default table output)
-#     -Help / -?:            Display this help message
+#     -CaseSensitive:       Enables case-sensitive search
+#     -Exact:               Match only lines where the entire line equals the search text
+#     -Filenames:           Show unique filenames only instead of full table output
+#     -LinesAbove <N>:      Include N lines of context above each match
+#     -LinesBelow <N>:      Include N lines of context below each match
+#     -NoConsoleOutput:     Suppress console output (requires -Path, -SearchString, and -SaveResults)
+#     -Path <PATH>:         Path to a folder to search (prompts if not specified)
+#     -Recurse:             Search subdirectories recursively
+#     -SaveResults <PATH>:  Save results to a text file (i.e. -SaveResults "C:\output.txt")
+#     -SearchString <TEXT>: The text to search for (prompts if not specified)
+#     -ShowLines:           Show full line content grouped by file with line numbers (replaces default table output)
+#     -Help / -?:           Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

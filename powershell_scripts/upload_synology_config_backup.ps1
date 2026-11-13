@@ -12,14 +12,14 @@
 # NOTE4: WinSCP's .NET assembly is incompatible with PowerShell 7.x due to missing .NET Framework APIs. This script automatically re-launches itself under PowerShell 5.1 when run from PowerShell 7.x. If WinSCP releases a .NET 6+ compatible assembly in a future version, the re-launch block below can be removed. Use -TestCompatibility to check if the current WinSCP version works natively under PowerShell 7.x.
 
 # Optional flags:
-#     -Backup <PATH>: Path to the local or network folder containing the Synology backup file (required)
-#     -Interactive: Prompt for SFTP credentials at runtime instead of using hardcoded values
-#     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
-#     -NoLog: Suppress the WinSCP session log file
-#     -Preview: Show what would happen without actually uploading or deleting anything
+#     -Backup <PATH>:      Path to the local or network folder containing the Synology backup file (required)
+#     -Interactive:        Prompt for SFTP credentials at runtime instead of using hardcoded values
+#     -NoConsoleOutput:    Suppress all console output (requires -SaveResults)
+#     -NoLog:              Suppress the WinSCP session log file
+#     -Preview:            Show what would happen without actually uploading or deleting anything
 #     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -TestCompatibility: Test whether WinSCP works natively under the current PowerShell version
-#     -Help / -?: Display this help message
+#     -TestCompatibility:  Test whether WinSCP works natively under the current PowerShell version
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

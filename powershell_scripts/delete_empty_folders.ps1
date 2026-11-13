@@ -8,14 +8,14 @@
 # NOTE3: Junctions and symbolic links are never followed or deleted, and a folder whose contents can't be read is skipped and reported instead of being treated as empty
 
 # Optional flags:
-#     -DeleteAll:            Automatically confirm deletion of all empty folders without prompting
-#     -Exclude <TEXT>:       Skip folders (and everything inside them) whose names match these wildcard patterns, comma-separated (i.e. -Exclude .git,node_modules)
-#     -NoConsoleOutput:      Suppress console output (requires -SaveResults and either -DeleteAll or -Preview)
-#     -Path <PATH>:          Path to the folder to process (prompts if not specified)
-#     -Preview:              Show which folders would be deleted without actually removing anything
-#     -Recurse:              Also process all nested subfolders, deepest first (without it, only the immediate subfolders of -Path are considered)
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Help / -?:            Display this help message
+#     -DeleteAll:          Automatically confirm deletion of all empty folders without prompting
+#     -Exclude <TEXT>:     Skip folders (and everything inside them) whose names match these wildcard patterns, comma-separated (i.e. -Exclude .git,node_modules)
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults and either -DeleteAll or -Preview)
+#     -Path <PATH>:        Path to the folder to process (prompts if not specified)
+#     -Preview:            Show which folders would be deleted without actually removing anything
+#     -Recurse:            Also process all nested subfolders, deepest first (without it, only the immediate subfolders of -Path are considered)
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 

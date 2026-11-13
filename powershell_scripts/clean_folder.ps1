@@ -5,12 +5,12 @@
 # Required flag:
 #     -TargetFolder <PATH>: Full path to the folder to clean
 # Optional flags:
-#     -DeleteAll: Automatically delete all contents without prompting
-#     -NoConsoleOutput: Suppress console output (requires -DeleteAll and -SaveResults)
-#     -Preview: Show what would be deleted without making any changes
-#     -Recurse: Include files in subdirectories when listing and deleting
+#     -DeleteAll:          Automatically delete all contents without prompting
+#     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
+#     -Preview:            Show what would be deleted without making any changes
+#     -Recurse:            Include files in subdirectories when listing and deleting
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 

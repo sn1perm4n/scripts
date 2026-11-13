@@ -14,14 +14,14 @@
 # NOTE6: -EthernetMetric and -WifiMetric must be between 1 and 9999, and -EthernetMetric must be lower than -WifiMetric, since a lower metric means higher priority
 
 # Optional flags:
-#     -EthernetMetric <N>:   Interface metric to set on Ethernet adapters (default: 10; must be lower than -WifiMetric)
-#     -IncludeIPv6:          Also configure IPv6 interface metrics
-#     -NoConsoleOutput:      Suppress console output (requires -SaveResults)
-#     -Preview:              Show what would be changed without making any changes
-#     -RestoreDefaults:      Restore automatic metric for all affected adapters
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -WifiMetric <N>:       Interface metric to set on Wi-Fi adapters (default: 20)
-#     -Help / -?:            Display this help message
+#     -EthernetMetric <N>: Interface metric to set on Ethernet adapters (default: 10; must be lower than -WifiMetric)
+#     -IncludeIPv6:        Also configure IPv6 interface metrics
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
+#     -Preview:            Show what would be changed without making any changes
+#     -RestoreDefaults:    Restore automatic metric for all affected adapters
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -WifiMetric <N>:     Interface metric to set on Wi-Fi adapters (default: 20)
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 

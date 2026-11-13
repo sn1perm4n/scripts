@@ -12,19 +12,19 @@
 # NOTE5: A -Delay greater than 0 (and -Abort) uses shutdown.exe, since Restart-Computer's -Delay is only a polling interval for -Wait and Stop-Computer has no delay parameter. Delayed and aborted remote operations therefore require PowerShell remoting on the target, and shutdown.exe force-closes applications when the delay expires even without -Force.
 
 # Optional flags:
-#     -Abort:                           Cancel a pending restart or shutdown on the target(s)
-#     -Delay <N>:                       Seconds before the operation executes (default: 0)
-#     -Force:                           Force close running applications without prompting
-#     -HostFile <PATH>:                 Path to a text file containing one hostname per line
+#     -Abort:              Cancel a pending restart or shutdown on the target(s)
+#     -Delay <N>:          Seconds before the operation executes (default: 0)
+#     -Force:              Force close running applications without prompting
+#     -HostFile <PATH>:    Path to a text file containing one hostname per line
 #     -Hostname <NAME> / -IP <ADDRESS>: Target hostname, IP address, or comma-separated list
-#     -Interactive:                     Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
-#     -NoConsoleOutput:                 Suppress console output (requires -SaveResults; cannot be used with -Interactive)
-#     -Parallel:                        Process all hosts simultaneously instead of sequentially
-#     -Preview:                         Show what would happen for each target without performing the operation (skips credential prompt)
-#     -Restart:                         Restart the target(s)
-#     -SaveResults <PATH>:              Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Shutdown:                        Shut down the target(s)
-#     -Help / -?:                       Display this help message
+#     -Interactive:        Prompt for credentials for remote operations (optional — use if your current session lacks sufficient rights on the target). Password input is hidden via a secure Windows credential dialog.
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults; cannot be used with -Interactive)
+#     -Parallel:           Process all hosts simultaneously instead of sequentially
+#     -Preview:            Show what would happen for each target without performing the operation (skips credential prompt)
+#     -Restart:            Restart the target(s)
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Shutdown:           Shut down the target(s)
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

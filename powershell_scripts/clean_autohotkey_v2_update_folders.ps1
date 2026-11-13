@@ -10,11 +10,11 @@
 # NOTE4: These leftover version folders are created each time AutoHotkey self-updates and serve no purpose once the "v2" folder itself reflects the current version
 
 # Optional flags:
-#     -DeleteAll:            Automatically delete all leftover v2.X.Y folders without prompting
-#     -NoConsoleOutput:      Suppress console output (requires -DeleteAll and -SaveResults)
-#     -Preview:              Show what would be deleted without making any changes
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Help / -?:            Display this help message
+#     -DeleteAll:          Automatically delete all leftover v2.X.Y folders without prompting
+#     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
+#     -Preview:            Show what would be deleted without making any changes
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 

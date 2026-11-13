@@ -6,13 +6,13 @@
 # NOTE2: If a program is no longer visible in the System Tray that you expect to be there, or vice versa, re-open the affected program and manually reconfigure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
 
 # Optional flags:
-#     -Backup <PATH>: Back up NotifyIconSettings to a .reg file before making changes (default location: %USERPROFILE%\Desktop)
-#     -DeleteAll: Delete all flagged keys without prompting
-#     -List: Show all NotifyIconSettings keys without processing
-#     -NoConsoleOutput: Suppress console output (requires -DeleteAll and -SaveResults)
-#     -Preview: Show what would be deleted without making any changes (backup is skipped)
+#     -Backup <PATH>:      Back up NotifyIconSettings to a .reg file before making changes (default location: %USERPROFILE%\Desktop)
+#     -DeleteAll:          Delete all flagged keys without prompting
+#     -List:               Show all NotifyIconSettings keys without processing
+#     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
+#     -Preview:            Show what would be deleted without making any changes (backup is skipped)
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

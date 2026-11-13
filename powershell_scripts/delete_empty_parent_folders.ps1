@@ -2,12 +2,12 @@
 # This script scans a specified directory for empty parent folders and can prompt for each deletion. There is also a list of ProtectedFolders that should be avoided at all costs, add to this list as you see fit.
 
 # Optional flags:
-#     -DeleteAll: Automatically confirm deletion of all empty folders without prompting
-#     -NoConsoleOutput: Suppress console output (requires -DeleteAll and -SaveResults)
-#     -Path <PATH>: Path to the folder to scan (prompts if not specified)
-#     -Preview: Show which folders would be deleted without actually removing anything
+#     -DeleteAll:          Automatically confirm deletion of all empty folders without prompting
+#     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
+#     -Path <PATH>:        Path to the folder to scan (prompts if not specified)
+#     -Preview:            Show which folders would be deleted without actually removing anything
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

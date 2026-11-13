@@ -2,15 +2,15 @@
 # This script compares files between two directories or two individual files by name and size in bytes, highlighting matches, differences, and files unique to each directory
 
 # Optional flags:
-#     -Different: Only show files that differ or are unique to one directory
-#     -Filenames: Show filenames only instead of full paths (useful with -Recurse)
-#     -Identical: Only show files that match between both directories
-#     -NoConsoleOutput: Suppress console output (requires -Path1, -Path2, and -SaveResults)
-#     -Path1 <PATH>: Path to the first file or folder (prompts if not specified)
-#     -Path2 <PATH>: Path to the second file or folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories (only applicable when comparing directories)
+#     -Different:          Only show files that differ or are unique to one directory
+#     -Filenames:          Show filenames only instead of full paths (useful with -Recurse)
+#     -Identical:          Only show files that match between both directories
+#     -NoConsoleOutput:    Suppress console output (requires -Path1, -Path2, and -SaveResults)
+#     -Path1 <PATH>:       Path to the first file or folder (prompts if not specified)
+#     -Path2 <PATH>:       Path to the second file or folder (prompts if not specified)
+#     -Recurse:            Include files in subdirectories (only applicable when comparing directories)
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

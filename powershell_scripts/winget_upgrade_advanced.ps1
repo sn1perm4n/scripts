@@ -10,13 +10,13 @@
 # NOTE: On a fresh system where winget has never been run, this script may appear to hang until the priming step completes. This ensures first-run agreements are accepted non-interactively using v1.28.220 flags.
 
 # Optional flags:
-#     -InstallIfMissing: Install winget if it is not found on the system
-#     -LogToDesktop: Save results to a file named winget_<COMPUTERNAME>.txt on the desktop
-#     -NoConsoleOutput: Suppress console output (requires -SaveResults); errors are redirected into the results file instead of being lost
-#     -NoLog: Delete winget's own diagnostic log file(s) created during this run (winget has no native flag to suppress log creation, so this deletes them afterward instead)
+#     -InstallIfMissing:   Install winget if it is not found on the system
+#     -LogToDesktop:       Save results to a file named winget_<COMPUTERNAME>.txt on the desktop
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults); errors are redirected into the results file instead of being lost
+#     -NoLog:              Delete winget's own diagnostic log file(s) created during this run (winget has no native flag to suppress log creation, so this deletes them afterward instead)
 #     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -UpgradeAll: Upgrade all available packages after displaying the upgrade list
-#     -Help / -?: Display this help message
+#     -UpgradeAll:         Upgrade all available packages after displaying the upgrade list
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 

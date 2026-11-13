@@ -3,11 +3,11 @@
 # C:\ProgramData\Patch My PC\Patch My PC Home Updater\updates
 
 # Optional flags:
-#     -DeleteAll:            Automatically delete without prompting
-#     -NoConsoleOutput:      Suppress console output (requires -SaveResults and -DeleteAll)
-#     -Preview:              Show what would be deleted without making any changes
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Help / -?:            Display this help message
+#     -DeleteAll:          Automatically delete without prompting
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults and -DeleteAll)
+#     -Preview:            Show what would be deleted without making any changes
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Help / -?:          Display this help message
 
 #Requires -RunAsAdministrator
 

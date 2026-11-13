@@ -14,7 +14,7 @@
 # NOTE6: Restarting File Explorer below can cause the Nvidia system tray icon to disappear, since Nvidia's tray component does not always respond to the TaskbarCreated broadcast Explorer sends on restart. This script automatically restarts the NVIDIA Display Container LS service (if present) to work around it; this is a no-op on machines without an Nvidia GPU.
 
 # Optional flags:
-#     -Preview: Show what would be changed without making any changes
+#     -Preview:   Show what would be changed without making any changes
 #     -Help / -?: Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]

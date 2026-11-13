@@ -6,11 +6,11 @@
 # NOTE2: -AllUsers searches for the bundle package first (the form the all-users removal guidance uses) and falls back to a plain package search if none is found
 
 # Optional flags:
-#     -AllUsers:             Remove Game Assist for every user account on the machine (requires an elevated session)
-#     -NoConsoleOutput:      Suppress console output (requires -SaveResults)
-#     -Preview:              Show whether Game Assist is installed and what would be removed without making any changes
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Help / -?:            Display this help message
+#     -AllUsers:           Remove Game Assist for every user account on the machine (requires an elevated session)
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
+#     -Preview:            Show whether Game Assist is installed and what would be removed without making any changes
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

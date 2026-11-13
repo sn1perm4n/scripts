@@ -20,15 +20,15 @@
 # NOTE9: A failure on one target is logged as a warning and does not stop the remaining targets in -HostFile from being processed
 
 # Optional flags:
-#     -HostFile <PATH>:                             Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)
-#     -Hostname <PATH>:                             A single remote hostname to target (mutually exclusive with -HostFile)
-#     -Interactive:                                 Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context
-#     -NoConsoleOutput:                             Suppress console output (requires -Policy)
-#     -Policy <PATH>:                               The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu
-#     -Preview:                                     Report the current and proposed ExecutionPolicy for each target without making changes (requires -Policy)
-#     -SaveResults <PATH>:                          Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Scope <Process|CurrentUser|LocalMachine>:    Which scope to target (default: LocalMachine)
-#     -Help / -?:                                   Display this help message
+#     -HostFile <PATH>:                          Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)
+#     -Hostname <PATH>:                          A single remote hostname to target (mutually exclusive with -HostFile)
+#     -Interactive:                              Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context
+#     -NoConsoleOutput:                          Suppress console output (requires -Policy)
+#     -Policy <PATH>:                            The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu
+#     -Preview:                                  Report the current and proposed ExecutionPolicy for each target without making changes (requires -Policy)
+#     -SaveResults <PATH>:                       Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Scope <Process|CurrentUser|LocalMachine>: Which scope to target (default: LocalMachine)
+#     -Help / -?:                                Display this help message
 
 #Requires -RunAsAdministrator
 

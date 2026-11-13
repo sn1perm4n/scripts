@@ -2,15 +2,15 @@
 # This script uses PSScriptAnalyzer to check all PowerShell scripts in a user-specified directory for compatibility with PowerShell 5.x and 7.x
 
 # Optional flags:
-#     -CompactOutput: Simplifies console output to match saved file style (removes separators and extra spacing)
-#     -Failures: Shows only scripts with issues in output
-#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
-#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories
+#     -CompactOutput:      Simplifies console output to match saved file style (removes separators and extra spacing)
+#     -Failures:           Shows only scripts with issues in output
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
+#     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
+#     -Recurse:            Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Successes: Shows only scripts with no issues in output
-#     -Summary: Shows a summary of analyzed scripts at the end
-#     -Help / -?: Display this help message
+#     -Successes:          Shows only scripts with no issues in output
+#     -Summary:            Shows a summary of analyzed scripts at the end
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

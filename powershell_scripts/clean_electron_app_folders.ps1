@@ -4,13 +4,13 @@
 # NOTE: Electron-based apps (i.e. Claude, Discord, Slack, GitHub Desktop, etc.) commonly leave previous app-* folders behind after updates
 
 # Optional flags:
-#     -DeleteAll: Automatically delete all redundant app-* folders without prompting
-#     -List: Show all app-* folders found without processing
-#     -NoConsoleOutput: Suppress console output (requires -DeleteAll and -SaveResults)
-#     -Preview: Show what would be deleted without making any changes
+#     -DeleteAll:          Automatically delete all redundant app-* folders without prompting
+#     -List:               Show all app-* folders found without processing
+#     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
+#     -Preview:            Show what would be deleted without making any changes
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Table: Show all app-* folders in table format (Name, FullName, LastWriteTime)
-#     -Help / -?: Display this help message
+#     -Table:              Show all app-* folders in table format (Name, FullName, LastWriteTime)
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

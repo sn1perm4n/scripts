@@ -7,13 +7,13 @@
 # Get-CimInstance Win32_Product | Select-Object -First 1 | Get-Member -MemberType Property | Select-Object Name
 
 # Optional flags:
-#     -CaseSensitive: Enables case-sensitive filtering (requires -Filter)
+#     -CaseSensitive:      Enables case-sensitive filtering (requires -Filter)
 #     -Columns <string[]>: Specify which columns to display and export (default: Name, Vendor, Version)
-#     -Exact: Match only programs whose name equals the filter text exactly (requires -Filter)
-#     -Filter <string>: Filter results to only show programs whose name contains the specified string (case-insensitive by default; see -CaseSensitive and -Exact)
-#     -NoConsoleOutput: Suppress all console output (requires -SaveResults)
+#     -Exact:              Match only programs whose name equals the filter text exactly (requires -Filter)
+#     -Filter <string>:    Filter results to only show programs whose name contains the specified string (case-insensitive by default; see -CaseSensitive and -Exact)
+#     -NoConsoleOutput:    Suppress all console output (requires -SaveResults)
 #     -SaveResults <PATH>: Save results to a CSV file (i.e. -SaveResults "C:\output.csv")
-#     -Help / -?: Display this help message
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

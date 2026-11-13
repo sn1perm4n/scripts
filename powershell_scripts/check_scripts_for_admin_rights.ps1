@@ -2,12 +2,12 @@
 # This script checks a directory of PowerShell scripts to determine which ones likely require administrator rights, which already include an admin check, and which are missing #Requires -RunAsAdministrator
 
 # Optional flags:
-#     -NoConsoleOutput: Suppress console output (requires -SaveResults)
-#     -Path <PATH>: Path to a .ps1 file or a folder (prompts if not specified)
-#     -Recurse: Include files in subdirectories
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
+#     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
+#     -Recurse:            Include files in subdirectories
 #     -SaveResults <PATH>: Save results to a text file (i.e. -SaveResults "C:\output.txt")
-#     -Table: Display results as a formatted table instead of per-script output
-#     -Help / -?: Display this help message
+#     -Table:              Display results as a formatted table instead of per-script output
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

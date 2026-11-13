@@ -17,13 +17,13 @@
 # NOTE3: -Extensions performs a narrower backup of just the extensions folder's .xpi files instead of the full profile backup, for anyone who doesn't want their entire profile backed up; the "staged" subfolder is excluded since it only ever contains empty subfolders
 
 # Optional flags:
-#     -Extensions:           Back up only the extensions folder's .xpi files (excluding the empty "staged" subfolder) instead of the full profile; replaces the normal backup for that run
-#     -Force:                Automatically close Thunderbird if running, without prompting
-#     -IncludeCache:         Include cache/temp/log files in backup (excluded by default; has no effect with -Extensions)
-#     -NoConsoleOutput:      Suppress console output (requires -SaveResults, and one of -Force/-Preview)
-#     -Preview:              Show what would happen without running the backup
-#     -SaveResults <PATH>:   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
-#     -Help / -?:            Display this help message
+#     -Extensions:         Back up only the extensions folder's .xpi files (excluding the empty "staged" subfolder) instead of the full profile; replaces the normal backup for that run
+#     -Force:              Automatically close Thunderbird if running, without prompting
+#     -IncludeCache:       Include cache/temp/log files in backup (excluded by default; has no effect with -Extensions)
+#     -NoConsoleOutput:    Suppress console output (requires -SaveResults, and one of -Force/-Preview)
+#     -Preview:            Show what would happen without running the backup
+#     -SaveResults <PATH>: Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)
+#     -Help / -?:          Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
 param (

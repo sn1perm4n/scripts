@@ -52,6 +52,7 @@ if ($PSVersionTable.PSVersion.Major -ge 7 -and -not $TestCompatibility) {
 # Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
+# Handle -Help immediately
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-Sftp] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan

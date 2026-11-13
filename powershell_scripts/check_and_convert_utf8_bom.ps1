@@ -188,7 +188,7 @@ if ($Preview) {
 
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, ($lines -join "`n"))
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n" + ($lines -join "`n"))
 			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
@@ -221,7 +221,7 @@ if ($Successes) {
 
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, ($lines -join "`n"))
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n" + ($lines -join "`n"))
 		}
 		catch {
 			Write-Host ""
@@ -253,7 +253,7 @@ if ($Failures) {
 
 	if ($SaveResults) {
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, ($lines -join "`n"))
+			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n" + ($lines -join "`n"))
 		}
 		catch {
 			Write-Host ""

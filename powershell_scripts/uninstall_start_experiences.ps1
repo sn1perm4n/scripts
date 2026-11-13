@@ -28,11 +28,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-AllUsers] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -AllUsers             Remove the Start Experiences App for every user account on the machine (requires an elevated session)" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput      Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -Preview              Show whether the Start Experiences App is installed and what would be removed without making any changes" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
-	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
+	Write-Host "  -AllUsers            Remove the Start Experiences App for every user account on the machine (requires an elevated session)" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show whether the Start Experiences App is installed and what would be removed without making any changes" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }

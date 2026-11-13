@@ -34,11 +34,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-DeleteAll] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -DeleteAll            Automatically delete all leftover v2.X.Y folders without prompting" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput      Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -Preview              Show what would be deleted without making any changes" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
-	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
+	Write-Host "  -DeleteAll           Automatically delete all leftover v2.X.Y folders without prompting" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show what would be deleted without making any changes" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }

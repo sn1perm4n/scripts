@@ -38,13 +38,13 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-Exclude <NAME,...>] [-NoConsoleOutput] [-Preview] [-Restore <PATH>] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Backup <PATH>      Save the current state of every setting this script changes (registry values, the DiagTrack service, and the Customer Experience Improvement Program scheduled tasks) to a CSV file before making changes" -ForegroundColor Cyan
-	Write-Host "  -Exclude <NAME,...> Comma-separated section names to skip (i.e. Widgets,Copilot); see the section names below" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput    Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -Preview            Show the current and proposed value of every setting without making any changes (mutually exclusive with -Restore)" -ForegroundColor Cyan
-	Write-Host "  -Restore <PATH>     Restore settings from a -Backup CSV file instead of disabling anything (mutually exclusive with -Preview)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH> Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
-	Write-Host "  -Help               Display this help message" -ForegroundColor Cyan
+	Write-Host "  -Backup <PATH>       Save the current state of every setting this script changes (registry values, the DiagTrack service, and the Customer Experience Improvement Program scheduled tasks) to a CSV file before making changes" -ForegroundColor Cyan
+	Write-Host "  -Exclude <NAME,...>  Comma-separated section names to skip (i.e. Widgets,Copilot); see the section names below" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show the current and proposed value of every setting without making any changes (mutually exclusive with -Restore)" -ForegroundColor Cyan
+	Write-Host "  -Restore <PATH>      Restore settings from a -Backup CSV file instead of disabling anything (mutually exclusive with -Preview)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host "`nSection names for -Exclude:" -ForegroundColor Cyan
 	Write-Host "  DiagTrack, SyncProviderNotifications, Widgets, SearchHighlightsBing, ContentDeliveryManager, SearchHistory, SearchHighlightsPolicy, Spotlight, GameBar, SuggestWays, Copilot, StartRecommendations, AdvertisingID, LanguageList, AppLaunchTracking, CEIP" -ForegroundColor Cyan
 	Write-Host ""

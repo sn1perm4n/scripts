@@ -54,15 +54,15 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-HostFile <PATH>] [-Hostname <PATH>] [-Interactive] [-NoConsoleOutput] [-Policy <PATH>] [-Preview] [-SaveResults <PATH>] [-Scope <Process|CurrentUser|LocalMachine>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -HostFile <PATH>                             Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)" -ForegroundColor Cyan
-	Write-Host "  -Hostname <PATH>                             A single remote hostname to target (mutually exclusive with -HostFile)" -ForegroundColor Cyan
-	Write-Host "  -Interactive                                 Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput                             Suppress console output (requires -Policy)" -ForegroundColor Cyan
-	Write-Host "  -Policy <PATH>                               The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu" -ForegroundColor Cyan
-	Write-Host "  -Preview                                     Report the current and proposed ExecutionPolicy for each target without making changes (requires -Policy)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>                          Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
-	Write-Host "  -Scope <Process|CurrentUser|LocalMachine>    Which scope to target (default: LocalMachine)" -ForegroundColor Cyan
-	Write-Host "  -Help                                        Display this help message" -ForegroundColor Cyan
+	Write-Host "  -HostFile <PATH>                           Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)" -ForegroundColor Cyan
+	Write-Host "  -Hostname <PATH>                           A single remote hostname to target (mutually exclusive with -HostFile)" -ForegroundColor Cyan
+	Write-Host "  -Interactive                               Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput                           Suppress console output (requires -Policy)" -ForegroundColor Cyan
+	Write-Host "  -Policy <PATH>                             The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu" -ForegroundColor Cyan
+	Write-Host "  -Preview                                   Report the current and proposed ExecutionPolicy for each target without making changes (requires -Policy)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>                        Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
+	Write-Host "  -Scope <Process|CurrentUser|LocalMachine>  Which scope to target (default: LocalMachine)" -ForegroundColor Cyan
+	Write-Host "  -Help                                      Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }

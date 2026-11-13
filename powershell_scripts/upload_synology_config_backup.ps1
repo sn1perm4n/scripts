@@ -52,14 +52,14 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName -Backup <PATH> [-Interactive] [-NoConsoleOutput] [-NoLog] [-Preview] [-SaveResults <PATH>] [-TestCompatibility] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Backup <PATH>        Path to the local or network folder containing the Synology backup file (required)" -ForegroundColor Cyan
-	Write-Host "  -Interactive          Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput      Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -NoLog                Suppress the WinSCP session log file" -ForegroundColor Cyan
-	Write-Host "  -Preview              Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>   Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
-	Write-Host "  -TestCompatibility    Test whether WinSCP works natively under the current PowerShell version" -ForegroundColor Cyan
-	Write-Host "  -Help                 Display this help message" -ForegroundColor Cyan
+	Write-Host "  -Backup <PATH>       Path to the local or network folder containing the Synology backup file (required)" -ForegroundColor Cyan
+	Write-Host "  -Interactive         Prompt for SFTP credentials at runtime instead of using hardcoded values" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -NoLog               Suppress the WinSCP session log file" -ForegroundColor Cyan
+	Write-Host "  -Preview             Show what would happen without actually uploading or deleting anything" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
+	Write-Host "  -TestCompatibility   Test whether WinSCP works natively under the current PowerShell version" -ForegroundColor Cyan
+	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }

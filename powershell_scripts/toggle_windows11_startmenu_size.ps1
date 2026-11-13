@@ -31,11 +31,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Size <Automatic|Small|Large>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -NoConsoleOutput              Suppress console output (requires -Size and -SaveResults)" -ForegroundColor Cyan
-	Write-Host "  -Preview                      Show the current and proposed Start menu size without making changes (requires -Size)" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>           Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
-	Write-Host "  -Size <Automatic|Small|Large> The new Start menu size to apply; omit for an interactive menu" -ForegroundColor Cyan
-	Write-Host "  -Help                         Display this help message" -ForegroundColor Cyan
+	Write-Host "  -NoConsoleOutput               Suppress console output (requires -Size and -SaveResults)" -ForegroundColor Cyan
+	Write-Host "  -Preview                       Show the current and proposed Start menu size without making changes (requires -Size)" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>            Save results to a text file (appends if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
+	Write-Host "  -Size <Automatic|Small|Large>  The new Start menu size to apply; omit for an interactive menu" -ForegroundColor Cyan
+	Write-Host "  -Help                          Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
 }

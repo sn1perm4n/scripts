@@ -98,7 +98,7 @@ if ((Get-Item $scriptFileOrDirectory).PSIsContainer) {
 		}
 		if ($SaveResults) {
 			try {
-				[System.IO.File]::WriteAllText($SaveResults, "$ScriptName`: No .ps1 files found in the directory.")
+				[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$ScriptName`: No .ps1 files found in the directory.")
 			}
 			catch {
 				Write-Host ""

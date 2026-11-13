@@ -47,6 +47,7 @@ param (
 # Get the script name for usage/help output
 $ScriptName = Split-Path $PSCommandPath -Leaf
 
+# Handle -Help immediately
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Abort] [-Delay <N>] [-Force] [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-NoConsoleOutput] [-Parallel] [-Preview] [-Restart] [-SaveResults <PATH>] [-Shutdown] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan

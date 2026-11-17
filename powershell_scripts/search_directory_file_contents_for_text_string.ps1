@@ -74,11 +74,11 @@ if ($NoConsoleOutput -and (-not $Path -or -not $SearchString -or -not $SaveResul
 
 # Prompt user for folder path if not specified
 if (-not $Path) {
-	$Path = Read-Host "Enter the full path to a folder"
+	$Path = Read-Host "`nEnter the full path to a folder"
 }
 
 # Validate directory exists before proceeding
-if (-not (Test-Path -Path $Path -PathType Container)) {
+if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
 	$errorMessage = "The directory '$Path' does not exist."
 	if ($NoConsoleOutput) {
 		try {
@@ -101,14 +101,21 @@ if (-not $SearchString) {
 	$SearchString = Read-Host "`nEnter the text string to search for"
 }
 
+if (-not $SearchString) {
+	Write-Host ""
+	Write-Error "No search string was provided."
+	exit 1
+}
+
 try {
 	if (-not $NoConsoleOutput) { Write-Host "`nSearching for '$SearchString' in '$Path'..." -ForegroundColor Cyan }
 
 	$getChildItemParams = @{
-		Path = $Path
+		LiteralPath = $Path
 		File = $true
 		Recurse = $Recurse
-		ErrorAction = 'Stop'
+		ErrorAction = 'SilentlyContinue'
+		ErrorVariable = 'unreadableFolderErrors'
 	}
 
 	$escapedText = [regex]::Escape($SearchString)
@@ -117,26 +124,34 @@ try {
 	$selectStringParams = @{
 		Pattern = $pattern
 		CaseSensitive = $CaseSensitive
-		ErrorAction = 'Stop'
+		ErrorAction = 'SilentlyContinue'
+		ErrorVariable = 'unreadableErrors'
 	}
 
 	$Results = Get-ChildItem @getChildItemParams | Select-String @selectStringParams
+
+	# Report anything that could not be read instead of silently treating it as having no matches
+	$unreadableCount = @($unreadableFolderErrors).Count + @($unreadableErrors).Count
+	$unreadableNote = ''
+	if ($unreadableCount -gt 0) {
+		$unreadableNote = " $unreadableCount item(s) could not be read."
+	}
 
 	if ($Results) {
 		if ($Filenames) {
 			# Show unique filenames only as a clean list
 			# (-ShowLines, -LinesAbove, and -LinesBelow are ignored in -Filenames mode)
-			$uniqueFiles = $Results | Select-Object -ExpandProperty Filename -Unique
+			$uniqueFiles = @($Results | Select-Object -ExpandProperty Path -Unique | ForEach-Object { Split-Path $_ -Leaf })
 			if (-not $NoConsoleOutput) {
 				Write-Host ""
 				$uniqueFiles | ForEach-Object { Write-Host $_ -ForegroundColor Cyan }
 			}
 
-			$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($uniqueFiles.Count) file(s) found containing '$SearchString'."
+			$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($uniqueFiles.Count) file(s) found containing '$SearchString'.$unreadableNote"
 			if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 
 			if ($SaveResults) {
-				$outputLines = $uniqueFiles + @("", $summaryLine)
+				$outputLines = @($uniqueFiles) + @("", $summaryLine)
 				try {
 					$outputString = "$env:COMPUTERNAME`:`n" + ($outputLines -join "`n")
 					[System.IO.File]::WriteAllText($SaveResults, $outputString)
@@ -158,7 +173,7 @@ try {
 
 				if (-not $NoConsoleOutput) {
 					foreach ($fileGroup in $resultsByFile) {
-						$fileLines = @(Get-Content -Path $fileGroup.Name)
+						$fileLines = @(Get-Content -LiteralPath $fileGroup.Name)
 						$totalLines = $fileLines.Count
 
 						Write-Host "`n$($fileGroup.Name):" -ForegroundColor Cyan
@@ -184,7 +199,7 @@ try {
 				}
 
 				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
-				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s)."
+				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s).$unreadableNote"
 				if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 			}
 			elseif ($ShowLines) {
@@ -201,7 +216,7 @@ try {
 				}
 
 				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
-				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s)."
+				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s).$unreadableNote"
 				if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
 			}
 			else {
@@ -210,7 +225,7 @@ try {
 				}
 
 				$fileCount = ($Results | Select-Object -ExpandProperty Path -Unique | Measure-Object).Count
-				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s)."
+				$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] $($Results.Count) match(es) found across $fileCount file(s).$unreadableNote"
 				if (-not $NoConsoleOutput) { Write-Host $summaryLine -ForegroundColor Green }
 			}
 
@@ -220,7 +235,7 @@ try {
 				if ($useContext) {
 					$resultsByFile = $Results | Group-Object Path
 					foreach ($fileGroup in $resultsByFile) {
-						$fileLines = @(Get-Content -Path $fileGroup.Name)
+						$fileLines = @(Get-Content -LiteralPath $fileGroup.Name)
 						$totalLines = $fileLines.Count
 						$outputLines += "$($fileGroup.Name):"
 
@@ -281,7 +296,7 @@ try {
 		}
 	}
 	else {
-		$warningMessage = "$ScriptName`: No matches found."
+		$warningMessage = "$ScriptName`: No matches found.$unreadableNote"
 		if (-not $NoConsoleOutput) {
 			Write-Host ""
 			Write-Warning $warningMessage

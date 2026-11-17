@@ -88,7 +88,7 @@ $item = Get-Item -LiteralPath $InputPath
 
 # Collect files
 $files = if ($item.PSIsContainer) {
-	Get-ChildItem -Path $InputPath -Filter *.ps1 -File -Recurse:$Recurse
+	Get-ChildItem -LiteralPath $InputPath -Filter *.ps1 -File -Recurse:$Recurse
 }
 else {
 	if ($item.Extension -eq '.ps1') {
@@ -294,12 +294,13 @@ foreach ($file in $files) {
 
 	$lines = @(Get-Content -LiteralPath $file.FullName)
 	$newLines = @()
+	$fileFixedCount = 0
 
 	for ($i = 0; $i -lt $lines.Count; $i++) {
 		$line = $lines[$i]
 		if ($line -match '(Write-Error|Write-Warning).*?\$\(\$_\.Exception\.Message\)\.') {
 			$line = $line -replace '(\$\(\$_\.Exception\.Message\))\.', '$1'
-			$fixedCount++
+			$fileFixedCount++
 		}
 		$newLines += $line
 	}
@@ -307,7 +308,10 @@ foreach ($file in $files) {
 	try {
 		if ($doBackup) {
 			$backupPath = $file.FullName + ".bak"
-			Copy-Item -Path $file.FullName -Destination $backupPath -Force -ErrorAction Stop
+			if (Test-Path -LiteralPath $backupPath) {
+				throw "Backup already exists, so this file was not fixed: $backupPath"
+			}
+			Copy-Item -LiteralPath $file.FullName -Destination $backupPath -ErrorAction Stop
 			if (-not $NoConsoleOutput) { Write-Host "Backup created: $backupPath" -ForegroundColor Cyan }
 			if ($SaveResults) {
 				$FileOutputLines += "Backup created: $backupPath"
@@ -315,7 +319,8 @@ foreach ($file in $files) {
 		}
 
 		$utf8Bom = New-Object System.Text.UTF8Encoding $true
-		[System.IO.File]::WriteAllText($file.FullName, ($newLines -join "`r`n"), $utf8Bom)
+		[System.IO.File]::WriteAllText($file.FullName, ($newLines -join "`n"), $utf8Bom)
+		$fixedCount += $fileFixedCount
 		if ($firstFix -and -not $doBackup) {
 			$firstFix = $false
 		}

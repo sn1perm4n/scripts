@@ -193,6 +193,9 @@ $FileOutputLines = @("$env:COMPUTERNAME`:")
 $summaryLine = ""
 
 # Analyze each script
+$printedAny = $false
+$seenIssues = @{}
+
 for ($i = 0; $i -lt $scripts.Count; $i++) {
 	$script = $scripts[$i]
 	$hasIssues = $false
@@ -200,7 +203,22 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 
 	foreach ($version in $VersionsToCheck) {
 		try {
-			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Severity Warning -ExcludeRule PSAvoidUsingWriteHost
+			# Compare against the PSScriptAnalyzer compatibility profile that matches this version (the newest bundled PowerShell 7 profile is 7.0, so features added in later 7.x releases may be reported as unavailable)
+			$compatProfile = 'win-8_x64_10.0.17763.0_7.0.0_x64_3.1.2_core'
+			$syntaxVersion = '7.0'
+			if ($version -like '5.*') {
+				$compatProfile = 'win-8_x64_10.0.17763.0_5.1.17763.316_x64_4.0.30319.42000_framework'
+				$syntaxVersion = '5.1'
+			}
+			$analyzerSettings = @{
+				Severity = @('Warning')
+				ExcludeRules = @('PSAvoidUsingWriteHost')
+				Rules = @{
+					PSUseCompatibleCommands = @{ Enable = $true; TargetProfiles = @($compatProfile) }
+					PSUseCompatibleSyntax = @{ Enable = $true; TargetVersions = @($syntaxVersion) }
+				}
+			}
+			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Settings $analyzerSettings
 		}
 		catch {
 			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $($_.Exception.Message)"
@@ -233,9 +251,13 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			$scriptOutput += "No compatibility issues detected."
 		}
 
-		# The analyzer runs once per version but the rules are identical, so only count each script's issues once
-		if ($version -eq $VersionsToCheck[0]) {
-			$AllResults += $results
+		# Rules that do not depend on the version return identical results on every pass, so keep each distinct issue only once
+		foreach ($result in $results) {
+			$issueKey = "$($result.ScriptName)|$($result.RuleName)|$($result.Line)|$($result.Message)"
+			if (-not $seenIssues.ContainsKey($issueKey)) {
+				$seenIssues[$issueKey] = $true
+				$AllResults += $result
+			}
 		}
 	}
 
@@ -264,6 +286,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			Write-Host "=========================================" -ForegroundColor DarkCyan
 		}
 		Write-Host "Analyzing script: $($script.FullName)" -ForegroundColor Cyan
+		$printedAny = $true
 
 		foreach ($line in $scriptOutput) {
 			$color = if ($hasIssues) { 'Yellow' } else { 'Green' }
@@ -296,6 +319,9 @@ if ($Summary) {
 			Write-Host ""
 		}
 		elseif (-not $Failures) {
+			Write-Host ""
+		}
+		elseif (-not $printedAny) {
 			Write-Host ""
 		}
 		Write-Host $summaryLine -ForegroundColor Cyan
@@ -335,6 +361,9 @@ if ($SaveResults) {
 }
 
 if ($Failures -and $AllResults.Count -eq 0 -and -not $NoConsoleOutput) {
+	if (-not $Summary) {
+		Write-Host ""
+	}
 	Write-Host "Scripts scanned: $($scripts.Count) - No failures found." -ForegroundColor Green
 }
 

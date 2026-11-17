@@ -6,7 +6,7 @@
 # NOTE2: If a program is no longer visible in the System Tray that you expect to be there, or vice versa, re-open the affected program and manually reconfigure its System Tray visibility via Settings -> Personalization -> Taskbar -> Other system tray icons
 
 # Optional flags:
-#     -Backup <PATH>:      Back up NotifyIconSettings to a .reg file before making changes (default location: %USERPROFILE%\Desktop)
+#     -Backup <PATH>:      Back up NotifyIconSettings to a .reg file before making changes
 #     -DeleteAll:          Delete all flagged keys without prompting
 #     -List:               Show all NotifyIconSettings keys without processing
 #     -NoConsoleOutput:    Suppress console output (requires -DeleteAll and -SaveResults)
@@ -33,7 +33,6 @@ if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Backup <PATH>] [-DeleteAll] [-List] [-NoConsoleOutput] [-Preview] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup <PATH>       Back up NotifyIconSettings to a .reg file before making changes" -ForegroundColor Cyan
-	Write-Host "                       Default location if no path supplied: %USERPROFILE%\Desktop" -ForegroundColor Cyan
 	Write-Host "  -DeleteAll           Delete all flagged keys without prompting" -ForegroundColor Cyan
 	Write-Host "  -List                Show all NotifyIconSettings keys without processing" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -DeleteAll and -SaveResults)" -ForegroundColor Cyan
@@ -55,10 +54,26 @@ if ($SaveResults) {
 }
 
 # Validate -Backup path if specified
-if ($PSBoundParameters.ContainsKey('Backup') -and $Backup -ne '' -and -not (Test-Path (Split-Path $Backup -Parent))) {
-	Write-Host ""
-	Write-Error "The directory for -Backup does not exist: '$(Split-Path $Backup -Parent)'"
-	exit 1
+if ($PSBoundParameters.ContainsKey('Backup')) {
+	if (-not $Backup) {
+		Write-Host ""
+		Write-Error "-Backup requires a file path (i.e. -Backup `"C:\Backups\NotifyIconSettings.reg`")."
+		exit 1
+	}
+
+	$Backup = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Backup)
+
+	if (Test-Path -LiteralPath $Backup -PathType Container) {
+		Write-Host ""
+		Write-Error "-Backup must be a file path, not a folder: '$Backup'"
+		exit 1
+	}
+
+	if (-not (Test-Path -LiteralPath (Split-Path $Backup -Parent) -PathType Container)) {
+		Write-Host ""
+		Write-Error "The directory for -Backup does not exist: '$(Split-Path $Backup -Parent)'"
+		exit 1
+	}
 }
 
 # -NoConsoleOutput requires -DeleteAll and -SaveResults, since without -DeleteAll this script
@@ -72,6 +87,7 @@ if ($NoConsoleOutput -and (-not $DeleteAll -or -not $SaveResults)) {
 $FileOutputLines = @("$env:COMPUTERNAME`:")
 $deletedCount = 0
 $totalFlaggedCount = 0
+$failedCount = 0
 
 $registryPath = "HKCU:\Control Panel\NotifyIconSettings"
 
@@ -270,23 +286,31 @@ $totalFlaggedCount = ($duplicateGroups | ForEach-Object { $_.Count - 1 } | Measu
 
 # Perform backup if -Backup is specified and -Preview is not
 if ($PSBoundParameters.ContainsKey('Backup') -and -not $Preview) {
-	$backupPath = if ($Backup -ne '') {
-		$Backup
-	}
-	else {
-		"$env:USERPROFILE\Desktop\NotifyIconSettings_backup_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').reg"
-	}
+	$backupPath = $Backup
 	try {
 		reg export "HKCU\Control Panel\NotifyIconSettings" $backupPath /y 2>&1 | Out-Null
+		if ($LASTEXITCODE -ne 0) {
+			throw "reg export failed with exit code $LASTEXITCODE"
+		}
 		if (-not $NoConsoleOutput) { Write-Host "Backup saved to: $backupPath`n" -ForegroundColor Green }
 		if ($SaveResults) { $FileOutputLines += "Backup saved to: $backupPath" }
 	}
 	catch {
-		if (-not $NoConsoleOutput) {
-			Write-Host ""
-			Write-Warning "Could not save backup: $($_.Exception.Message)"
+		$errorMessage = "Could not save backup, so no keys were deleted: $($_.Exception.Message)"
+		if ($NoConsoleOutput) {
+			try {
+				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
+			}
+			catch {
+				Write-Host ""
+				Write-Error $errorMessage
+			}
 		}
-		if ($SaveResults) { $FileOutputLines += "Could not save backup: $($_.Exception.Message)" }
+		else {
+			Write-Host ""
+			Write-Error $errorMessage
+		}
+		exit 1
 	}
 }
 
@@ -372,6 +396,7 @@ foreach ($group in $duplicateGroups | Sort-Object Name) {
 						Write-Warning "Could not delete $($entry.KeyName): $($_.Exception.Message)"
 					}
 					if ($SaveResults) { $FileOutputLines += "Could not delete $($entry.KeyName): $($_.Exception.Message)" }
+					$failedCount++
 				}
 			}
 		}
@@ -420,6 +445,10 @@ if ($SaveResults) {
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
+}
+
+if ($failedCount -gt 0) {
+	exit 1
 }
 
 # Read-Host # Uncomment when testing, prevents the script window from closing so you can review the output

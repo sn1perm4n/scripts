@@ -30,16 +30,16 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-Successes] [-Summary] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Successes] [-Summary] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CompactOutput       Simplifies console output to match saved file style (removes separators and extra spacing)" -ForegroundColor Cyan
 	Write-Host "  -Failures            Show only scripts with compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
+	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Successes           Show only scripts with no compatibility issues" -ForegroundColor Cyan
 	Write-Host "  -Summary             Show a summary of total scripts analyzed, passed, and failed" -ForegroundColor Cyan
-	Write-Host "  -SaveResults <PATH>  Save results to a text file (overwrites if file exists, with a hostname header identifying the machine the script was run from)" -ForegroundColor Cyan
 	Write-Host "  -Help                Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -107,7 +107,7 @@ if (-not $Path) {
 	Write-Host ""
 }
 
-if (-not (Test-Path $Path)) {
+if (-not (Test-Path -LiteralPath $Path)) {
 	$errorMessage = "The specified path does not exist."
 	if ($NoConsoleOutput) {
 		try {
@@ -126,12 +126,12 @@ if (-not (Test-Path $Path)) {
 }
 
 # Collect scripts
-if ((Get-Item $Path).PSIsContainer) {
-	$scripts = Get-ChildItem -Path $Path -Recurse:$Recurse -Filter *.ps1
+if ((Get-Item -LiteralPath $Path).PSIsContainer) {
+	$scripts = Get-ChildItem -LiteralPath $Path -Recurse:$Recurse -Filter *.ps1
 }
 else {
 	if ($Path -like "*.ps1") {
-		$scripts = @(Get-Item $Path)
+		$scripts = @(Get-Item -LiteralPath $Path)
 	}
 	else {
 		$errorMessage = "The specified file is not a PowerShell script (.ps1)."
@@ -175,7 +175,7 @@ else {
 }
 
 $Detected7Versions = @()
-$pwshPaths = Get-ChildItem 'C:\Program Files\PowerShell' -Directory -ErrorAction SilentlyContinue
+$pwshPaths = Get-ChildItem (Join-Path $env:ProgramFiles 'PowerShell') -Directory -ErrorAction SilentlyContinue
 foreach ($dir in $pwshPaths) {
 	$pwshExe = Join-Path $dir.FullName 'pwsh.exe'
 	if (Test-Path $pwshExe) {
@@ -233,7 +233,10 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			$scriptOutput += "No compatibility issues detected."
 		}
 
-		$AllResults += $results
+		# The analyzer runs once per version but the rules are identical, so only count each script's issues once
+		if ($version -eq $VersionsToCheck[0]) {
+			$AllResults += $results
+		}
 	}
 
 	# Successes prints only scripts with no issues

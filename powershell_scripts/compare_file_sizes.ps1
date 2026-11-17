@@ -2,9 +2,9 @@
 # This script compares files between two directories or two individual files by name and size in bytes, highlighting matches, differences, and files unique to each directory
 
 # Optional flags:
-#     -Different:          Only show files that differ or are unique to one directory
+#     -Different:          Only show files that differ or are unique to one directory (mutually exclusive with -Identical)
 #     -Filenames:          Show filenames only instead of full paths (useful with -Recurse)
-#     -Identical:          Only show files that match between both directories
+#     -Identical:          Only show files that match between both directories (mutually exclusive with -Different)
 #     -NoConsoleOutput:    Suppress console output (requires -Path1, -Path2, and -SaveResults)
 #     -Path1 <PATH>:       Path to the first file or folder (prompts if not specified)
 #     -Path2 <PATH>:       Path to the second file or folder (prompts if not specified)
@@ -32,9 +32,9 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 if ($Help) {
 	Write-Host "`nUsage:`n    .\$ScriptName [-Different] [-Filenames] [-Identical] [-NoConsoleOutput] [-Path1 <PATH>] [-Path2 <PATH>] [-Recurse] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
-	Write-Host "  -Different           Only show files that differ or are unique to one directory" -ForegroundColor Cyan
+	Write-Host "  -Different           Only show files that differ or are unique to one directory (mutually exclusive with -Identical)" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Show filenames only instead of full paths (useful with -Recurse)" -ForegroundColor Cyan
-	Write-Host "  -Identical           Only show files that match between both directories" -ForegroundColor Cyan
+	Write-Host "  -Identical           Only show files that match between both directories (mutually exclusive with -Different)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -Path1, -Path2, and -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Path1 <PATH>        Path to the first file or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Path2 <PATH>        Path to the second file or folder (prompts if not specified)" -ForegroundColor Cyan
@@ -63,12 +63,19 @@ if ($NoConsoleOutput -and (-not $Path1 -or -not $Path2 -or -not $SaveResults)) {
 	exit 1
 }
 
+# -Different and -Identical are mutually exclusive, since together they would filter out every line
+if ($Different -and $Identical) {
+	Write-Host ""
+	Write-Error "-Different and -Identical cannot be used together."
+	exit 1
+}
+
 # Prompt user for both paths if not specified
 if (-not $Path1) {
 	$Path1 = Read-Host "`nEnter the full path to the first file or folder"
 }
 
-if (-not (Test-Path -Path $Path1)) {
+if (-not (Test-Path -LiteralPath $Path1)) {
 	$errorMessage = "Path not found: $Path1"
 	if ($NoConsoleOutput) {
 		try {
@@ -90,7 +97,7 @@ if (-not $Path2) {
 	$Path2 = Read-Host "`nEnter the full path to the second file or folder"
 }
 
-if (-not (Test-Path -Path $Path2)) {
+if (-not (Test-Path -LiteralPath $Path2)) {
 	$errorMessage = "Path not found: $Path2"
 	if ($NoConsoleOutput) {
 		try {
@@ -108,8 +115,8 @@ if (-not (Test-Path -Path $Path2)) {
 	exit 1
 }
 
-$item1st = Get-Item $Path1
-$item2nd = Get-Item $Path2
+$item1st = Get-Item -LiteralPath $Path1
+$item2nd = Get-Item -LiteralPath $Path2
 
 # Initialize output lines
 $FileOutputLines = @("$env:COMPUTERNAME`:")
@@ -149,8 +156,12 @@ if (-not $item1st.PSIsContainer) {
 }
 else {
 	# Compare two directories
-	$files1st = Get-ChildItem -Path $Path1 -File -Recurse:$Recurse
-	$files2nd = Get-ChildItem -Path $Path2 -File -Recurse:$Recurse
+	$files1st = Get-ChildItem -LiteralPath $item1st.FullName -File -Recurse:$Recurse
+	$files2nd = Get-ChildItem -LiteralPath $item2nd.FullName -File -Recurse:$Recurse
+
+	# Resolve both roots so relative paths are correct even with trailing slashes, relative paths, or forward slashes
+	$root1st = $item1st.FullName.TrimEnd('\')
+	$root2nd = $item2nd.FullName.TrimEnd('\')
 
 	if ($files1st.Count -eq 0) {
 		$warningMessage = "$ScriptName`: No files found in: $Path1"
@@ -191,8 +202,15 @@ else {
 	# Build lookup hashtable for 2nd directory by full path relative to root
 	$lookup2nd = @{}
 	foreach ($file in $files2nd) {
-		$relPath = $file.FullName.Substring($Path2.Length).TrimStart('\')
+		$relPath = $file.FullName.Substring($root2nd.Length).TrimStart('\')
 		$lookup2nd[$relPath] = $file
+	}
+
+	# Build lookup hashtable for 1st directory the same way, so files only in 2nd are found without rescanning
+	$lookup1st = @{}
+	foreach ($file in $files1st) {
+		$relPath = $file.FullName.Substring($root1st.Length).TrimStart('\')
+		$lookup1st[$relPath] = $file
 	}
 
 	# Initialize counters
@@ -207,7 +225,7 @@ else {
 
 	# Compare files in 1st against 2nd
 	foreach ($file1st in $files1st) {
-		$relPath = $file1st.FullName.Substring($Path1.Length).TrimStart('\')
+		$relPath = $file1st.FullName.Substring($root1st.Length).TrimStart('\')
 		$displayName = if ($Filenames) { $file1st.Name } else { $relPath }
 
 		if ($lookup2nd.ContainsKey($relPath)) {
@@ -281,8 +299,8 @@ else {
 
 	# Find files only in 2nd
 	foreach ($file2nd in $files2nd) {
-		$relPath = $file2nd.FullName.Substring($Path2.Length).TrimStart('\')
-		if (-not $lookup2nd.ContainsKey($relPath) -or -not ($files1st | Where-Object { $_.FullName.Substring($Path1.Length).TrimStart('\') -eq $relPath })) {
+		$relPath = $file2nd.FullName.Substring($root2nd.Length).TrimStart('\')
+		if (-not $lookup1st.ContainsKey($relPath)) {
 			if ($Filenames) {
 				$line = "ONLY IN 2ND:   $($file2nd.Name) ($($file2nd.Length) bytes)"
 			}

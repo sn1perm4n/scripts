@@ -63,11 +63,20 @@ if ($NoConsoleOutput -and (-not $DeleteAll -or -not $SaveResults)) {
 	exit 1
 }
 
+# Refuse drive roots and core system folders, since deleting their contents could make Windows unusable
+$resolvedTarget = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($TargetFolder).TrimEnd('\')
+$protectedFolders = @($env:SystemDrive, $env:SystemRoot, $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramData, $env:USERPROFILE, (Split-Path $env:USERPROFILE -Parent)) | Where-Object { $_ } | ForEach-Object { $_.TrimEnd('\') }
+if ($resolvedTarget -match '^[A-Za-z]:?$' -or $resolvedTarget -in $protectedFolders) {
+	Write-Host ""
+	Write-Error "Refusing to clean a drive root or core system folder: '$resolvedTarget'"
+	exit 1
+}
+
 $FileOutputLines = @("$env:COMPUTERNAME`:")
 
 if (-not $NoConsoleOutput) { Write-Host "`nChecking '$TargetFolder'..." -ForegroundColor Cyan }
 
-if (-not (Test-Path -Path $TargetFolder)) {
+if (-not (Test-Path -LiteralPath $TargetFolder)) {
 	$warningMessage = "The directory '$TargetFolder' does not exist."
 	if (-not $NoConsoleOutput) {
 		Write-Host ""
@@ -86,7 +95,7 @@ if (-not (Test-Path -Path $TargetFolder)) {
 }
 
 try {
-	$items = Get-ChildItem -Path $TargetFolder -Force -Recurse:$Recurse
+	$items = Get-ChildItem -LiteralPath $TargetFolder -Force -Recurse:$Recurse
 
 	if ($items.Count -eq 0) {
 		$warningMessage = "The directory '$TargetFolder' exists but is empty."
@@ -107,7 +116,7 @@ try {
 	}
 
 	# Calculate size before deletion
-	$totalBytesFreed = (Get-ChildItem -Path $TargetFolder -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+	$totalBytesFreed = (Get-ChildItem -LiteralPath $TargetFolder -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
 	if (-not $totalBytesFreed) { $totalBytesFreed = 0 }
 
 	if (-not $NoConsoleOutput) { Write-Host "`nThe following items will be deleted from '$TargetFolder':" -ForegroundColor Cyan }
@@ -157,11 +166,37 @@ try {
 			exit 0
 		}
 
-		# Delete all files and folders
-		$items | Remove-Item -Recurse -Force
+		# Delete deepest items first so folders are already empty when reached, and count failures instead of assuming success
+		$deletedCount = 0
+		$failedCount = 0
+		foreach ($item in ($items | Sort-Object { $_.FullName.Length } -Descending)) {
+			try {
+				if ($item.PSIsContainer -and -not $Recurse) {
+					Remove-Item -LiteralPath $item.FullName -Recurse -Force -ErrorAction Stop
+				}
+				else {
+					Remove-Item -LiteralPath $item.FullName -Force -ErrorAction Stop
+				}
+				$deletedCount++
+			}
+			catch {
+				$failedCount++
+				if (-not $NoConsoleOutput) {
+					Write-Host ""
+					Write-Warning "Could not delete '$($item.FullName)': $($_.Exception.Message)"
+				}
+				if ($SaveResults) { $FileOutputLines += "Could not delete '$($item.FullName)': $($_.Exception.Message)" }
+			}
+		}
 
-		$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Cleanup complete, $freedDisplay freed."
-		if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
+		if ($failedCount -gt 0) {
+			$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Cleanup finished with errors, $deletedCount item(s) deleted, $failedCount could not be deleted."
+			if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Yellow }
+		}
+		else {
+			$summaryLine = "$ScriptName`: [$env:COMPUTERNAME] Cleanup complete, $freedDisplay freed."
+			if (-not $NoConsoleOutput) { Write-Host "`n$summaryLine" -ForegroundColor Green }
+		}
 		if ($SaveResults) { $FileOutputLines += ""; $FileOutputLines += $summaryLine }
 	}
 }
@@ -199,6 +234,10 @@ if ($SaveResults) {
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
+}
+
+if ($failedCount -gt 0) {
+	exit 1
 }
 
 exit 0

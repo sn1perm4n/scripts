@@ -34,7 +34,7 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Filenames] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-UnblockAll] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Backup] [-Filenames] [-NoConsoleOutput] [-Path <PATH>] [-Preview] [-Recurse] [-SaveResults <PATH>] [-UnblockAll] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Backup              Automatically create backups before unblocking files (skips interactive prompt)" -ForegroundColor Cyan
 	Write-Host "  -Filenames           Show filenames only instead of full paths" -ForegroundColor Cyan
@@ -72,7 +72,7 @@ if (-not $Path) {
 	$Path = Read-Host "`nEnter the full path to a folder"
 }
 
-if (-not (Test-Path -Path $Path -PathType Container)) {
+if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
 	$errorMessage = "The specified path does not exist or is not a directory."
 	if ($NoConsoleOutput) {
 		try {
@@ -94,7 +94,7 @@ if (-not (Test-Path -Path $Path -PathType Container)) {
 if (-not $NoConsoleOutput) { Write-Host "`nScanning directory: $Path" -ForegroundColor Cyan }
 
 try {
-	$files = Get-ChildItem -Path $Path -Recurse:$Recurse -File -ErrorAction Stop
+	$files = Get-ChildItem -LiteralPath $Path -Recurse:$Recurse -File -ErrorAction Stop
 }
 catch {
 	$errorMessage = "Error enumerating files: $($_.Exception.Message)"
@@ -121,7 +121,7 @@ $FileOutputLines = @("$env:COMPUTERNAME`:")
 foreach ($file in $files) {
 	# Check for and record blocked files
 	try {
-		$null = Get-Item -Path $file.FullName -Stream Zone.Identifier -ErrorAction Stop
+		$null = Get-Item -LiteralPath $file.FullName -Stream Zone.Identifier -ErrorAction Stop
 		$blockedFiles += $file
 	}
 	catch {
@@ -136,15 +136,34 @@ foreach ($file in $files) {
 }
 
 if ($blockedFiles.Count -eq 0) {
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] No blocked files found." -ForegroundColor Green }
+	$noBlockedLine = "$ScriptName`: [$env:COMPUTERNAME] No blocked files found."
+	$noBlockedColor = 'Green'
+	if ($checkErrors.Count -gt 0) {
+		$noBlockedLine = "$ScriptName`: [$env:COMPUTERNAME] No blocked files found, but $($checkErrors.Count) file(s) could not be checked."
+		$noBlockedColor = 'Yellow'
+	}
+	if (-not $NoConsoleOutput) {
+		Write-Host "`n$noBlockedLine" -ForegroundColor $noBlockedColor
+		foreach ($err in $checkErrors) {
+			Write-Host ""
+			Write-Warning "File: $($err.File) — $($err.Error)"
+		}
+	}
 	if ($SaveResults) {
+		$noBlockedOutput = "$env:COMPUTERNAME`:`n$noBlockedLine"
+		foreach ($err in $checkErrors) {
+			$noBlockedOutput += "`nFile: $($err.File)`nError: $($err.Error)"
+		}
 		try {
-			[System.IO.File]::WriteAllText($SaveResults, "$env:COMPUTERNAME`:`n$ScriptName`: [$env:COMPUTERNAME] No blocked files found.")
+			[System.IO.File]::WriteAllText($SaveResults, $noBlockedOutput)
 		}
 		catch {
 			Write-Host ""
 			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
+	}
+	if ($checkErrors.Count -gt 0) {
+		exit 1
 	}
 	exit 0
 }
@@ -205,10 +224,13 @@ if ($Preview) {
 			Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 		}
 	}
+	if ($checkErrors.Count -gt 0) {
+		exit 1
+	}
 	exit 0
-}
+	}
 
-# Prompt the user to optionally unblock all files
+	# Prompt the user to optionally unblock all files
 if ($UnblockAll) {
 	$response = 'Y'
 }
@@ -241,14 +263,17 @@ if ($response -match '^[Yy]$') {
 		try {
 			if ($doBackup) {
 				$backupPath = $file.FullName + ".bak"
-				Copy-Item -Path $file.FullName -Destination $backupPath -Force -ErrorAction Stop
+				if (Test-Path -LiteralPath $backupPath) {
+					throw "Backup already exists, so this file was not unblocked: $backupPath"
+				}
+				Copy-Item -LiteralPath $file.FullName -Destination $backupPath -ErrorAction Stop
 				if (-not $NoConsoleOutput) { Write-Host "Backup created: $backupPath" -ForegroundColor Cyan }
 				if ($SaveResults) {
 					$FileOutputLines += "Backup created: $backupPath"
 				}
 			}
 
-			Unblock-File -Path $file.FullName -ErrorAction Stop
+			Unblock-File -LiteralPath $file.FullName -ErrorAction Stop
 			$displayName = if ($Filenames) { $file.Name } else { $file.FullName }
 			if (-not $NoConsoleOutput) { Write-Host "Unblocked: $displayName" -ForegroundColor Green }
 			if ($SaveResults) {
@@ -263,10 +288,11 @@ if ($response -match '^[Yy]$') {
 		}
 	}
 
-	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Unblock operation complete. $($blockedFiles.Count) file(s) unblocked." -ForegroundColor Green }
+	$unblockedCount = $blockedFiles.Count - $unblockErrors.Count
+	if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: [$env:COMPUTERNAME] Unblock operation complete. $unblockedCount file(s) unblocked." -ForegroundColor Green }
 	if ($SaveResults) {
 		$FileOutputLines += ""
-		$FileOutputLines += "$ScriptName`: [$env:COMPUTERNAME] Unblock operation complete. $($blockedFiles.Count) file(s) unblocked."
+		$FileOutputLines += "$ScriptName`: [$env:COMPUTERNAME] Unblock operation complete. $unblockedCount file(s) unblocked."
 	}
 
 	if ($unblockErrors.Count -gt 0) {
@@ -309,6 +335,10 @@ if ($SaveResults) {
 		Write-Host ""
 		Write-Warning "Could not save results to '$SaveResults': $($_.Exception.Message)"
 	}
+}
+
+if ($unblockErrors.Count -gt 0 -or $checkErrors.Count -gt 0) {
+	exit 1
 }
 
 exit 0

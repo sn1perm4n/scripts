@@ -59,8 +59,8 @@ if (-not $Path) {
 }
 $ScriptPath = $Path
 
-if (-not (Test-Path $ScriptPath -PathType Container)) {
-	$errorMessage = "The directory '$ScriptPath' does not exist."
+if (-not (Test-Path -LiteralPath $ScriptPath)) {
+	$errorMessage = "The path '$ScriptPath' does not exist."
 	if ($NoConsoleOutput) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
@@ -90,20 +90,28 @@ $StrongAdminIndicators = @(
 	'Stop-Service',
 	'Register-ScheduledTask',
 	'Enable-WindowsOptionalFeature',
-	'dism(\.exe)?',
-	'bcdedit',
-	'netsh',
-	'wevtutil',
-	'pnputil',
+	'\bdism(\.exe)?\b',
+	'\bbcdedit\b',
+	'\bnetsh\b',
+	'\bwevtutil\b',
+	'\bpnputil\b',
 	'Remove-AppxPackage'
 )
 
 $Results = @()
 $FileOutputLines = @("$env:COMPUTERNAME`:")
 
-Get-ChildItem $ScriptPath -Filter *.ps1 -Recurse:$Recurse | Where-Object { $_.FullName -ne $PSCommandPath } | ForEach-Object {
+# Collect scripts (a single .ps1 file or a folder)
+$scriptFiles = if ((Get-Item -LiteralPath $ScriptPath).PSIsContainer) {
+	Get-ChildItem -LiteralPath $ScriptPath -Filter *.ps1 -Recurse:$Recurse
+}
+else {
+	Get-Item -LiteralPath $ScriptPath | Where-Object { $_.Extension -eq '.ps1' }
+}
 
-	$content = Get-Content $_.FullName -Raw
+$scriptFiles | Where-Object { $_.FullName -ne $PSCommandPath } | ForEach-Object {
+
+	$content = Get-Content -LiteralPath $_.FullName -Raw
 	$flags = @()
 
 	# Detect inline admin-rights check block or #Requires -RunAsAdministrator

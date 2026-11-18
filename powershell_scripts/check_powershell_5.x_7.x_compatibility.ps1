@@ -4,6 +4,7 @@
 # Optional flags:
 #     -CompactOutput:      Simplifies console output to match saved file style (removes separators and extra spacing)
 #     -Failures:           Shows only scripts with issues in output
+#     -Filenames:          Shows only script names with no per-version details (respects -Failures and -Successes)
 #     -NoConsoleOutput:    Suppress console output (requires -SaveResults)
 #     -Path <PATH>:        Path to a .ps1 file or a folder (prompts if not specified)
 #     -Recurse:            Include files in subdirectories
@@ -16,6 +17,7 @@
 param (
 	[switch]$CompactOutput,
 	[switch]$Failures,
+	[switch]$Filenames,
 	[switch]$NoConsoleOutput,
 	[string]$Path,
 	[switch]$Recurse,
@@ -30,10 +32,11 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Successes] [-Summary] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CompactOutput] [-Failures] [-Filenames] [-NoConsoleOutput] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Successes] [-Summary] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CompactOutput       Simplifies console output to match saved file style (removes separators and extra spacing)" -ForegroundColor Cyan
 	Write-Host "  -Failures            Show only scripts with compatibility issues" -ForegroundColor Cyan
+	Write-Host "  -Filenames           Show only script names with no per-version details (respects -Failures and -Successes)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>         Path to a .ps1 file or a folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse             Include files in subdirectories" -ForegroundColor Cyan
@@ -59,6 +62,13 @@ if ($SaveResults) {
 if ($Successes -and $Failures) {
 	Write-Host ""
 	Write-Warning "-Successes and -Failures are mutually exclusive. Please use only one at a time."
+	exit 1
+}
+
+# -Filenames already prints only script names, so -CompactOutput has nothing to simplify
+if ($Filenames -and $CompactOutput) {
+	Write-Host ""
+	Write-Error "-Filenames and -CompactOutput cannot be used together."
 	exit 1
 }
 
@@ -252,6 +262,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 				$analyzerSettings.Rules['PSUseCompatibleCommands'] = @{ Enable = $true; TargetProfiles = @($versionProfiles[$version]) }
 			}
 			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Settings $analyzerSettings
+
 			# Filter a known false positive: -Type on Set-ItemProperty is a dynamic parameter added by the Registry provider, which the compatibility profiles do not include
 			$results = @($results | Where-Object { $_.Message -notmatch "parameter 'Type' is not available for command 'Set-ItemProperty'" })
 		}
@@ -308,15 +319,26 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 
 	# Save file output if requested, respecting -Failures and -Successes filters
 	if ($SaveResults -and $scriptOutput.Count -gt 0) {
-		$FileOutputLines += "Script: $($script.FullName)"
-		$FileOutputLines += $scriptOutput
-		if (-not $CompactOutput) {
-			$FileOutputLines += ""  # blank line between scripts
+		if ($Filenames) {
+			$FileOutputLines += $script.Name
+		}
+		else {
+			$FileOutputLines += "Script: $($script.FullName)"
+			$FileOutputLines += $scriptOutput
+			if (-not $CompactOutput) {
+				$FileOutputLines += ""  # blank line between scripts
+			}
 		}
 	}
 
+	# -Filenames prints only the script name
+	if ($Filenames -and $scriptOutput.Count -gt 0 -and -not $NoConsoleOutput) {
+		$color = if ($hasIssues) { 'Yellow' } else { 'Green' }
+		Write-Host $script.Name -ForegroundColor $color
+		$printedAny = $true
+	}
 	# Only print to console if output exists
-	if ($scriptOutput.Count -gt 0 -and -not $NoConsoleOutput) {
+	elseif ($scriptOutput.Count -gt 0 -and -not $NoConsoleOutput) {
 		# For -Failures (non-compact mode), separate printed scripts with a blank line
 		if ($Failures -and -not $CompactOutput -and $printedAny) {
 			Write-Host ""

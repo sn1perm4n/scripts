@@ -193,6 +193,38 @@ $FileOutputLines = @("$env:COMPUTERNAME`:")
 $summaryLine = ""
 
 # Analyze each script
+# Find the PSScriptAnalyzer compatibility profile that best matches each PowerShell version, so no profile names are hardcoded
+$analyzerModule = Get-Module PSScriptAnalyzer -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1
+$profileNames = @()
+if ($analyzerModule) {
+	$profileNames = @(Get-ChildItem -LiteralPath (Join-Path $analyzerModule.ModuleBase 'compatibility_profiles') -Filter *.json -ErrorAction SilentlyContinue | Select-Object -ExpandProperty BaseName)
+}
+
+$profileCandidates = foreach ($profileName in $profileNames) {
+	if ($profileName -match '^win-\d+_x64_10\.0\.(?<build>\d+)\.\d+_(?<ps>\d+\.\d+)\.[\d.]+_x64_') {
+		[pscustomobject]@{ Name = $profileName; PS = [version]$Matches['ps']; Build = [int]$Matches['build'] }
+	}
+}
+
+# For each installed version, use the newest profile for the same major version that is not newer than the installed version (then the newest Windows build)
+$versionProfiles = @{}
+foreach ($version in $VersionsToCheck) {
+	$installedVersion = [version](($version -split '\.')[0..1] -join '.')
+	$bestProfile = $profileCandidates | Where-Object { $_.PS.Major -eq $installedVersion.Major -and $_.PS -le $installedVersion } | Sort-Object PS, Build -Descending | Select-Object -First 1
+	$versionProfiles[$version] = $bestProfile.Name
+
+	if (-not $bestProfile) {
+		$warningLine = "No PSScriptAnalyzer compatibility profile found for PowerShell $version, so command compatibility will not be checked for it."
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning $warningLine
+		}
+		if ($SaveResults) {
+			$FileOutputLines += $warningLine
+		}
+	}
+}
+
 $printedAny = $false
 $seenIssues = @{}
 
@@ -203,20 +235,20 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 
 	foreach ($version in $VersionsToCheck) {
 		try {
-			# Compare against the PSScriptAnalyzer compatibility profile that matches this version (the newest bundled PowerShell 7 profile is 7.0, so features added in later 7.x releases may be reported as unavailable)
-			$compatProfile = 'win-8_x64_10.0.17763.0_7.0.0_x64_3.1.2_core'
+			# Compare against the compatibility profile found for this version (the newest bundled profile may be older than the installed version, so features added since may be reported as unavailable)
 			$syntaxVersion = '7.0'
 			if ($version -like '5.*') {
-				$compatProfile = 'win-8_x64_10.0.17763.0_5.1.17763.316_x64_4.0.30319.42000_framework'
 				$syntaxVersion = '5.1'
 			}
 			$analyzerSettings = @{
 				Severity = @('Warning')
 				ExcludeRules = @('PSAvoidUsingWriteHost')
 				Rules = @{
-					PSUseCompatibleCommands = @{ Enable = $true; TargetProfiles = @($compatProfile) }
 					PSUseCompatibleSyntax = @{ Enable = $true; TargetVersions = @($syntaxVersion) }
 				}
+			}
+			if ($versionProfiles[$version]) {
+				$analyzerSettings.Rules['PSUseCompatibleCommands'] = @{ Enable = $true; TargetProfiles = @($versionProfiles[$version]) }
 			}
 			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Settings $analyzerSettings
 		}
@@ -282,6 +314,11 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 
 	# Only print to console if output exists
 	if ($scriptOutput.Count -gt 0 -and -not $NoConsoleOutput) {
+		# For -Failures (non-compact mode), separate printed scripts with a blank line
+		if ($Failures -and -not $CompactOutput -and $printedAny) {
+			Write-Host ""
+		}
+
 		if (-not $CompactOutput) {
 			Write-Host "=========================================" -ForegroundColor DarkCyan
 		}
@@ -293,12 +330,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			Write-Host $line -ForegroundColor $color
 		}
 
-		# Add a blank line between scripts only for -Failures (non-compact mode)
-		if ($Failures -and -not $CompactOutput -and $i -lt ($scripts.Count - 1)) {
-			Write-Host ""
-		}
-
-		if (-not $CompactOutput -and $i -lt ($scripts.Count - 1) -and -not $Failures) {
+				if (-not $CompactOutput -and $i -lt ($scripts.Count - 1) -and -not $Failures) {
 			Write-Host ""
 		}
 	}
@@ -315,15 +347,7 @@ if ($Summary) {
 
 	if (-not $NoConsoleOutput) {
 		# Handle newlines before summary
-		if ($Failures -and $CompactOutput) {
-			Write-Host ""
-		}
-		elseif (-not $Failures) {
-			Write-Host ""
-		}
-		elseif (-not $printedAny) {
-			Write-Host ""
-		}
+		Write-Host ""
 		Write-Host $summaryLine -ForegroundColor Cyan
 	}
 }
@@ -345,12 +369,7 @@ if ($SaveResults) {
 		$outputString = ($FileOutputLines -join "`n")
 		[System.IO.File]::WriteAllText($SaveResults, $outputString)
 		if (-not $NoConsoleOutput) {
-			if ($Failures -and -not $CompactOutput -and -not $Summary) {
-				Write-Host "$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green
-			}
-			else {
-				Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green
-			}
+			Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green
 		}
 	}
 	catch {
@@ -382,12 +401,7 @@ if ($SaveResults) {
 
 # Keep window open
 if (-not $NoConsoleOutput) {
-	if ($Failures -and $AllResults.Count -gt 0 -and -not $Summary -and -not $SaveResults) {
-		Write-Host "Press any key to exit..." -ForegroundColor Cyan
-	}
-	else {
-		Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
-	}
+	Write-Host "`nPress any key to exit..." -ForegroundColor Cyan
 	$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 }
 

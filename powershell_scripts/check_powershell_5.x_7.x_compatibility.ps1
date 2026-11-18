@@ -105,6 +105,7 @@ if (-not $Path) {
 	Write-Host ""
 	$Path = Read-Host "Enter the full path to a .ps1 file or a folder containing scripts"
 	Write-Host ""
+	$promptedForPath = $true
 }
 
 if (-not (Test-Path -LiteralPath $Path)) {
@@ -349,7 +350,9 @@ if ($Summary) {
 
 	if (-not $NoConsoleOutput) {
 		# Handle newlines before summary
-		Write-Host ""
+		if ($printedAny -or -not $promptedForPath) {
+			Write-Host ""
+		}
 		Write-Host $summaryLine -ForegroundColor Cyan
 	}
 }
@@ -382,7 +385,7 @@ if ($SaveResults) {
 }
 
 if ($Failures -and $AllResults.Count -eq 0 -and -not $NoConsoleOutput) {
-	if (-not $Summary) {
+	if (-not $Summary -and -not $promptedForPath) {
 		Write-Host ""
 	}
 	Write-Host "Scripts scanned: $($scripts.Count) - No failures found." -ForegroundColor Green

@@ -251,6 +251,8 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 				$analyzerSettings.Rules['PSUseCompatibleCommands'] = @{ Enable = $true; TargetProfiles = @($versionProfiles[$version]) }
 			}
 			$results = Invoke-ScriptAnalyzer -Path $script.FullName -Recurse -Settings $analyzerSettings
+			# Filter a known false positive: -Type on Set-ItemProperty is a dynamic parameter added by the Registry provider, which the compatibility profiles do not include
+			$results = @($results | Where-Object { $_.Message -notmatch "parameter 'Type' is not available for command 'Set-ItemProperty'" })
 		}
 		catch {
 			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $($_.Exception.Message)"

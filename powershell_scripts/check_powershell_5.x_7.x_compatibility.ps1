@@ -1,5 +1,5 @@
 ﻿# GitHub repository (Reed Waller): https://github.com/sn1perm4n/scripts/tree/main/powershell_scripts
-# This script uses PSScriptAnalyzer to check all PowerShell scripts in a user-specified directory for compatibility with PowerShell 5.x and 7.x
+# This script uses PSScriptAnalyzer and each installed PowerShell engine's own parser to check all PowerShell scripts in a user-specified directory for compatibility with PowerShell 5.x and 7.x
 
 # Optional flags:
 #     -CompactOutput:      Simplifies console output to match saved file style (removes separators and extra spacing)
@@ -186,12 +186,15 @@ else {
 }
 
 $Detected7Versions = @()
+$VersionEngines = @{}
+$VersionEngines[$PS5Version] = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
 $pwshPaths = Get-ChildItem (Join-Path $env:ProgramFiles 'PowerShell') -Directory -ErrorAction SilentlyContinue
 foreach ($dir in $pwshPaths) {
 	$pwshExe = Join-Path $dir.FullName 'pwsh.exe'
 	if (Test-Path $pwshExe) {
 		$ver = & $pwshExe -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
 		$Detected7Versions += $ver
+		$VersionEngines[$ver] = $pwshExe
 	}
 }
 $Detected7Versions = $Detected7Versions | Sort-Object -Unique
@@ -236,6 +239,63 @@ foreach ($version in $VersionsToCheck) {
 	}
 }
 
+# Parse every script with each installed PowerShell engine's own parser, since that is the most reliable syntax compatibility test (i.e. it catches PowerShell 7-only syntax such as ?? when parsed by Windows PowerShell 5.1)
+$scriptList = @($scripts)
+$parseErrors = @{}
+$parseListFile = Join-Path ([System.IO.Path]::GetTempPath()) "compat_parse_list_$([guid]::NewGuid().ToString('N')).txt"
+$parseHelperFile = Join-Path ([System.IO.Path]::GetTempPath()) "compat_parse_helper_$([guid]::NewGuid().ToString('N')).ps1"
+$parseHelper = @'
+param([string]$ListFile)
+$lines = [System.IO.File]::ReadAllLines($ListFile)
+for ($i = 0; $i -lt $lines.Count; $i++) {
+	$errors = $null
+	[void][System.Management.Automation.Language.Parser]::ParseFile($lines[$i], [ref]$null, [ref]$errors)
+	foreach ($e in $errors) {
+		"$i`t$($e.Extent.StartLineNumber)`t$($e.Message -replace '\s+', ' ')"
+	}
+}
+'@
+[System.IO.File]::WriteAllLines($parseListFile, [string[]]@($scriptList | ForEach-Object { $_.FullName }), (New-Object System.Text.UTF8Encoding($true)))
+[System.IO.File]::WriteAllText($parseHelperFile, $parseHelper)
+
+foreach ($version in $VersionsToCheck) {
+	$parseErrors[$version] = @{}
+
+	try {
+		if (-not $VersionEngines[$version]) {
+			throw "its executable was not found"
+		}
+
+		$parseOutput = & $VersionEngines[$version] -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $parseHelperFile -ListFile $parseListFile 2>&1
+		if ($LASTEXITCODE -ne 0) {
+			throw "exit code $LASTEXITCODE"
+		}
+
+		foreach ($outputLine in $parseOutput) {
+			$parts = "$outputLine" -split "`t", 3
+			if ($parts.Count -eq 3) {
+				$scriptIndex = [int]$parts[0]
+				if (-not $parseErrors[$version].ContainsKey($scriptIndex)) {
+					$parseErrors[$version][$scriptIndex] = @()
+				}
+				$parseErrors[$version][$scriptIndex] += [pscustomobject]@{ Line = [int]$parts[1]; Message = $parts[2] }
+			}
+		}
+	}
+	catch {
+		$warningLine = "Could not parse scripts with PowerShell $version, so syntax compatibility will not be checked for it: $($_.Exception.Message)"
+		if (-not $NoConsoleOutput) {
+			Write-Host ""
+			Write-Warning $warningLine
+		}
+		if ($SaveResults) {
+			$FileOutputLines += $warningLine
+		}
+	}
+}
+
+Remove-Item -LiteralPath $parseListFile, $parseHelperFile -ErrorAction SilentlyContinue
+
 $printedAny = $false
 $seenIssues = @{}
 
@@ -265,6 +325,13 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 
 			# Filter a known false positive: -Type on Set-ItemProperty is a dynamic parameter added by the Registry provider, which the compatibility profiles do not include
 			$results = @($results | Where-Object { $_.Message -notmatch "parameter 'Type' is not available for command 'Set-ItemProperty'" })
+
+			# Add the syntax errors found by this version's own parser
+			if ($parseErrors[$version].ContainsKey($i)) {
+				foreach ($parseError in $parseErrors[$version][$i]) {
+					$results = @($results) + [pscustomobject]@{ RuleName = 'ParseError'; Message = $parseError.Message; Line = $parseError.Line; ScriptName = $script.Name }
+				}
+			}
 		}
 		catch {
 			$warningLine = "Error analyzing $($script.FullName) for PowerShell $version compatibility: $($_.Exception.Message)"
@@ -355,7 +422,7 @@ for ($i = 0; $i -lt $scripts.Count; $i++) {
 			Write-Host $line -ForegroundColor $color
 		}
 
-				if (-not $CompactOutput -and $i -lt ($scripts.Count - 1) -and -not $Failures) {
+		if (-not $CompactOutput -and $i -lt ($scripts.Count - 1) -and -not $Failures) {
 			Write-Host ""
 		}
 	}

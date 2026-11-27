@@ -5,15 +5,17 @@
 #     -Align:                 Align flag descriptions into two columns when used with -Description (console output only)
 #     -Count:                 Show the number of scripts each flag appears in (only meaningful with -Unique)
 #     -Description:           Include flag descriptions from the # Optional flags comment block
-#     -Exclude:               Show scripts missing at least one flag specified via -FlagFilter, instead of scripts containing all of them (requires -FlagFilter)
+#     -Exclude <TEXT>:        Skip scripts or folders (and everything inside them) whose names match these wildcard patterns, comma-separated (i.e. -Exclude "toggle_*,powershell_scripts_archive")
 #     -Filenames:             Print only script names with no flag details or blank lines between entries
+#     -Filter <TEXT>:         Only process scripts whose file names (with or without .ps1) match these wildcard patterns, comma-separated (i.e. -Filter "toggle_*,clean_*")
 #     -FlagFilter <NAME,...>: Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter "-SaveResults,-NoConsoleOutput")
+#     -Missing:               Show scripts missing at least one flag specified via -FlagFilter, instead of scripts containing all of them (requires -FlagFilter)
 #     -NoConsoleOutput:       Suppress console output (requires -SaveResults)
 #     -NoFlags:               List scripts that declare no flags, plus any with an # Optional flags comment block but no param block flags, instead of listing flags (not supported with -Unique or -FlagFilter)
 #     -Path <PATH>:           Path to a PowerShell script (.ps1) or folder (prompts if not specified)
 #     -Recurse:               Search subdirectories recursively
 #     -SaveResults <PATH>:    Save results to a .csv file (appends if file exists)
-#     -Unique:                Show only unique deduplicated flag names in an alphabetized list
+#     -Unique:                Show only unique deduplicated flags in an alphabetized list (a flag with different hints in different scripts is listed once per form, i.e. -Backup and -Backup <PATH>)
 #     -Help / -?:             Display this help message
 
 [CmdletBinding(PositionalBinding=$false)]
@@ -21,9 +23,11 @@ param (
 	[switch]$Align,
 	[switch]$Count,
 	[switch]$Description,
-	[switch]$Exclude,
+	[string[]]$Exclude,
 	[switch]$Filenames,
+	[string[]]$Filter,
 	[string[]]$FlagFilter,
+	[switch]$Missing,
 	[switch]$NoConsoleOutput,
 	[switch]$NoFlags,
 	[string]$Path,
@@ -38,20 +42,22 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Exclude] [-Filenames] [-FlagFilter <NAME,...>] [-NoConsoleOutput] [-NoFlags] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-Align] [-Count] [-Description] [-Exclude <TEXT>] [-Filenames] [-Filter <TEXT>] [-FlagFilter <NAME,...>] [-Missing] [-NoConsoleOutput] [-NoFlags] [-Path <PATH>] [-Recurse] [-SaveResults <PATH>] [-Unique] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -Align                  Align flag descriptions into two columns when used with -Description (console output only)" -ForegroundColor Cyan
 	Write-Host "  -Count                  Show the number of scripts each flag appears in (only meaningful with -Unique)" -ForegroundColor Cyan
 	Write-Host "  -Description            Include flag descriptions from the # Optional flags comment block" -ForegroundColor Cyan
-	Write-Host "  -Exclude                Show scripts missing at least one flag specified via -FlagFilter, instead of scripts containing all of them (requires -FlagFilter)" -ForegroundColor Cyan
+	Write-Host "  -Exclude <TEXT>         Skip scripts or folders (and everything inside them) whose names match these wildcard patterns, comma-separated (i.e. -Exclude `"toggle_*,powershell_scripts_archive`")" -ForegroundColor Cyan
 	Write-Host "  -Filenames              Print only script names with no flag details or blank lines between entries" -ForegroundColor Cyan
+	Write-Host "  -Filter <TEXT>          Only process scripts whose file names (with or without .ps1) match these wildcard patterns, comma-separated (i.e. -Filter `"toggle_*,clean_*`")" -ForegroundColor Cyan
 	Write-Host "  -FlagFilter <NAME,...>  Filter output to only scripts containing all specified flags (comma-separated, i.e. -FlagFilter `"-SaveResults,-NoConsoleOutput`")" -ForegroundColor Cyan
+	Write-Host "  -Missing                Show scripts missing at least one flag specified via -FlagFilter, instead of scripts containing all of them (requires -FlagFilter)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput        Suppress console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -NoFlags                List scripts that declare no flags, plus any with an # Optional flags comment block but no param block flags, instead of listing flags (not supported with -Unique or -FlagFilter)" -ForegroundColor Cyan
 	Write-Host "  -Path <PATH>            Path to a PowerShell script (.ps1) or folder (prompts if not specified)" -ForegroundColor Cyan
 	Write-Host "  -Recurse                Search subdirectories recursively" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>     Save results to a .csv file (appends if file exists)" -ForegroundColor Cyan
-	Write-Host "  -Unique                 Show only unique deduplicated flag names in an alphabetized list" -ForegroundColor Cyan
+	Write-Host "  -Unique                 Show only unique deduplicated flags in an alphabetized list (a flag with different hints in different scripts is listed once per form, i.e. -Backup and -Backup <PATH>)" -ForegroundColor Cyan
 	Write-Host "  -Help                   Display this help message" -ForegroundColor Cyan
 	Write-Host ""
 	exit 0
@@ -62,16 +68,24 @@ if ($FlagFilter) {
 	$FlagFilter = $FlagFilter | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 }
 
+# Normalize -Filter and -Exclude so a single comma-separated string works the same as multiple values
+if ($Filter) {
+	$Filter = $Filter | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+}
+if ($Exclude) {
+	$Exclude = $Exclude | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+}
+
 # Warn on unsupported flag combinations
 if ($Description -and $Unique) {
 	Write-Host ""
-	Write-Warning "-Description is not supported with -Unique. Descriptions may vary per script and would be misleading in deduplicated output. Run without -Unique to see descriptions per script."
+	Write-Error "$ScriptName`: -Description is not supported with -Unique. Descriptions may vary per script and would be misleading in deduplicated output. Run without -Unique to see descriptions per script."
 	exit 1
 }
 
 if ($Filenames -and $Unique) {
 	Write-Host ""
-	Write-Warning "-Filenames is not supported with -Unique."
+	Write-Error "$ScriptName`: -Filenames is not supported with -Unique."
 	exit 1
 }
 
@@ -85,34 +99,44 @@ if ($Align -and -not $Description) {
 	Write-Warning "-Align has no effect without -Description."
 }
 
-if ($Exclude -and -not $FlagFilter) {
+if ($Count -and -not $Unique -and -not $NoFlags) {
 	Write-Host ""
-	Write-Warning "-Exclude has no effect without -FlagFilter."
+	Write-Warning "-Count has no effect without -Unique."
+}
+
+if ($Missing -and -not $FlagFilter) {
+	Write-Host ""
+	Write-Warning "-Missing has no effect without -FlagFilter."
 }
 
 if ($NoFlags -and $Unique) {
 	Write-Host ""
-	Write-Warning "-NoFlags is not supported with -Unique."
+	Write-Error "$ScriptName`: -NoFlags is not supported with -Unique."
 	exit 1
 }
 
 if ($NoFlags -and $FlagFilter) {
 	Write-Host ""
-	Write-Warning "-NoFlags is not supported with -FlagFilter, since it lists scripts that have no flags to filter."
+	Write-Error "$ScriptName`: -NoFlags is not supported with -FlagFilter, since it lists scripts that have no flags to filter."
 	exit 1
 }
 
-if ($NoFlags -and ($Align -or $Count -or $Description -or $Exclude -or $Filenames)) {
+if ($NoFlags -and ($Align -or $Count -or $Description -or $Filenames -or $Missing)) {
 	Write-Host ""
-	Write-Warning "-Align, -Count, -Description, -Exclude, and -Filenames have no effect with -NoFlags."
+	Write-Warning "-Align, -Count, -Description, -Filenames, and -Missing have no effect with -NoFlags."
+}
+
+# Resolve -SaveResults against the current PowerShell location, since the .NET file methods used below resolve relative paths against the process working directory instead
+if ($SaveResults) {
+	$SaveResults = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SaveResults)
 }
 
 # Validate -SaveResults path if specified
 if ($SaveResults) {
 	$saveDir = Split-Path $SaveResults -Parent
-	if ($saveDir -and -not (Test-Path $saveDir)) {
+	if ($saveDir -and -not (Test-Path -LiteralPath $saveDir)) {
 		Write-Host ""
-		Write-Error "The directory for -SaveResults does not exist: '$saveDir'"
+		Write-Error "$ScriptName`: The directory for -SaveResults does not exist: '$saveDir'"
 		exit 1
 	}
 }
@@ -120,7 +144,7 @@ if ($SaveResults) {
 # -NoConsoleOutput requires -SaveResults, since without it there's nowhere to record results
 if ($NoConsoleOutput -and -not $SaveResults) {
 	Write-Host ""
-	Write-Error "-NoConsoleOutput requires -SaveResults."
+	Write-Error "$ScriptName`: -NoConsoleOutput requires -SaveResults."
 	exit 1
 }
 
@@ -131,8 +155,8 @@ if (-not $Path) {
 	if (-not $NoConsoleOutput) { Write-Host "" }
 }
 
-if (-not (Test-Path $Path)) {
-	$errorMessage = "The specified path does not exist."
+if (-not (Test-Path -LiteralPath $Path)) {
+	$errorMessage = "$ScriptName`: The specified path does not exist."
 	if ($NoConsoleOutput) {
 		try {
 			[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
@@ -150,15 +174,15 @@ if (-not (Test-Path $Path)) {
 }
 
 # Collect scripts
-if ((Get-Item $Path).PSIsContainer) {
-	$scripts = Get-ChildItem -Path $Path -Recurse:$Recurse -Filter *.ps1
+if ((Get-Item -LiteralPath $Path).PSIsContainer) {
+	$scripts = Get-ChildItem -LiteralPath $Path -Recurse:$Recurse -Filter *.ps1
 }
 else {
 	if ($Path -like "*.ps1") {
-		$scripts = @(Get-Item $Path)
+		$scripts = @(Get-Item -LiteralPath $Path)
 	}
 	else {
-		$errorMessage = "The specified file is not a PowerShell script (.ps1)."
+		$errorMessage = "$ScriptName`: The specified file is not a PowerShell script (.ps1)."
 		if ($NoConsoleOutput) {
 			try {
 				[System.IO.File]::AppendAllText($SaveResults, "$errorMessage`n")
@@ -176,8 +200,39 @@ else {
 	}
 }
 
+# Skip scripts whose file names (or whose parent folders below the -Path folder) match any -Exclude wildcard pattern; the file name without .ps1 is checked too
+if ($Exclude) {
+	$pathItem = Get-Item -LiteralPath $Path
+	$excludeRoot = if ($pathItem.PSIsContainer) { $pathItem.FullName.TrimEnd('\', '/') } else { $pathItem.DirectoryName }
+	$scripts = @($scripts | Where-Object {
+		$relativePath = $_.FullName.Substring($excludeRoot.Length).TrimStart('\', '/')
+		$namesToCheck = @($relativePath -split '[\\/]') + $_.BaseName
+		$excluded = $false
+		foreach ($pattern in $Exclude) {
+			foreach ($nameToCheck in $namesToCheck) {
+				if ($nameToCheck -like $pattern) { $excluded = $true }
+			}
+		}
+		-not $excluded
+	})
+}
+
+# Keep only scripts whose file names (with or without .ps1) match at least one -Filter wildcard pattern
+if ($Filter) {
+	$scripts = @($scripts | Where-Object {
+		$matched = $false
+		foreach ($pattern in $Filter) {
+			if ($_.Name -like $pattern -or $_.BaseName -like $pattern) { $matched = $true }
+		}
+		$matched
+	})
+}
+
 if ($scripts.Count -eq 0) {
 	$warningMessage = "$ScriptName`: No PowerShell scripts (.ps1) found."
+	if ($Filter -or $Exclude) { $warningMessage = "$ScriptName`: No PowerShell scripts (.ps1) found after applying -Filter/-Exclude." }
+	# -Filter patterns must match the whole file name, so a pattern without any wildcard character is a likely mistake
+	if ($Filter -and -not ($Filter | Where-Object { $_ -match '[*?\[]' })) { $warningMessage += " -Filter patterns must match the whole file name, so add a wildcard (i.e. -Filter `"$($Filter[0])*`")." }
 	if (-not $NoConsoleOutput) {
 		Write-Host ""
 		Write-Warning $warningMessage
@@ -198,39 +253,23 @@ $CsvOutputLines = @()
 $allFlags = @{}
 $flagCounts = @{}
 $totalFlags = 0
+$printedScripts = 0
 
 # -NoFlags lists scripts that declare no flags instead of listing flags, using the same param block detection as the main loop below; the main loop is never reached in this mode
 if ($NoFlags) {
-	$isFolder = (Get-Item $Path).PSIsContainer
+	$isFolder = (Get-Item -LiteralPath $Path).PSIsContainer
 	$rootPath = if ($isFolder) { (Resolve-Path -LiteralPath $Path).ProviderPath.TrimEnd('\') } else { '' }
 	$noFlagsScripts = @()
 	$commentOnlyScripts = @()
 
 	foreach ($script in $scripts) {
-		$content = @(Get-Content -Path $script.FullName -ErrorAction SilentlyContinue)
+		$content = @(Get-Content -LiteralPath $script.FullName -ErrorAction SilentlyContinue)
 		$relativePath = if ($isFolder) { $script.FullName.Substring($rootPath.Length + 1) } else { $script.Name }
 
-		$paramStart = -1
-		for ($i = 0; $i -lt $content.Count; $i++) {
-			if ($content[$i] -match '^\s*param\s*\(') {
-				$paramStart = $i
-				break
-			}
-		}
-
+		# Count the parameters with PowerShell's own parser, same as the main loop below
+		$ast = [System.Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$null, [ref]$null)
 		$parsedFlagCount = 0
-		if ($paramStart -ne -1) {
-			$depth = 1
-			for ($i = $paramStart + 1; $i -lt $content.Count; $i++) {
-				$line = $content[$i]
-				foreach ($char in $line.ToCharArray()) {
-					if ($char -eq '(') { $depth++ }
-					elseif ($char -eq ')') { $depth-- }
-				}
-				if ($depth -le 0) { break }
-				if ($line -match '^\s*\[(switch|string|int|bool|double)\]\$(\w+)') { $parsedFlagCount++ }
-			}
-		}
+		if ($ast.ParamBlock) { $parsedFlagCount = $ast.ParamBlock.Parameters.Count }
 
 		if ($parsedFlagCount -gt 0) { continue }
 
@@ -287,57 +326,49 @@ if ($NoFlags) {
 }
 
 foreach ($script in $scripts) {
-	$content = Get-Content -Path $script.FullName -ErrorAction SilentlyContinue
+	$content = Get-Content -LiteralPath $script.FullName -ErrorAction SilentlyContinue
 	if (-not $content) { continue }
 
-	# Find param block
-	$paramStart = -1
-	for ($i = 0; $i -lt $content.Count; $i++) {
-		if ($content[$i] -match '^\s*param\s*\(') {
-			$paramStart = $i
-			break
-		}
-	}
-
-	if ($paramStart -eq -1) { continue }
-
-	$paramLines = @()
-	$depth = 1
-	for ($i = $paramStart + 1; $i -lt $content.Count; $i++) {
-		$line = $content[$i]
-		foreach ($char in $line.ToCharArray()) {
-			if ($char -eq '(') { $depth++ }
-			elseif ($char -eq ')') { $depth-- }
-		}
-		if ($depth -le 0) { break }
-		$paramLines += $line
-	}
-
-	if ($paramLines.Count -eq 0) { continue }
+	# Read the param block with PowerShell's own parser so every parameter type is found (i.e. [string[]]) and comments or strings cannot end the block early
+	$ast = [System.Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref]$null, [ref]$null)
+	if (-not $ast.ParamBlock -or $ast.ParamBlock.Parameters.Count -eq 0) { continue }
 
 	$lines = $content
 
-	# Parse flags from param lines
-	$parsedFlags = @()
-	foreach ($line in $paramLines) {
-		if ($line -match '^\s*\[(switch|string|int|bool|double)\]\$(\w+)') {
-			$type = $Matches[1]
-			$name = $Matches[2]
-
-			$hint = switch ($type) {
-				'string' { ' <PATH>' }
-				'int'    { ' <N>' }
-				'double' { ' <N>' }
-				default  { '' }
+	# Build the hint lookup (and the description lookup if -Description is specified) from the # Optional flags comment block
+	$hintMap = @{}
+	$descriptionMap = @{}
+	$inOptionalFlags = $false
+	foreach ($line in $lines) {
+		if ($line -match '#\s*Optional flags') {
+			$inOptionalFlags = $true
+			continue
+		}
+		if ($inOptionalFlags) {
+			if ($line -match '^\s*#\s+(-\S+)') {
+				$flagKey = $Matches[1] -replace '[^a-zA-Z0-9\-]', ''
+				if ($line -match '^\s*#\s+-\w+\s+(<[^>]*>)') {
+					$hintMap[$flagKey] = $Matches[1]
+				}
+				if ($Description -and $line -match ':\s+(.+)$') {
+					$descriptionMap[$flagKey] = $Matches[1].Trim()
+				}
 			}
-
-			$parsedFlags += "-$name$hint"
+			elseif ($line -notmatch '^\s*#') {
+				break
+			}
 		}
 	}
 
-	if ($parsedFlags.Count -eq 0) { continue }
+	# Build each flag as it is written in the Optional flags comment block (i.e. -Path <PATH>); a flag with no hint there is listed without one
+	$parsedFlags = @()
+	foreach ($parameter in $ast.ParamBlock.Parameters) {
+		$name = $parameter.Name.VariablePath.UserPath
+		$hint = if ($hintMap.ContainsKey("-$name")) { " $($hintMap["-$name"])" } else { '' }
+		$parsedFlags += "-$name$hint"
+	}
 
-	# If -FlagFilter is specified, skip scripts that don't match: normally scripts must contain ALL specified flags, but with -Exclude scripts must be missing at least one of them instead
+	# If -FlagFilter is specified, skip scripts that don't match: normally scripts must contain ALL specified flags, but with -Missing scripts must be missing at least one of them instead
 	if ($FlagFilter) {
 		$allMatch = $true
 		foreach ($filter in $FlagFilter) {
@@ -347,7 +378,7 @@ foreach ($script in $scripts) {
 				break
 			}
 		}
-		if ($Exclude) {
+		if ($Missing) {
 			if ($allMatch) { continue }
 		}
 		else {
@@ -355,37 +386,13 @@ foreach ($script in $scripts) {
 		}
 	}
 
-	# Build description lookup from # Optional flags comment block if -Description specified
-	$descriptionMap = @{}
-	if ($Description) {
-		$inOptionalFlags = $false
-		foreach ($line in $lines) {
-			if ($line -match '#\s*Optional flags') {
-				$inOptionalFlags = $true
-				continue
-			}
-			if ($inOptionalFlags) {
-				if ($line -match '^\s*#\s+(-\S+)') {
-					$flagKey = $Matches[1] -replace '[^a-zA-Z0-9\-]', ''
-					if ($line -match ':\s+(.+)$') {
-						$descriptionMap[$flagKey] = $Matches[1].Trim()
-					}
-				}
-				elseif ($line -notmatch '^\s*#') {
-					break
-				}
-			}
-		}
-	}
-
-	# Accumulate flag counts
+	# Accumulate flag counts, one per distinct form of a flag (i.e. -Backup and -Backup <PATH> are counted separately)
 	foreach ($f in $parsedFlags) {
-		$baseName = ($f -split ' ')[0]
-		if ($flagCounts.ContainsKey($baseName)) {
-			$flagCounts[$baseName]++
+		if ($flagCounts.ContainsKey($f)) {
+			$flagCounts[$f]++
 		}
 		else {
-			$flagCounts[$baseName] = 1
+			$flagCounts[$f] = 1
 		}
 	}
 
@@ -396,12 +403,18 @@ foreach ($script in $scripts) {
 			$totalFlags++
 		}
 		else {
-			if ($scripts.Count -gt 1 -or $FlagFilter) {
+			if ($scripts.Count -gt 1 -or $FlagFilter -or $Filter -or $Exclude) {
+				# Separate scripts with a blank line before every script name except the first one printed
+				if ($printedScripts -gt 0) {
+					if (-not $NoConsoleOutput) { Write-Host "" }
+					if ($SaveResults) { $CsvOutputLines += "" }
+				}
 				if (-not $NoConsoleOutput) { Write-Host $script.Name -ForegroundColor Cyan }
 				if ($SaveResults) { $CsvOutputLines += $script.Name }
+				$printedScripts++
 			}
 
-			$flagsToShow = if ($FlagFilter -and -not $Exclude) {
+			$flagsToShow = if ($FlagFilter -and -not $Missing) {
 				$parsedFlags | Where-Object {
 					$baseName = ($_ -split ' ')[0]
 					$FlagFilter | Where-Object { $baseName -eq "-$($_.TrimStart('-'))" }
@@ -420,7 +433,9 @@ foreach ($script in $scripts) {
 
 			foreach ($f in $flagsToShow) {
 				$baseName = ($f -split ' ')[0]
+				$fCsv = if ($f -match '[,"]') { '"' + ($f -replace '"', '""') + '"' } else { $f }
 				$desc = if ($Description -and $descriptionMap.ContainsKey($baseName)) { $descriptionMap[$baseName] } else { "" }
+				$descCsv = $desc -replace '"', '""'
 
 				if ($Description -and $desc) {
 					if (-not $NoConsoleOutput) {
@@ -432,43 +447,36 @@ foreach ($script in $scripts) {
 							Write-Host "  $f`: $desc"
 						}
 					}
-					if ($SaveResults) { $CsvOutputLines += "$f,`"$desc`"" }
+					if ($SaveResults) { $CsvOutputLines += "$fCsv,`"$descCsv`"" }
 				}
 				else {
 					if (-not $NoConsoleOutput) { Write-Host "  $f" }
-					if ($SaveResults) { $CsvOutputLines += $f }
+					if ($SaveResults) { $CsvOutputLines += $fCsv }
 				}
 				$totalFlags++
-			}
-
-			if (($scripts.Count -gt 1 -or $FlagFilter) -and $script -ne $scripts[-1]) {
-				if (-not $NoConsoleOutput) { Write-Host "" }
-				if ($SaveResults) { $CsvOutputLines += "" }
 			}
 		}
 	}
 	else {
 		foreach ($f in $parsedFlags) {
-			$baseName = ($f -split ' ')[0]
-			if (-not $allFlags.ContainsKey($baseName)) {
-				$allFlags[$baseName] = $f
-			}
+			$allFlags[$f] = $true
 		}
 	}
 }
 
 # Output -Unique results
 if ($Unique) {
-	$sorted = $allFlags.Keys | Sort-Object
+	$sorted = $allFlags.Keys | Sort-Object @{ Expression = { ($_ -split ' ')[0] } }, @{ Expression = { $_ } }
 	foreach ($key in $sorted) {
+		$keyCsv = if ($key -match '[,"]') { '"' + ($key -replace '"', '""') + '"' } else { $key }
 		$countSuffix = if ($Count) { " (Count: $($flagCounts[$key]))" } else { "" }
-		if (-not $NoConsoleOutput) { Write-Host "  $($allFlags[$key])$countSuffix" }
+		if (-not $NoConsoleOutput) { Write-Host "  $key$countSuffix" }
 		if ($SaveResults) {
 			if ($Count) {
-				$CsvOutputLines += "$($allFlags[$key]),$($flagCounts[$key])"
+				$CsvOutputLines += "$keyCsv,$($flagCounts[$key])"
 			}
 			else {
-				$CsvOutputLines += $allFlags[$key]
+				$CsvOutputLines += $keyCsv
 			}
 		}
 		$totalFlags++
@@ -486,8 +494,7 @@ else {
 }
 
 if (-not $NoConsoleOutput) {
-	if ($Filenames) { Write-Host "" }
-	if ($Unique) { Write-Host "" }
+	Write-Host ""
 	if ($totalFlags -eq 0) {
 		Write-Warning $summaryLine
 	}

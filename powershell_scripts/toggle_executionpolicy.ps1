@@ -21,7 +21,7 @@
 
 # Optional flags:
 #     -HostFile <PATH>:                          Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)
-#     -Hostname <PATH>:                          A single remote hostname to target (mutually exclusive with -HostFile)
+#     -Hostname <NAME>:                          A single remote hostname to target (mutually exclusive with -HostFile)
 #     -Interactive:                              Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context
 #     -NoConsoleOutput:                          Suppress console output (requires -Policy)
 #     -Policy <PATH>:                            The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu
@@ -52,10 +52,10 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-HostFile <PATH>] [-Hostname <PATH>] [-Interactive] [-NoConsoleOutput] [-Policy <PATH>] [-Preview] [-SaveResults <PATH>] [-Scope <Process|CurrentUser|LocalMachine>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-HostFile <PATH>] [-Hostname <NAME>] [-Interactive] [-NoConsoleOutput] [-Policy <PATH>] [-Preview] [-SaveResults <PATH>] [-Scope <Process|CurrentUser|LocalMachine>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -HostFile <PATH>                           Path to a text file listing one remote hostname per line (mutually exclusive with -Hostname)" -ForegroundColor Cyan
-	Write-Host "  -Hostname <PATH>                           A single remote hostname to target (mutually exclusive with -HostFile)" -ForegroundColor Cyan
+	Write-Host "  -Hostname <NAME>                           A single remote hostname to target (mutually exclusive with -HostFile)" -ForegroundColor Cyan
 	Write-Host "  -Interactive                               Prompt for alternate credentials to use against remote targets (input is masked); omit to use the current user's context" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput                           Suppress console output (requires -Policy)" -ForegroundColor Cyan
 	Write-Host "  -Policy <PATH>                             The new ExecutionPolicy to apply - one of Restricted, AllSigned, RemoteSigned, Unrestricted, Bypass, or Undefined; omit for an interactive menu" -ForegroundColor Cyan

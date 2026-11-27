@@ -8,9 +8,9 @@
 
 # Optional flags:
 #     -CaseSensitive:      Enables case-sensitive filtering (requires -Filter)
-#     -Columns <string[]>: Specify which columns to display and export (default: Name, Vendor, Version)
+#     -Columns <NAME,...>: Specify which columns to display and export (default: Name, Vendor, Version)
 #     -Exact:              Match only programs whose name equals the filter text exactly (requires -Filter)
-#     -Filter <string>:    Filter results to only show programs whose name contains the specified string (case-insensitive by default; see -CaseSensitive and -Exact)
+#     -Filter <TEXT>:      Filter results to only show programs whose name contains the specified string (case-insensitive by default; see -CaseSensitive and -Exact)
 #     -NoConsoleOutput:    Suppress all console output (requires -SaveResults)
 #     -SaveResults <PATH>: Save results to a CSV file (i.e. -SaveResults "C:\output.csv")
 #     -Help / -?:          Display this help message
@@ -31,7 +31,7 @@ $ScriptName = Split-Path $PSCommandPath -Leaf
 
 # Handle -Help immediately
 if ($Help) {
-	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Columns <string[]>] [-Exact] [-Filter <string>] [-NoConsoleOutput] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
+	Write-Host "`nUsage:`n    .\$ScriptName [-CaseSensitive] [-Columns <NAME,...>] [-Exact] [-Filter <TEXT>] [-NoConsoleOutput] [-SaveResults <PATH>] [-Help]" -ForegroundColor Cyan
 	Write-Host "`nOptional flags:" -ForegroundColor Cyan
 	Write-Host "  -CaseSensitive       Enables case-sensitive filtering (requires -Filter)" -ForegroundColor Cyan
 	Write-Host "  -Columns <cols>      Specify which columns to display and export (default: Name, Vendor, Version)" -ForegroundColor Cyan
@@ -39,7 +39,7 @@ if ($Help) {
 	Write-Host "                       Available: Name, Vendor, Version, InstallDate, InstallLocation, InstallSource," -ForegroundColor Cyan
 	Write-Host "                                  Caption, Description, IdentifyingNumber, Language, PackageName" -ForegroundColor Cyan
 	Write-Host "  -Exact               Match only programs whose name equals the filter text exactly (requires -Filter)" -ForegroundColor Cyan
-	Write-Host "  -Filter <string>     Filter results to only show programs whose name contains the specified string" -ForegroundColor Cyan
+	Write-Host "  -Filter <TEXT>       Filter results to only show programs whose name contains the specified string" -ForegroundColor Cyan
 	Write-Host "                       (case-insensitive by default; see -CaseSensitive and -Exact)" -ForegroundColor Cyan
 	Write-Host "  -NoConsoleOutput     Suppress all console output (requires -SaveResults)" -ForegroundColor Cyan
 	Write-Host "  -SaveResults <PATH>  Save results to a CSV file (i.e. -SaveResults ""C:\output.csv"")" -ForegroundColor Cyan

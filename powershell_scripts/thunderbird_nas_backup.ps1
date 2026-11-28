@@ -365,7 +365,7 @@ if ($Extensions) {
 			try {
 				$content = ($resultLines -join "`n") + "`n"
 				[System.IO.File]::AppendAllText($SaveResults, $content)
-				if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
+				if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 			}
 			catch {
 				Write-Host ""
@@ -401,7 +401,7 @@ if ($Extensions) {
 		try {
 			$content = ($resultLines -join "`n") + "`n"
 			[System.IO.File]::AppendAllText($SaveResults, $content)
-			if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
 			# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
@@ -450,7 +450,7 @@ if ($Preview) {
 		try {
 			$content = ($resultLines -join "`n") + "`n"
 			[System.IO.File]::AppendAllText($SaveResults, $content)
-			if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
+			if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 		}
 		catch {
 			# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
@@ -489,7 +489,7 @@ if ($SaveResults) {
 	try {
 		$content = ($resultLines -join "`n") + "`n"
 		[System.IO.File]::AppendAllText($SaveResults, $content)
-		if (-not $NoConsoleOutput) { Write-Host "`nResults saved to: $SaveResults" -ForegroundColor Green }
+		if (-not $NoConsoleOutput) { Write-Host "`n$ScriptName`: Results saved to text file: $SaveResults" -ForegroundColor Green }
 	}
 	catch {
 		# This warning covers a failure to write to -SaveResults itself, so there's no file left to redirect it into - it always prints to console, even with -NoConsoleOutput, since otherwise it would vanish with no record anywhere
